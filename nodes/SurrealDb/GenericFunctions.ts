@@ -145,8 +145,12 @@ export async function connectSurrealClient(
 	user: string,
 	password: string,
 ) {
-	// Add /rpc to the connection string if it's not already there
-	if (!connectionString.endsWith('/rpc')) {
+	// For cloud instances, we need to ensure we're using the correct endpoint format
+	// SurrealDB cloud requires authentication at the base URL, not at the /rpc endpoint
+	const isCloudInstance = connectionString.includes('surreal.cloud');
+	
+	// Only add /rpc for non-cloud instances or if explicitly specified
+	if (!isCloudInstance && !connectionString.endsWith('/rpc')) {
 		connectionString = connectionString.endsWith('/') ? `${connectionString}rpc` : `${connectionString}/rpc`;
 	}
 	
@@ -167,10 +171,22 @@ export async function connectSurrealClient(
 		
 		// Sign in as a namespace, database, or root user
 		console.log('Signing in with:', { username: user, password }); // Show actual password for debugging
-		await db.signin({
-			username: user,
-			password,
-		});
+		
+		// For cloud instances, we need to use the scope parameter
+		const isCloudInstance = connectionString.includes('surreal.cloud');
+		if (isCloudInstance) {
+			await db.signin({
+				username: user,
+				password,
+				namespace,
+				database,
+			});
+		} else {
+			await db.signin({
+				username: user,
+				password,
+			});
+		}
 		
 		// Select a specific namespace / database
 		console.log('Using namespace/database:', { namespace, database });

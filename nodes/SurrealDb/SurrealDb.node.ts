@@ -39,6 +39,7 @@ export class SurrealDb implements INodeType {
 			{
 				name: 'surrealDbApi',
 				required: true,
+				testedBy: 'surrealDbCredentialTest',
 			},
 		],
 		properties: nodeProperties,

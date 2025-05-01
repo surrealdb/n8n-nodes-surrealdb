@@ -1,20 +1,12 @@
 import {
 	ICredentialType,
 	INodeProperties,
-	ICredentialTestRequest,
 } from 'n8n-workflow';
 
 export class SurrealDbApi implements ICredentialType {
 	name = 'surrealDbApi';
 	displayName = 'SurrealDB API';
 	documentationUrl = 'https://surrealdb.com/docs';
-	test: ICredentialTestRequest = {
-		request: {
-			baseURL: '={{$credentials.configurationType === "connectionString" ? $credentials.connectionString.split("://")[0].replace("ws", "http") + "://" + $credentials.connectionString.split("://")[1].split("/")[0] : $credentials.protocol === "ws" ? "http://" + $credentials.host + ":" + $credentials.port : $credentials.protocol === "wss" ? "https://" + $credentials.host + ":" + $credentials.port : $credentials.protocol + "://" + $credentials.host + ":" + $credentials.port}}',
-			url: '/health',
-			method: 'GET',
-		},
-	};
 	properties: INodeProperties[] = [
 		{
 			displayName: 'Configuration Type',
