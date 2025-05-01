@@ -2,45 +2,168 @@ import type { INodeProperties } from 'n8n-workflow';
 
 export const nodeProperties: INodeProperties[] = [
 	{
-		displayName: 'Operation',
-		name: 'operation',
+		displayName: 'Resource',
+		name: 'resource',
 		type: 'options',
 		noDataExpression: true,
 		options: [
 			{
-				name: 'Create',
-				value: 'create',
-				description: 'Create a record',
-				action: 'Create a record',
+				name: 'Record',
+				value: 'record',
 			},
 			{
-				name: 'Delete',
-				value: 'delete',
-				description: 'Delete records',
-				action: 'Delete records',
+				name: 'Table',
+				value: 'table',
 			},
 			{
 				name: 'Query',
 				value: 'query',
-				description: 'Execute a SurrealQL query',
-				action: 'Execute a SurrealQL query',
 			},
 			{
-				name: 'Select',
-				value: 'select',
-				description: 'Select records',
-				action: 'Select records',
+				name: 'System',
+				value: 'system',
+			},
+		],
+		default: 'record',
+	},
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: [
+					'record',
+				],
+			},
+		},
+		options: [
+			{
+				name: 'Create',
+				value: 'createRecord',
+				description: 'Create a new record',
+				action: 'Create a record',
+			},
+			{
+				name: 'Get',
+				value: 'getRecord',
+				description: 'Retrieve a specific record by ID',
+				action: 'Get a record',
 			},
 			{
 				name: 'Update',
-				value: 'update',
-				description: 'Update records',
-				action: 'Update records',
+				value: 'updateRecord',
+				description: 'Replace the content of a specific record',
+				action: 'Update a record',
+			},
+			{
+				name: 'Merge',
+				value: 'mergeRecord',
+				description: 'Merge data into a specific record',
+				action: 'Merge a record',
+			},
+			{
+				name: 'Delete',
+				value: 'deleteRecord',
+				description: 'Delete a specific record by ID',
+				action: 'Delete a record',
+			},
+			{
+				name: 'Upsert',
+				value: 'upsertRecord',
+				description: 'Create a record if it doesn\'t exist, or update it if it does',
+				action: 'Upsert a record',
 			},
 		],
-		default: 'select',
+		default: 'createRecord',
+	},
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+			},
+		},
+		options: [
+			{
+				name: 'Get All Records',
+				value: 'getAllRecords',
+				description: 'Retrieve all records from a table',
+				action: 'Get all records from a table',
+			},
+			{
+				name: 'Create Many',
+				value: 'createMany',
+				description: 'Create multiple records in a single operation',
+				action: 'Create many records in a table',
+			},
+			{
+				name: 'Get Many',
+				value: 'getMany',
+				description: 'Retrieve multiple specific records by their IDs',
+				action: 'Get many records from a table',
+			},
+		],
+		default: 'getAllRecords',
+	},
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: [
+					'query',
+				],
+			},
+		},
+		options: [
+			{
+				name: 'Execute Query',
+				value: 'executeQuery',
+				description: 'Execute a raw SurrealQL query',
+				action: 'Execute a SurrealQL query',
+			},
+		],
+		default: 'executeQuery',
+	},
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: [
+					'system',
+				],
+			},
+		},
+		options: [
+			{
+				name: 'Health Check',
+				value: 'healthCheck',
+				description: 'Check if the database instance is responsive',
+				action: 'Check database health',
+			},
+			{
+				name: 'Version',
+				value: 'version',
+				description: 'Get the version of the SurrealDB instance',
+				action: 'Get database version',
+			},
+		],
+		default: 'healthCheck',
 	},
 
+	// Common fields for Record and Table resources
 	{
 		displayName: 'Table',
 		name: 'table',
@@ -49,17 +172,181 @@ export const nodeProperties: INodeProperties[] = [
 		default: '',
 		description: 'SurrealDB table name',
 		displayOptions: {
+			show: {
+				resource: [
+					'record',
+					'table',
+				],
+			},
 			hide: {
 				operation: [
-					'query',
+					'getRecord',
+					'updateRecord',
+					'mergeRecord',
+					'deleteRecord',
+					'upsertRecord',
 				],
 			},
 		},
 	},
 
 	// ----------------------------------
-	//         query
+	//         Record Resource
 	// ----------------------------------
+	
+	// Fields for Record operations that require a Record ID
+	{
+		displayName: 'Table',
+		name: 'table',
+		type: 'string',
+		required: true,
+		default: '',
+		description: 'SurrealDB table name',
+		displayOptions: {
+			show: {
+				resource: [
+					'record',
+				],
+				operation: [
+					'getRecord',
+					'updateRecord',
+					'mergeRecord',
+					'deleteRecord',
+					'upsertRecord',
+				],
+			},
+		},
+	},
+	{
+		displayName: 'Record ID',
+		name: 'id',
+		type: 'string',
+		required: true,
+		default: '',
+		description: 'ID of the record (without the table prefix)',
+		displayOptions: {
+			show: {
+				resource: [
+					'record',
+				],
+				operation: [
+					'getRecord',
+					'updateRecord',
+					'mergeRecord',
+					'deleteRecord',
+					'upsertRecord',
+				],
+			},
+		},
+	},
+	
+	// Data field for operations that require data input
+	{
+		displayName: 'Data (JSON)',
+		name: 'data',
+		type: 'json',
+		required: true,
+		default: '{}',
+		description: 'Data to create or update the record with',
+		displayOptions: {
+			show: {
+				resource: [
+					'record',
+				],
+				operation: [
+					'createRecord',
+					'updateRecord',
+					'mergeRecord',
+					'upsertRecord',
+				],
+			},
+		},
+	},
+	
+	// ----------------------------------
+	//         Table Resource
+	// ----------------------------------
+	
+	// Fields for Table operations
+	{
+		displayName: 'Records Data (JSON)',
+		name: 'data',
+		type: 'json',
+		required: true,
+		default: '[]',
+		description: 'Array of record objects to create',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'createMany',
+				],
+			},
+		},
+	},
+	{
+		displayName: 'Record IDs',
+		name: 'ids',
+		type: 'string',
+		required: true,
+		default: '',
+		placeholder: 'id1,id2,id3',
+		description: 'Comma-separated list of record IDs (without the table prefix)',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'getMany',
+				],
+			},
+		},
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'getAllRecords',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				typeOptions: {
+					minValue: 1,
+				},
+				default: 100,
+				description: 'Maximum number of records to return',
+			},
+			{
+				displayName: 'Start',
+				name: 'start',
+				type: 'number',
+				default: 0,
+				description: 'Number of records to skip',
+			},
+		],
+	},
+	
+	// ----------------------------------
+	//         Query Resource
+	// ----------------------------------
+	
+	// Fields for Query operations
 	{
 		displayName: 'Query',
 		name: 'query',
@@ -69,8 +356,11 @@ export const nodeProperties: INodeProperties[] = [
 		},
 		displayOptions: {
 			show: {
-				operation: [
+				resource: [
 					'query',
+				],
+				operation: [
+					'executeQuery',
 				],
 			},
 		},
@@ -85,8 +375,11 @@ export const nodeProperties: INodeProperties[] = [
 		type: 'json',
 		displayOptions: {
 			show: {
-				operation: [
+				resource: [
 					'query',
+				],
+				operation: [
+					'executeQuery',
 				],
 			},
 		},
@@ -94,47 +387,22 @@ export const nodeProperties: INodeProperties[] = [
 		placeholder: '{ "age": 18 }',
 		description: 'Parameters for the query as a JSON object',
 	},
-
-	// ----------------------------------
-	//         delete
-	// ----------------------------------
-	{
-		displayName: 'Delete Query (JSON Format)',
-		name: 'query',
-		type: 'json',
-		typeOptions: {
-			rows: 5,
-		},
-		displayOptions: {
-			show: {
-				operation: [
-					'delete',
-				],
-			},
-		},
-		default: '{}',
-		placeholder: '{ "age": { ">": 18 } }',
-		required: true,
-		description: 'SurrealDB Delete query',
-	},
-
-	// ----------------------------------
-	//         select
-	// ----------------------------------
 	{
 		displayName: 'Options',
 		name: 'options',
 		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
 		displayOptions: {
 			show: {
+				resource: [
+					'query',
+				],
 				operation: [
-					'select',
+					'executeQuery',
 				],
 			},
 		},
-		default: {},
-		placeholder: 'Add option',
-		description: 'Add query options',
 		options: [
 			{
 				displayName: 'Limit',
@@ -143,121 +411,22 @@ export const nodeProperties: INodeProperties[] = [
 				typeOptions: {
 					minValue: 1,
 				},
-				default: 0,
-				description:
-					'Use limit to specify the maximum number of records or 0 for unlimited records',
+				default: 100,
+				description: 'Maximum number of records to return (only applied if query doesn\'t already have LIMIT)',
 			},
 			{
 				displayName: 'Start',
 				name: 'start',
 				type: 'number',
 				default: 0,
-				description: 'The number of records to skip in the results set',
+				description: 'Number of records to skip (only applied if query doesn\'t already have START)',
 			},
 		],
 	},
-	{
-		displayName: 'Query (JSON Format)',
-		name: 'query',
-		type: 'json',
-		typeOptions: {
-			rows: 5,
-		},
-		displayOptions: {
-			show: {
-				operation: [
-					'select',
-				],
-			},
-		},
-		default: '{}',
-		placeholder: '{ "age": { ">": 18 } }',
-		required: true,
-		description: 'SurrealDB Select query',
-	},
 
 	// ----------------------------------
-	//         create
+	//         System Resource
 	// ----------------------------------
-	{
-		displayName: 'Fields',
-		name: 'fields',
-		type: 'string',
-		displayOptions: {
-			show: {
-				operation: [
-					'create',
-				],
-			},
-		},
-		default: '',
-		placeholder: 'name,description',
-		description: 'Comma-separated list of the fields to be included into the new record',
-	},
-
-	// ----------------------------------
-	//         update
-	// ----------------------------------
-	{
-		displayName: 'Update Key',
-		name: 'updateKey',
-		type: 'string',
-		displayOptions: {
-			show: {
-				operation: [
-					'update',
-				],
-			},
-		},
-		default: 'id',
-		required: true,
-		description:
-			'Name of the property which decides which rows in the database should be updated. Normally that would be "id".',
-	},
-	{
-		displayName: 'Fields',
-		name: 'fields',
-		type: 'string',
-		displayOptions: {
-			show: {
-				operation: [
-					'update',
-				],
-			},
-		},
-		default: '',
-		placeholder: 'name,description',
-		description: 'Comma-separated list of the fields to be included into the updated record',
-	},
-	{
-		displayName: 'Options',
-		name: 'options',
-		type: 'collection',
-		displayOptions: {
-			show: {
-				operation: [
-					'update',
-					'create',
-				],
-			},
-		},
-		placeholder: 'Add option',
-		default: {},
-		options: [
-			{
-				displayName: 'Date Fields',
-				name: 'dateFields',
-				type: 'string',
-				default: '',
-				description: 'Comma-separated list of fields that will be parsed as date',
-			},
-			{
-				displayName: 'Use Dot Notation',
-				name: 'useDotNotation',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to use dot notation to access date fields',
-			},
-		],
-	},
+	
+	// No additional fields needed for System operations
 ];

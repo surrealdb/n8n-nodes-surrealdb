@@ -113,42 +113,47 @@ This plan provides a structured approach to updating the node while minimizing t
 
 ## Next Milestone
 
-Phase 1 of the refactoring plan has been completed:
+Phase 2 of the refactoring plan has been completed:
 
-1. **Create RecordId Utility Function (Completed)**
-   - Added a utility function `createRecordId(table, id)` in utilities.ts
-   - The function returns a string in the format "table:id"
-   - This matches the current implementation's approach to record IDs
+1. **Implement Record Resource Operations (Completed)**
+   - Added Create Record operation (refactored existing create)
+   - Added Get Record operation to retrieve a specific record by ID
+   - Added Update Record operation (refactored existing update)
+   - Added Merge Record operation to merge data into a specific record
+   - Added Delete Record operation (refactored existing delete)
+   - Added Upsert Record operation to create or update a record
+   - All operations implemented with proper validation and error handling
 
-2. **Enhance Input Validation (Completed)**
-   - Added `validateJSON` function to validate JSON input
-   - Added `validateRequiredField` function to ensure required fields are provided
-   - Added `validateNumericField` function to validate numeric fields
-   - Added `validateArrayField` function to validate array fields
-   - All validation functions implemented in GenericFunctions.ts
+2. **Implement Table Resource Operations (Completed)**
+   - Added Get All Records operation (refactored existing select) with pagination
+   - Added Create Many operation to create multiple records in a single operation
+   - Added Get Many operation to retrieve multiple specific records by their IDs
+   - All operations implemented with proper validation and error handling
 
-3. **Standardize Output Transformation (Completed)**
-   - Added `formatSingleResult` function for consistent single result formatting
-   - Added `formatArrayResult` function for consistent array result formatting
-   - Both functions implemented in utilities.ts
+3. **Implement Query Resource Operations (Completed)**
+   - Refactored existing query operation
+   - Added pagination support with LIMIT and START parameters
+   - Improved array result handling to properly return multiple items
+   - Enhanced parameter handling with validation
 
-4. **Test Implementation (Completed)**
-   - Modified the query operation to use the new utility functions:
-     - Added parameters support with `validateJSON`
-     - Added query validation with `validateRequiredField`
-     - Implemented consistent output formatting with `formatSingleResult` and `formatArrayResult`
-   - Modified the update operation to use the new utility functions:
-     - Added field validation with `validateRequiredField`
-     - Implemented record ID creation with `createRecordId`
-     - Improved result handling and formatting
+4. **Implement System Resource Operations (Completed)**
+   - Added Health Check operation using n8n's httpRequest helper
+   - Added Version operation with fallback mechanism:
+     - First tries using `db.query('INFO FOR SERVER')`
+     - Falls back to the /version endpoint if needed
+   - Both operations implemented with proper error handling
+   - System operations do not throw errors on failure, but return a status indicating success or failure
 
-The next milestone is to begin Phase 2 of the refactoring plan: Resource-Based Restructuring. This will involve:
+The next milestone is to begin Phase 3 of the refactoring plan: UI and UX Improvements. This will involve:
 
-1. **Implement Record Resource Operations**
-   - Add Create operation (refactor existing create)
-   - Add Get operation
-   - Add Update operation (refactor existing update)
-   - Add Merge operation
-   - Add Delete operation (refactor existing delete)
-   - Add Upsert operation
-   - Test each operation individually
+1. **Update Node Properties**
+   - Review and refine the node properties
+   - Enhance field descriptions and placeholders
+   - Improve display options for better UX
+   - Test all UI combinations
+
+2. **Enhance Error Handling**
+   - Review error handling across all operations
+   - Add more descriptive error messages
+   - Ensure consistent error handling patterns
+   - Test error scenarios
