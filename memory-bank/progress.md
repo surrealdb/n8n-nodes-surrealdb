@@ -113,20 +113,42 @@ This plan provides a structured approach to updating the node while minimizing t
 
 ## Next Milestone
 
-The next milestone is to complete Phase 1 of the refactoring plan:
+Phase 1 of the refactoring plan has been completed:
 
-1. **Create RecordId Utility Function**
-   - Add a utility function to handle the creation of RecordId objects
-   - Test with existing operations to ensure compatibility
+1. **Create RecordId Utility Function (Completed)**
+   - Added a utility function `createRecordId(table, id)` in utilities.ts
+   - The function returns a string in the format "table:id"
+   - This matches the current implementation's approach to record IDs
 
-2. **Enhance Input Validation**
-   - Add JSON validation functions
-   - Add required field validation functions
-   - Add type validation functions
-   - Test with existing operations
+2. **Enhance Input Validation (Completed)**
+   - Added `validateJSON` function to validate JSON input
+   - Added `validateRequiredField` function to ensure required fields are provided
+   - Added `validateNumericField` function to validate numeric fields
+   - Added `validateArrayField` function to validate array fields
+   - All validation functions implemented in GenericFunctions.ts
 
-3. **Standardize Output Transformation**
-   - Create helper functions for consistent output formatting
-   - Test with existing operations
+3. **Standardize Output Transformation (Completed)**
+   - Added `formatSingleResult` function for consistent single result formatting
+   - Added `formatArrayResult` function for consistent array result formatting
+   - Both functions implemented in utilities.ts
 
-This will lay the foundation for the resource-based restructuring in Phase 2.
+4. **Test Implementation (Completed)**
+   - Modified the query operation to use the new utility functions:
+     - Added parameters support with `validateJSON`
+     - Added query validation with `validateRequiredField`
+     - Implemented consistent output formatting with `formatSingleResult` and `formatArrayResult`
+   - Modified the update operation to use the new utility functions:
+     - Added field validation with `validateRequiredField`
+     - Implemented record ID creation with `createRecordId`
+     - Improved result handling and formatting
+
+The next milestone is to begin Phase 2 of the refactoring plan: Resource-Based Restructuring. This will involve:
+
+1. **Implement Record Resource Operations**
+   - Add Create operation (refactor existing create)
+   - Add Get operation
+   - Add Update operation (refactor existing update)
+   - Add Merge operation
+   - Add Delete operation (refactor existing delete)
+   - Add Upsert operation
+   - Test each operation individually

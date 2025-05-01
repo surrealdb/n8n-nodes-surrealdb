@@ -75,9 +75,24 @@ export const nodeProperties: INodeProperties[] = [
 			},
 		},
 		default: '',
-		placeholder: 'SELECT * FROM person WHERE age > 18',
+		placeholder: 'SELECT * FROM person WHERE age > $age',
 		required: true,
 		description: 'SurrealQL query to execute',
+	},
+	{
+		displayName: 'Parameters (JSON)',
+		name: 'parameters',
+		type: 'json',
+		displayOptions: {
+			show: {
+				operation: [
+					'query',
+				],
+			},
+		},
+		default: '{}',
+		placeholder: '{ "age": 18 }',
+		description: 'Parameters for the query as a JSON object',
 	},
 
 	// ----------------------------------

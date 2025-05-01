@@ -16,6 +16,84 @@ import type {
 } from './surrealDb.types';
 
 /**
+ * Validate JSON input
+ * @param self The execute functions instance
+ * @param input The JSON string to validate
+ * @param itemIndex The index of the current item
+ * @returns The parsed JSON object
+ * @throws NodeOperationError if the input is not valid JSON
+ */
+export function validateJSON(self: IExecuteFunctions, input: string, itemIndex: number): any {
+	try {
+		return JSON.parse(input);
+	} catch (error) {
+		throw new NodeOperationError(self.getNode(), 'Invalid JSON provided', { itemIndex });
+	}
+}
+
+/**
+ * Validate required field
+ * @param self The execute functions instance
+ * @param field The field value to validate
+ * @param fieldName The name of the field for error messages
+ * @param itemIndex The index of the current item
+ * @throws NodeOperationError if the field is undefined or empty
+ */
+export function validateRequiredField(
+	self: IExecuteFunctions,
+	field: any,
+	fieldName: string,
+	itemIndex: number,
+): void {
+	if (field === undefined || field === '') {
+		throw new NodeOperationError(self.getNode(), `${fieldName} is required`, { itemIndex });
+	}
+}
+
+/**
+ * Validate numeric field
+ * @param self The execute functions instance
+ * @param field The field value to validate
+ * @param fieldName The name of the field for error messages
+ * @param itemIndex The index of the current item
+ * @returns The validated number
+ * @throws NodeOperationError if the field is not a valid positive number
+ */
+export function validateNumericField(
+	self: IExecuteFunctions,
+	field: any,
+	fieldName: string,
+	itemIndex: number,
+): number {
+	const num = Number(field);
+	if (isNaN(num) || num < 0) {
+		throw new NodeOperationError(self.getNode(), `${fieldName} must be a positive number`, {
+			itemIndex,
+		});
+	}
+	return num;
+}
+
+/**
+ * Validate array field
+ * @param self The execute functions instance
+ * @param field The field value to validate
+ * @param fieldName The name of the field for error messages
+ * @param itemIndex The index of the current item
+ * @throws NodeOperationError if the field is not an array
+ */
+export function validateArrayField(
+	self: IExecuteFunctions,
+	field: any,
+	fieldName: string,
+	itemIndex: number,
+): void {
+	if (!Array.isArray(field)) {
+		throw new NodeOperationError(self.getNode(), `${fieldName} must be an array`, { itemIndex });
+	}
+}
+
+/**
  * Standard way of building the SurrealDB connection string, unless overridden with a provided string
  *
  * @param {ICredentialDataDecryptedObject} credentials SurrealDB credentials to use, unless conn string is overridden
