@@ -2,7 +2,7 @@
 
 ## Current Status
 
-The SurrealDB node is currently in a partially functional state. It provides basic connectivity to SurrealDB and implements some core operations, but it needs significant refactoring to align with the requirements specified in the PRD.
+The SurrealDB node is in a functional state with most of the core features implemented according to the PRD requirements. Recent improvements have focused on standardizing query handling for different authentication types and enhancing error handling.
 
 ### What Works
 
@@ -164,3 +164,38 @@ The next milestone is to rewrite the credentials part of the node from scratch b
     *   **Testing:** Must use the standard n8n credential `test` method for connection verification.
 
 Following the credentials rewrite, the next steps will be to continue with Phase 3 of the original refactoring plan: UI and UX Improvements, starting with enhancing error handling.
+
+## Recent Improvements
+
+### Standardized Query Handling for Authentication Types
+
+A significant improvement has been implemented to standardize query handling across different SurrealDB authentication types:
+
+1. **Added `prepareSurrealQuery` Utility Function**:
+   - Created a new utility function in GenericFunctions.ts that modifies queries based on authentication type
+   - For Root authentication: Adds both namespace and database to queries (`USE NS namespace DB database; query`)
+   - For Namespace authentication: Adds database to queries (`USE DB database; query`)
+   - For Database authentication: No modification needed (passes query through unchanged)
+
+2. **Updated All Query Operations**:
+   - Modified Table >> Get All Records to use the new utility function
+   - Modified Table >> Get Many to use the new utility function
+   - Modified Query >> Execute Query to use the new utility function
+   - Modified System >> Version to use the new utility function for INFO FOR SERVER query
+
+3. **Improved Connection String Handling**:
+   - Enhanced connection string formatting in connectSurrealClient to ensure proper /rpc endpoint handling
+   - Added logic to remove trailing slashes and add /rpc for HTTP/HTTPS connections
+   - Updated credential test to handle /rpc endpoint correctly
+
+4. **Added Conditional Debug Logging**:
+   - Implemented a DEBUG flag at the top of SurrealDb.node.ts that can be toggled to enable/disable debug logging
+   - Added conditional debug logging statements throughout the code to help with troubleshooting
+   - Log statements include original query, modified query, authentication details, and result structure
+
+5. **Enhanced Result Processing**:
+   - Improved handling of query results, especially for queries with USE statements
+   - Added logic to find the first non-null array in the result for queries that include USE statements
+   - Updated result formatting to handle different result structures consistently
+
+These improvements make the node more robust and maintainable by centralizing the authentication-specific logic in one utility function, following the DRY principle.

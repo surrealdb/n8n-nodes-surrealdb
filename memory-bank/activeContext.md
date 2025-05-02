@@ -2,32 +2,22 @@
 
 ## Current Work Focus
 
-The current focus is on rewriting the credentials part of the node from scratch based on precise, simplified requirements to align with standard n8n credential testing.
+The current focus is on implementing standardized query handling for SurrealDB authentication types and enhancing error handling across all operations.
 
 ### Key Areas of Focus
 
-1. **Credentials Rewrite**: Rewriting the credential definition and handling logic from scratch based on the following specific requirements:
-    *   **Supported Protocols:** ONLY `http://` and `https://` for the `connectionString`. No WebSocket support.
-    *   **Fields:**
-        1.  `connectionString`: (Type: string, Required) Example: `https://localhost:8000` or `https://<cloud-id>.surreal.cloud`. Must start with `http://` or `https://`.
-        2.  `authentication`: (Type: options - 'Root', 'Namespace', 'Database', Required) Determines the scope of authentication.
-        3.  `username`: (Type: string, Required) User for authentication.
-        4.  `password`: (Type: string, Password input type, Required) Password for authentication.
-        5.  `namespace`: (Type: string, Optional) The target namespace.
-            *   **Visibility:** Hidden if `authentication` is set to 'Root'.
-        6.  `database`: (Type: string, Optional) The target database.
-            *   **Visibility:** Hidden if `authentication` is set to 'Root' or 'Namespace'.
-    *   **Testing:** Must use the standard n8n credential `test` method for connection verification.
+1. **Authentication-Aware Query Handling**: Implementing a centralized approach to handle query modification based on authentication type:
+   * **Root Authentication**: Adding both namespace and database to queries
+   * **Namespace Authentication**: Adding database to queries
+   * **Database Authentication**: No modification needed
 
-2. **Resource-Based Organization**: Restructuring the node to organize functionality by resources (Record, Table, Query, System) as specified in the PRD.
+2. **Debugging and Logging**: Adding conditional debug logging to help troubleshoot query execution and result processing.
 
-3. **Operation Implementation**: Implementing all required operations for each resource, ensuring they follow the specifications in the PRD.
+3. **Result Processing Improvements**: Enhancing the handling of query results, especially for queries with USE statements.
 
-4. **Input Validation**: Enhancing input validation to provide better error messages and prevent invalid operations.
+4. **Connection String Handling**: Improving connection string formatting to ensure proper /rpc endpoint handling.
 
-5. **Output Transformation**: Standardizing output formatting across all operations for consistency.
-
-6. **Error Handling**: Improving error handling to provide more descriptive error messages.
+5. **Error Handling**: Continuing to improve error handling to provide more descriptive error messages.
 
 ## Recent Changes
 
