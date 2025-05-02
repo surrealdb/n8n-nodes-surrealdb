@@ -136,12 +136,18 @@ export class SurrealDb implements INodeType {
 							// Execute the select operation
 							const result = await client.select(recordId);
 							
-							// Format the result
-							const formattedResult = formatSingleResult(result);
-							returnData.push({
-								...formattedResult,
-								pairedItem: { item: i },
-							});
+							// Check if the record was found (result is not null/undefined/empty object)
+							// SurrealDB's client.select returns the record object if found, or null/undefined if not found.
+							// An empty object check is included for robustness, though less likely.
+							if (result !== null && result !== undefined && (typeof result !== 'object' || Object.keys(result).length > 0)) {
+								// Format the result only if found
+								const formattedResult = formatSingleResult(result);
+								returnData.push({
+									...formattedResult,
+									pairedItem: { item: i },
+								});
+							}
+							// If not found, do nothing, resulting in zero items for this input item
 						} catch (error) {
 							if (this.continueOnFail()) {
 								returnData.push({
@@ -410,12 +416,12 @@ export class SurrealDb implements INodeType {
 							}
 							
 							// Find the first non-null array in the result
-							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item) && item.length > 0) : null;
+							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null; // Find first array, even if empty
 							
-							if (recordsArray) {
+							if (recordsArray) { // Check if an array was found (could be empty)
 								// Format the results
 								const records = recordsArray;
-								const formattedResults = formatArrayResult(records);
+								const formattedResults = formatArrayResult(records); // formatArrayResult([]) returns []
 								
 								// Add each record as a separate item
 								for (const formattedResult of formattedResults) {
@@ -424,13 +430,9 @@ export class SurrealDb implements INodeType {
 										pairedItem: { item: i },
 									});
 								}
-							} else {
-								// If no records found or result structure is unexpected, return an empty result
-								returnData.push({
-									json: { result: [] },
-									pairedItem: { item: i },
-								});
 							}
+							// If recordsArray is null (e.g., query error before finding an array), do nothing.
+							// If recordsArray is [], formatArrayResult([]) returns [], loop doesn't run, returnData is unchanged.
 						} catch (error) {
 							if (this.continueOnFail()) {
 								returnData.push({
@@ -514,7 +516,8 @@ export class SurrealDb implements INodeType {
 							const ids = idsString.split(',').map(id => id.trim()).filter(id => id !== '');
 							
 							if (ids.length === 0) {
-								throw new Error('At least one Record ID is required');
+								// If no valid IDs provided after filtering, return no results for this item
+								continue; 
 							}
 							
 							// We need to use a query to select multiple records by ID
@@ -550,12 +553,12 @@ export class SurrealDb implements INodeType {
 							}
 							
 							// Find the first non-null array in the result
-							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item) && item.length > 0) : null;
+							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null; // Find first array, even if empty
 							
-							if (recordsArray) {
+							if (recordsArray) { // Check if an array was found (could be empty)
 								// Format the results
 								const records = recordsArray;
-								const formattedResults = formatArrayResult(records); 
+								const formattedResults = formatArrayResult(records); // formatArrayResult([]) returns []
 								
 								// Add each record as a separate item
 								for (const formattedResult of formattedResults) {
@@ -564,14 +567,8 @@ export class SurrealDb implements INodeType {
 										pairedItem: { item: i },
 									});
 								}
-							} else {
-								// If no records found or result structure is unexpected, return an empty result
-								// Corrected else block from previous attempt
-								returnData.push({
-									json: { result: [] },
-									pairedItem: { item: i },
-								});
 							}
+							// If recordsArray is null or empty, do nothing, resulting in zero items for this input item
 						} catch (error) {
 							if (this.continueOnFail()) {
 								returnData.push({
