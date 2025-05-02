@@ -184,11 +184,7 @@ export const nodeProperties: INodeProperties[] = [
 			},
 			hide: {
 				operation: [
-					'getRecord',
-					'updateRecord',
-					'mergeRecord',
-					'deleteRecord',
-					'upsertRecord',
+					'createRecord', // Hide 'table' only for createRecord
 				],
 			},
 		},

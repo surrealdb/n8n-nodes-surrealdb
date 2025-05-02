@@ -63,6 +63,10 @@ export class SurrealDb implements INodeType {
 			nodeDatabase, // Pass the renamed variable
 		);
 
+		if (DEBUG) {
+			console.log('DEBUG - Resolved Credentials:', JSON.stringify(resolvedCredentials));
+		}
+
 		const client = await connectSurrealClient(resolvedCredentials);
 
 		let returnData: INodeExecutionData[] = [];
@@ -171,6 +175,11 @@ export class SurrealDb implements INodeType {
 							// Create the record ID
 							const recordId = createRecordId(table, id);
 							
+							if (DEBUG) {
+								console.log('DEBUG - Update Record - Record ID:', recordId);
+								console.log('DEBUG - Update Record - Data:', JSON.stringify(data));
+							}
+
 							// Execute the update operation
 							const result = await client.update(recordId, data);
 							
@@ -291,12 +300,32 @@ export class SurrealDb implements INodeType {
 							// Create the record ID
 							const recordId = createRecordId(table, id);
 							
-							// For upsert, we use the update method which will create the record if it doesn't exist
-							// This is the behavior specified in the PRD
-							const result = await client.update(recordId, data);
+							if (DEBUG) {
+								console.log('DEBUG - Upsert Record - Before client.upsert - Record ID:', recordId);
+								console.log('DEBUG - Upsert Record - Before client.upsert - Data:', JSON.stringify(data));
+								console.log('DEBUG - Upsert Record - Before client.upsert - Client state:', client);
+							}
 							
-							// Format the result
-							const formattedResult = formatSingleResult(result);
+							let formattedResult;
+							try {
+								// For upsert, we use the upsert method which will create the record if it doesn't exist
+								// According to the SurrealDB documentation, this is the correct method for upserting records
+								const result = await client.upsert(recordId, data);
+								
+								if (DEBUG) {
+									console.log('DEBUG - Upsert Record - After client.upsert - Result:', JSON.stringify(result));
+								}
+								
+								// Format the result
+								formattedResult = formatSingleResult(result);
+							} catch (upsertError) {
+								if (DEBUG) {
+									console.error('DEBUG - Upsert Record - Error during client.upsert:', upsertError);
+									console.error('DEBUG - Upsert Record - Error stack:', (upsertError as Error).stack);
+								}
+								throw upsertError;
+							}
+							
 							returnData.push({
 								...formattedResult,
 								pairedItem: { item: i },
@@ -490,7 +519,7 @@ export class SurrealDb implements INodeType {
 							
 							// We need to use a query to select multiple records by ID
 							// Build a list of full Record IDs for the IN clause, joined by comma ONLY
-							const recordIdList = ids.map(id => createRecordId(table, id)).join(',');
+							const recordIdList = ids.map(id => `${table}:${id}`).join(',');
 							
 							// Build the query string with the Record IDs directly interpolated
 							let query = `SELECT * FROM ${table} WHERE id IN [${recordIdList}]`;

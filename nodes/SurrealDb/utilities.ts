@@ -1,4 +1,5 @@
 import type { IPairedItemData, INodeExecutionData } from 'n8n-workflow';
+import { RecordId } from 'surrealdb';
 
 /**
  * Generate paired item data for the given number of items
@@ -10,12 +11,14 @@ export function generatePairedItemData(length: number): IPairedItemData[] {
 }
 
 /**
- * Create a record ID string from table name and ID
+ * Create a RecordId object from table name and ID
  * This is required for SurrealDB operations that work with specific records
- * Format: "table:id"
+ * @param table The table name
+ * @param id The record ID
+ * @returns A RecordId object that can be used with SurrealDB SDK methods
  */
-export function createRecordId(table: string, id: string): string {
-	return `${table}:${id}`;
+export function createRecordId(table: string, id: string): RecordId {
+	return new RecordId(table, id);
 }
 
 /**

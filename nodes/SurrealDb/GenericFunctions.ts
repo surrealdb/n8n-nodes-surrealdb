@@ -1,3 +1,6 @@
+// Set to true to enable debug logging, false to disable
+const DEBUG = false;
+
 import get from 'lodash/get';
 import set from 'lodash/set';
 import { Surreal } from 'surrealdb';
@@ -247,27 +250,44 @@ export async function connectSurrealClient(
 		// Format the connection string to ensure it's compatible with SurrealDB SDK
 		// Remove trailing slashes and ensure it has the correct format
 		let formattedConnectionString = connectionString.trim();
-		
+
 		// Remove trailing slash if present
 		if (formattedConnectionString.endsWith('/')) {
 			formattedConnectionString = formattedConnectionString.slice(0, -1);
 		}
-		
+
 		// Ensure it ends with /rpc for HTTP/HTTPS connections
-		if ((formattedConnectionString.startsWith('http://') || formattedConnectionString.startsWith('https://')) 
+		if ((formattedConnectionString.startsWith('http://') || formattedConnectionString.startsWith('https://'))
 			&& !formattedConnectionString.endsWith('/rpc')) {
 			formattedConnectionString += '/rpc';
 		}
-		
-		// Connect to the database with the formatted connection string
-		await db.connect(formattedConnectionString);
+
+		// For Database authentication, pass namespace and database directly in connect options
+		if (authType === 'Database') {
+			if (!namespace || !database) {
+				throw new Error('Namespace and Database are required for Database authentication');
+			}
+			
+			if (DEBUG) {
+				console.log('DEBUG - connectSurrealClient - Connecting with options - Namespace:', namespace, 'Database:', database);
+			}
+			
+			// Connect with namespace and database in options
+			await db.connect(formattedConnectionString, {
+				namespace: namespace,
+				database: database
+			});
+		} else {
+			// For other authentication types, just connect without options
+			await db.connect(formattedConnectionString);
+		}
 
 		// Sign in based on authentication type
 		if (authType === 'Root') {
 			// For root authentication, we just need username and password
 			// @ts-ignore - The SurrealDB SDK types may not match our usage
 			await db.signin({ username, password });
-			
+
 			// For Root authentication, we don't set namespace/database at connection time
 			// Instead, we'll add USE statements to each query
 		} else if (authType === 'Namespace') {
@@ -277,27 +297,39 @@ export async function connectSurrealClient(
 			// For namespace authentication, we need username, password, and namespace
 			// @ts-ignore - The SurrealDB SDK types may not match our usage
 			await db.signin({ username, password, namespace });
-			
+
 			// For Namespace authentication, we set the namespace at connection time
 			// but add USE DB statements to each query
-			// @ts-ignore - The SurrealDB SDK types may not match our usage
+			// @ts-ignore
 			await db.use(namespace);
 		} else if (authType === 'Database') {
 			if (!namespace || !database) {
 				throw new Error('Namespace and Database are required for Database authentication');
 			}
 			// For database authentication, we need username, password, namespace, and database
+			if (DEBUG) {
+				console.log('DEBUG - connectSurrealClient - Before signin - Authentication:', authType);
+				console.log('DEBUG - connectSurrealClient - Before signin - Username:', username);
+				console.log('DEBUG - connectSurrealClient - Before signin - Namespace:', namespace);
+				console.log('DEBUG - connectSurrealClient - Before signin - Database:', database);
+			}
 			// @ts-ignore - The SurrealDB SDK types may not match our usage
 			await db.signin({ username, password, namespace, database });
+			if (DEBUG) {
+				console.log('DEBUG - connectSurrealClient - After signin - Successfully signed in');
+			}
 			
-			// For Database authentication, we set both namespace and database at connection time
-			// @ts-ignore - The SurrealDB SDK types may not match our usage
-			await db.use(namespace, database);
+			// Note: We're not calling db.use() here because we've already set namespace and database in connect options
+			if (DEBUG) {
+				console.log('DEBUG - connectSurrealClient - Using namespace and database from connect options');
+			}
 		}
 
 		return db;
 	} catch (error) {
-		console.error('Error connecting to SurrealDB:', error);
+		if (DEBUG) {
+			console.error('DEBUG - Error connecting to SurrealDB:', error);
+		}
 		throw error;
 	}
 }
