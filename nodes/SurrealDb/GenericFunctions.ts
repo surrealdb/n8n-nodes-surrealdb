@@ -232,24 +232,13 @@ export async function connectSurrealClient(
 		connectionString = connectionString.endsWith('/') ? `${connectionString}rpc` : `${connectionString}/rpc`;
 	}
 	
-	console.log('Connecting to SurrealDB with:', {
-		connectionString,
-		namespace,
-		database,
-		user,
-		password, // Show actual password for debugging
-	});
-	
 	const db = new Surreal();
 	
 	try {
 		// Connect to the database
-		console.log('Connecting to:', connectionString);
 		await db.connect(connectionString);
 		
 		// Sign in as a namespace, database, or root user
-		console.log('Signing in with:', { username: user, password }); // Show actual password for debugging
-		
 		// For cloud instances, we need to use the scope parameter
 		const isCloudInstance = connectionString.includes('surreal.cloud');
 		if (isCloudInstance) {
@@ -267,13 +256,11 @@ export async function connectSurrealClient(
 		}
 		
 		// Select a specific namespace / database
-		console.log('Using namespace/database:', { namespace, database });
 		await db.use({ namespace, database });
 		
-		console.log('Successfully connected to SurrealDB');
 		return db;
 	} catch (error) {
-		console.error('Error connecting to SurrealDB:', error);
+		// console.error('Error connecting to SurrealDB:', error); // Keep error log? Maybe not needed for user.
 		throw error;
 	}
 }
