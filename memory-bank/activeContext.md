@@ -40,10 +40,11 @@ The current focus is on refactoring the SurrealDB node to align with the require
    - Debugged and fixed the `getAllRecords` operation to correctly process results from `client.query`.
    - Debugged and fixed the `createMany` operation to use `client.insert()` instead of an incorrect `client.query()` call.
    - Debugged and fixed the `getMany` operation, confirming that interpolating Record IDs directly into the `WHERE id IN [...]` clause is the correct approach.
+7. **Testing**: Confirmed `getAllRecords`, `createMany`, `getMany`, `executeQuery`, and `version` operations are working correctly after fixes.
 
 ## Next Steps
 
-According to the refactoring plan, the next steps are:
+According to the refactoring plan and recent discussion, the next steps are:
 
 ### Phase 1: Preparation and Infrastructure (Completed)
 
@@ -91,17 +92,12 @@ According to the refactoring plan, the next steps are:
    - Added Version operation with fallback mechanism
    - Both operations implemented with proper error handling
 
-### Phase 3: UI and UX Improvements (Next)
+### Phase 3: UI and UX Improvements (In Progress)
 
-8. **Update Node Properties**
-   - Review and refine the node properties
-   - Enhance field descriptions and placeholders
-   - Improve display options for better UX
-
-9. **Enhance Error Handling**
-   - Review error handling across all operations
-   - Add more descriptive error messages
-   - Ensure consistent error handling patterns
+1. **Update Node Properties & Fixes (Completed)**: Refined existing properties (`SurrealDbProperties.ts`) and fixed related bugs in Table operations (`getAllRecords`, `createMany`, `getMany` in `SurrealDb.node.ts`).
+2. **(New)** **Add Optional Namespace/Database Overrides (Next)**: Add optional fields to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. This requires updating `SurrealDbProperties.ts` and the execution logic in `SurrealDb.node.ts`.
+3. **(New)** **Cleanup Credentials UI**: Review and improve the UI defined in `credentials/SurrealDbApi.credentials.ts` based on user's specific requirements.
+4. **(Original)** **Enhance Error Handling**: Review and improve error handling messages and consistency across all operations in `SurrealDb.node.ts`.
 
 ## Active Decisions and Considerations
 
