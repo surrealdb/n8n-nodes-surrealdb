@@ -97,12 +97,25 @@ According to the refactoring plan and recent discussion, the next steps are:
 
 1. **Update Node Properties & Fixes (Completed)**: Refined existing properties (`SurrealDbProperties.ts`) and fixed related bugs in Table operations (`getAllRecords`, `createMany`, `getMany` in `SurrealDb.node.ts`).
 2. **Add Optional Namespace/Database Overrides (Completed)**: Added optional fields ("Namespace", "Database") to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts`. Moved the "Advanced Options" block to the end of the properties list.
-3. **Cleanup Credentials UI (Next)**: Review and improve the UI defined in `credentials/SurrealDbApi.credentials.ts` based on user's specific requirements.
+3. **Cleanup Credentials UI (In Progress)**: Refactoring the credentials UI defined in `credentials/SurrealDbApi.credentials.ts` to align with n8n standards:
+   - Remove WebSocket (ws/wss) protocol options, keeping only HTTP/HTTPS
+   - Update default protocol to HTTPS instead of ws
+   - Update descriptions to reflect HTTP/HTTPS only support
+   - Implement standard n8n credential testing that works with HTTP/HTTPS connections
+   - Update connection functions in `GenericFunctions.ts` to handle only HTTP/HTTPS connections
+   - Ensure proper error handling for connection failures
+   - Update type definitions in `surrealDb.types.ts` to align with the new credential structure
 4. **Enhance Error Handling**: Review and improve error handling messages and consistency across all operations in `SurrealDb.node.ts`.
 
 ## Active Decisions and Considerations
 
 1. **Incremental Approach**: The refactoring will be done in small, incremental steps to minimize the risk of breaking existing functionality. Each step will be tested before moving on to the next.
+
+2. **Credentials Refactoring**: The credentials refactoring will focus on simplifying the connection options to HTTP/HTTPS only, which will enable standard n8n credential testing. This approach:
+   - Simplifies the code and reduces potential issues
+   - Aligns with n8n credential testing standards
+   - Provides a more robust connection testing mechanism
+   - Makes the code easier to maintain and update
 
 2. **RecordId Handling**: The current implementation doesn't use the RecordId class from the SurrealDB SDK. We need to determine the correct approach for handling record IDs based on the SDK documentation.
 

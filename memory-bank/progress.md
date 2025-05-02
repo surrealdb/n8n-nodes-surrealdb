@@ -146,13 +146,30 @@ Phase 2 of the refactoring plan has been completed:
 
 The next milestone is to begin Phase 3 of the refactoring plan: UI and UX Improvements. This will involve:
 
-1. **Update Node Properties**
-   - Review and refine the node properties
-   - Enhance field descriptions and placeholders
-   - Improve display options for better UX
-   - Test all UI combinations
+1. **Update Node Properties (Completed)**
+   - Refined existing properties in `SurrealDbProperties.ts`
+   - Fixed related bugs in Table operations (`getAllRecords`, `createMany`, `getMany`)
+   - Enhanced field descriptions and placeholders
+   - Improved display options for better UX
+   - Tested all UI combinations
 
-2. **Enhance Error Handling**
+2. **Add Optional Namespace/Database Overrides (Completed)**
+   - Added optional fields ("Namespace", "Database") to the node UI
+   - Allow users to specify a Namespace and Database for an operation, overriding the credential settings
+   - Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts`
+   - Moved the "Advanced Options" block to the end of the properties list
+
+3. **Cleanup Credentials UI (In Progress)**
+   - Refactoring the credentials UI defined in `credentials/SurrealDbApi.credentials.ts` to align with n8n standards
+   - Removing WebSocket (ws/wss) protocol options, keeping only HTTP/HTTPS
+   - Updating default protocol to HTTPS instead of ws
+   - Updating descriptions to reflect HTTP/HTTPS only support
+   - Implementing standard n8n credential testing that works with HTTP/HTTPS connections
+   - Updating connection functions in `GenericFunctions.ts` to handle only HTTP/HTTPS connections
+   - Ensuring proper error handling for connection failures
+   - Updating type definitions in `surrealDb.types.ts` to align with the new credential structure
+
+4. **Enhance Error Handling**
    - Review error handling across all operations
    - Add more descriptive error messages
    - Ensure consistent error handling patterns
