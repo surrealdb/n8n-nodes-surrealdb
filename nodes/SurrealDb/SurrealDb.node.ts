@@ -50,13 +50,10 @@ export class SurrealDb implements INodeType {
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const credentials = await this.getCredentials('surrealDbApi');
 
-		// Get advanced options for potential overrides *before* resolving credentials
-		const advancedOptions = this.getNodeParameter('advancedOptions', 0, {}) as {
-			namespace?: string; // Renamed from overrideNamespace
-			database?: string; // Renamed from overrideDatabase
-		};
-		const nodeNamespace = advancedOptions.namespace?.trim() || ''; // Renamed from overrideNamespace
-		const nodeDatabase = advancedOptions.database?.trim() || ''; // Renamed from overrideDatabase
+		// Get options for the current operation to retrieve potential namespace/database overrides
+		const options = this.getNodeParameter('options', 0, {}) as IDataObject;
+		const nodeNamespace = (options.namespace as string)?.trim() || '';
+		const nodeDatabase = (options.database as string)?.trim() || '';
 
 		// Resolve credentials, passing in overrides
 		const resolvedCredentials = validateAndResolveSurrealCredentials(

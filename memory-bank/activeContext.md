@@ -46,6 +46,13 @@ The current focus is on implementing standardized query handling for SurrealDB a
 7. **Testing**: Confirmed `getAllRecords`, `createMany`, `getMany`, `executeQuery`, and `version` operations are working correctly after fixes.
 8. **Namespace/Database Overrides**: Implemented optional Namespace and Database overrides: Added UI fields ("Namespace", "Database") in `SurrealDbProperties.ts`, retrieved values in `SurrealDb.node.ts`, and updated `validateAndResolveSurrealCredentials` in `GenericFunctions.ts` to prioritize overrides. Moved the "Advanced Options" block containing these fields to the end of the node properties list for better UI layout.
 
+9. **UI Improvements - Options Consolidation**: Consolidated "Options" and "Advanced Options" into a single dropdown for a cleaner UI:
+   - Removed the standalone "Advanced Options" collection
+   - Added namespace/database fields to each resource-specific "Options" collection
+   - Created new "Options" collections for resources that didn't have them (Record, System, and Table operations)
+   - Updated `SurrealDb.node.ts` to retrieve namespace/database overrides from the consolidated "Options" parameter
+   - This change simplifies the UI by reducing the number of dropdowns while maintaining all functionality
+
 ## Next Steps
 
 According to the refactoring plan and recent discussion, the next steps are:

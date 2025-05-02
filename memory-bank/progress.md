@@ -184,4 +184,13 @@ A significant improvement has been implemented to standardize query handling acr
    - Added logic to find the first non-null array in the result for queries that include USE statements
    - Updated result formatting to handle different result structures consistently
 
-These improvements make the node more robust and maintainable by centralizing the authentication-specific logic in one utility function, following the DRY principle.
+### UI Improvements
+
+1. **Consolidated Options and Advanced Options**:
+   - Removed the standalone "Advanced Options" collection from `SurrealDbProperties.ts`
+   - Added namespace/database fields to each resource-specific "Options" collection
+   - Created new "Options" collections for resources that didn't have them (Record, System, and Table operations)
+   - Updated `SurrealDb.node.ts` to retrieve namespace/database overrides from the consolidated "Options" parameter
+   - This change simplifies the UI by reducing the number of dropdowns while maintaining all functionality
+
+These improvements make the node more robust, maintainable, and user-friendly by centralizing the authentication-specific logic in one utility function and simplifying the UI, following the DRY principle.

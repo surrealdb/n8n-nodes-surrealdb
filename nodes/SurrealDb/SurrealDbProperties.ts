@@ -316,6 +316,22 @@ export const nodeProperties: INodeProperties[] = [
 				default: 0,
 				description: 'Number of records to skip',
 			},
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
 		],
 	},
 	
@@ -399,6 +415,22 @@ export const nodeProperties: INodeProperties[] = [
 				default: 0,
 				description: 'Number of records to skip (only applied if query doesn\'t already have START)',
 			},
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
 		],
 	},
 
@@ -406,34 +438,111 @@ export const nodeProperties: INodeProperties[] = [
 	//         System Resource
 	// ----------------------------------
 	
-	// No additional fields needed for System operations
-
-	// ----------------------------------
-	//         Advanced Options (Moved to End)
-	// ----------------------------------
-	{ // Removed leading comma
-		displayName: 'Advanced Options',
-		name: 'advancedOptions',
+	// Add Options for System resource
+	{
+		displayName: 'Options',
+		name: 'options',
 		type: 'collection',
 		placeholder: 'Add Option',
 		default: {},
-		description: 'Optional overrides for connection parameters',
+		description: 'Additional options for system operations',
+		displayOptions: {
+			show: {
+				resource: [
+					'system',
+				],
+			},
+		},
 		options: [
 			{
 				displayName: 'Namespace',
-				name: 'namespace', // Renamed from overrideNamespace
+				name: 'namespace',
 				type: 'string',
 				default: '',
 				placeholder: 'e.g., my_namespace',
-				description: 'Optional namespace to use for this operation, overriding the credential setting.',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
 			},
 			{
 				displayName: 'Database',
-				name: 'database', // Renamed from overrideDatabase
+				name: 'database',
 				type: 'string',
 				default: '',
 				placeholder: 'e.g., my_database',
-				description: 'Optional database to use for this operation, overriding the credential setting.',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
+		],
+	},
+	
+	// Add Options for Record resource
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Additional options for record operations',
+		displayOptions: {
+			show: {
+				resource: [
+					'record',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
+		],
+	},
+	
+	// Add Options for Table resource (createMany and getMany operations)
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Additional options for table operations',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'createMany',
+					'getMany',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
 			},
 		],
 	},
