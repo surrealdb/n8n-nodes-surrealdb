@@ -41,6 +41,7 @@ The current focus is on refactoring the SurrealDB node to align with the require
    - Debugged and fixed the `createMany` operation to use `client.insert()` instead of an incorrect `client.query()` call.
    - Debugged and fixed the `getMany` operation, confirming that interpolating Record IDs directly into the `WHERE id IN [...]` clause is the correct approach.
 7. **Testing**: Confirmed `getAllRecords`, `createMany`, `getMany`, `executeQuery`, and `version` operations are working correctly after fixes.
+8. **Namespace/Database Overrides**: Implemented optional Namespace and Database overrides: Added UI fields ("Namespace", "Database") in `SurrealDbProperties.ts`, retrieved values in `SurrealDb.node.ts`, and updated `validateAndResolveSurrealCredentials` in `GenericFunctions.ts` to prioritize overrides. Moved the "Advanced Options" block containing these fields to the end of the node properties list for better UI layout.
 
 ## Next Steps
 
@@ -95,9 +96,9 @@ According to the refactoring plan and recent discussion, the next steps are:
 ### Phase 3: UI and UX Improvements (In Progress)
 
 1. **Update Node Properties & Fixes (Completed)**: Refined existing properties (`SurrealDbProperties.ts`) and fixed related bugs in Table operations (`getAllRecords`, `createMany`, `getMany` in `SurrealDb.node.ts`).
-2. **(New)** **Add Optional Namespace/Database Overrides (Next)**: Add optional fields to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. This requires updating `SurrealDbProperties.ts` and the execution logic in `SurrealDb.node.ts`.
-3. **(New)** **Cleanup Credentials UI**: Review and improve the UI defined in `credentials/SurrealDbApi.credentials.ts` based on user's specific requirements.
-4. **(Original)** **Enhance Error Handling**: Review and improve error handling messages and consistency across all operations in `SurrealDb.node.ts`.
+2. **Add Optional Namespace/Database Overrides (Completed)**: Added optional fields ("Namespace", "Database") to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts`. Moved the "Advanced Options" block to the end of the properties list.
+3. **Cleanup Credentials UI (Next)**: Review and improve the UI defined in `credentials/SurrealDbApi.credentials.ts` based on user's specific requirements.
+4. **Enhance Error Handling**: Review and improve error handling messages and consistency across all operations in `SurrealDb.node.ts`.
 
 ## Active Decisions and Considerations
 

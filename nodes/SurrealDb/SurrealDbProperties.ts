@@ -407,4 +407,34 @@ export const nodeProperties: INodeProperties[] = [
 	// ----------------------------------
 	
 	// No additional fields needed for System operations
+
+	// ----------------------------------
+	//         Advanced Options (Moved to End)
+	// ----------------------------------
+	{ // Removed leading comma
+		displayName: 'Advanced Options',
+		name: 'advancedOptions',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Optional overrides for connection parameters',
+		options: [
+			{
+				displayName: 'Namespace',
+				name: 'namespace', // Renamed from overrideNamespace
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting.',
+			},
+			{
+				displayName: 'Database',
+				name: 'database', // Renamed from overrideDatabase
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting.',
+			},
+		],
+	},
 ];

@@ -149,19 +149,40 @@ export function buildSurrealConnectionParams(
 }
 
 /**
- * Verify credentials. If ok, build SurrealDB connection string and resolve database name.
+ * Verify credentials. If ok, build SurrealDB connection string and resolve database name, applying node-level overrides.
  *
  * @param {ICredentialDataDecryptedObject} credentials raw/input SurrealDB credentials to use
+ * @param {string} [nodeParamNamespace] Optional namespace override from node parameters
+ * @param {string} [nodeParamDatabase] Optional database override from node parameters
  */
 export function validateAndResolveSurrealCredentials(
 	self: IExecuteFunctions,
 	credentials?: ICredentialDataDecryptedObject,
+	nodeParamNamespace?: string, // Renamed from overrideNamespace
+	nodeParamDatabase?: string, // Renamed from overrideDatabase
 ): ISurrealCredentials {
 	if (credentials === undefined) {
 		throw new NodeOperationError(self.getNode(), 'No credentials got returned!');
-	} else {
-		return buildSurrealConnectionParams(self, credentials as unknown as ISurrealCredentialsType);
 	}
+
+	// Get base connection parameters from credentials
+	const baseParams = buildSurrealConnectionParams(self, credentials as unknown as ISurrealCredentialsType);
+
+	// Apply overrides if provided and not empty
+	const finalNamespace = nodeParamNamespace && nodeParamNamespace.trim() !== ''
+		? nodeParamNamespace.trim()
+		: baseParams.namespace;
+
+	const finalDatabase = nodeParamDatabase && nodeParamDatabase.trim() !== ''
+		? nodeParamDatabase.trim()
+		: baseParams.database;
+
+	// Return the final parameters, including overrides
+	return {
+		...baseParams,
+		namespace: finalNamespace,
+		database: finalDatabase,
+	};
 }
 
 export function prepareItems(
