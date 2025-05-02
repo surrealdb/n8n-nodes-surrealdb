@@ -88,7 +88,8 @@ export class SurrealDbApi implements ICredentialType {
 	// Define a test request to verify credentials when they are saved
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: '={{$credentials.connectionString.trim()}}',
+			// Format the baseURL to ensure it doesn't end with /rpc for HTTP requests
+			baseURL: '={{$credentials.connectionString.trim().endsWith("/rpc") ? $credentials.connectionString.trim().slice(0, -4) : $credentials.connectionString.trim()}}',
 			url: '/version',
 			method: 'GET',
 		},

@@ -188,6 +188,48 @@ export function prepareFields(fields: string) {
 }
 
 /**
+ * Prepares a SurrealDB query based on the authentication type.
+ * 
+ * - For Root authentication: Adds both namespace and database to queries
+ * - For Namespace authentication: Adds database to queries
+ * - For Database authentication: No modification needed
+ * 
+ * @param query The original query to modify
+ * @param credentials The resolved SurrealDB credentials
+ * @returns The modified query with appropriate namespace/database context
+ */
+export function prepareSurrealQuery(
+	query: string,
+	credentials: ISurrealCredentials,
+): string {
+	const { authentication, namespace, database } = credentials;
+
+	// Early return if query is empty or authentication is Database (no modification needed)
+	if (!query || authentication === 'Database') {
+		return query;
+	}
+
+	// For Root authentication, we need to add both namespace and database
+	if (authentication === 'Root') {
+		if (!namespace || !database) {
+			throw new Error('Namespace and Database are required for queries with Root authentication');
+		}
+		return `USE NS ${namespace} DB ${database}; ${query}`;
+	}
+
+	// For Namespace authentication, we need to add database
+	if (authentication === 'Namespace') {
+		if (!database) {
+			throw new Error('Database is required for queries with Namespace authentication');
+		}
+		return `USE DB ${database}; ${query}`;
+	}
+
+	// Default return (should not reach here based on the conditions above)
+	return query;
+}
+
+/**
  * Connects to SurrealDB and authenticates using the provided credentials.
  *
  * @param credentials Resolved SurrealDB credentials
@@ -202,14 +244,32 @@ export async function connectSurrealClient(
 	const db = new Surreal();
 
 	try {
-		// Connect to the database
-		await db.connect(connectionString);
+		// Format the connection string to ensure it's compatible with SurrealDB SDK
+		// Remove trailing slashes and ensure it has the correct format
+		let formattedConnectionString = connectionString.trim();
+		
+		// Remove trailing slash if present
+		if (formattedConnectionString.endsWith('/')) {
+			formattedConnectionString = formattedConnectionString.slice(0, -1);
+		}
+		
+		// Ensure it ends with /rpc for HTTP/HTTPS connections
+		if ((formattedConnectionString.startsWith('http://') || formattedConnectionString.startsWith('https://')) 
+			&& !formattedConnectionString.endsWith('/rpc')) {
+			formattedConnectionString += '/rpc';
+		}
+		
+		// Connect to the database with the formatted connection string
+		await db.connect(formattedConnectionString);
 
 		// Sign in based on authentication type
 		if (authType === 'Root') {
 			// For root authentication, we just need username and password
 			// @ts-ignore - The SurrealDB SDK types may not match our usage
 			await db.signin({ username, password });
+			
+			// For Root authentication, we don't set namespace/database at connection time
+			// Instead, we'll add USE statements to each query
 		} else if (authType === 'Namespace') {
 			if (!namespace) {
 				throw new Error('Namespace is required for Namespace authentication');
@@ -217,6 +277,9 @@ export async function connectSurrealClient(
 			// For namespace authentication, we need username, password, and namespace
 			// @ts-ignore - The SurrealDB SDK types may not match our usage
 			await db.signin({ username, password, namespace });
+			
+			// For Namespace authentication, we set the namespace at connection time
+			// but add USE DB statements to each query
 			// @ts-ignore - The SurrealDB SDK types may not match our usage
 			await db.use(namespace);
 		} else if (authType === 'Database') {
@@ -226,6 +289,8 @@ export async function connectSurrealClient(
 			// For database authentication, we need username, password, namespace, and database
 			// @ts-ignore - The SurrealDB SDK types may not match our usage
 			await db.signin({ username, password, namespace, database });
+			
+			// For Database authentication, we set both namespace and database at connection time
 			// @ts-ignore - The SurrealDB SDK types may not match our usage
 			await db.use(namespace, database);
 		}

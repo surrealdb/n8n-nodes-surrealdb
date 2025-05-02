@@ -8,8 +8,12 @@ import type {
 	IHttpRequestOptions,
 } from 'n8n-workflow';
 
+// Set to true to enable debug logging, false to disable
+const DEBUG = false;
+
 import {
 	connectSurrealClient,
+	prepareSurrealQuery,
 	validateAndResolveSurrealCredentials,
 	validateJSON,
 	validateRequiredField,
@@ -329,22 +333,62 @@ export class SurrealDb implements INodeType {
 							
 							// Get options
 							const options = this.getNodeParameter('options', i, {}) as IDataObject;
-							const limit = options.limit as number || 100;
+							const limit = options.limit as number;
 							const start = options.start as number || 0;
 							
-							// Execute the query with pagination, interpolating the table name directly
+							// Build the query with pagination, interpolating the table name directly
 							// Table names usually cannot be parameterized in SQL-like languages
-							// Provide generic type argument for expected result structure: [any[]] - An array containing the array of records
-							const result = await client.query<[any[]]>(
-								`SELECT * FROM ${table} LIMIT $limit START $start`,
-								{ limit, start }
-							);
+							let query = `SELECT * FROM ${table}`;
 							
-							// The result from client.query is an array, one element per statement.
-							// For a single SELECT, the first element (result[0]) is the array of records.
-							if (Array.isArray(result) && result.length > 0 && Array.isArray(result[0])) {
+							// Only add LIMIT and START if explicitly provided
+							const queryParams: Record<string, any> = {};
+							
+							if (limit !== undefined) {
+								query += ` LIMIT $limit`;
+								queryParams.limit = limit;
+							}
+							
+							if (start > 0) {
+								query += ` START $start`;
+								queryParams.start = start;
+							}
+							
+							// Prepare the query based on authentication type
+							if (DEBUG) {
+								// DEBUG: Log original query and credentials
+								console.log('DEBUG - Original query:', query);
+								console.log('DEBUG - Authentication type:', resolvedCredentials.authentication);
+								console.log('DEBUG - Namespace:', resolvedCredentials.namespace);
+								console.log('DEBUG - Database:', resolvedCredentials.database);
+							}
+							
+							query = prepareSurrealQuery(query, resolvedCredentials);
+							
+							if (DEBUG) {
+								// DEBUG: Log modified query
+								console.log('DEBUG - Modified query:', query);
+								console.log('DEBUG - Query params:', queryParams);
+							}
+							
+							// Execute the query
+							// Provide generic type argument for expected result structure: [any[]] - An array containing the array of records
+							const result = await client.query<[any[]]>(query, queryParams);
+							
+							if (DEBUG) {
+								// DEBUG: Log raw result
+								console.log('DEBUG - Raw query result:', JSON.stringify(result));
+								
+								// The result from client.query is an array, where each element corresponds to a statement.
+								// For queries with USE statements, the first element (result[0]) is null and the second element (result[1]) contains the records.
+								console.log('DEBUG - Result structure:', JSON.stringify(result.map(r => typeof r)));
+							}
+							
+							// Find the first non-null array in the result
+							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item) && item.length > 0) : null;
+							
+							if (recordsArray) {
 								// Format the results
-								const records = result[0];
+								const records = recordsArray;
 								const formattedResults = formatArrayResult(records);
 								
 								// Add each record as a separate item
@@ -452,14 +496,39 @@ export class SurrealDb implements INodeType {
 							const recordIdList = ids.map(id => createRecordId(table, id)).join(',');
 							
 							// Build the query string with the Record IDs directly interpolated
-							const query = `SELECT * FROM ${table} WHERE id IN [${recordIdList}]`;
+							let query = `SELECT * FROM ${table} WHERE id IN [${recordIdList}]`;
+							
+							if (DEBUG) {
+								// DEBUG: Log original query and credentials
+								console.log('DEBUG - Get Many - Original query:', query);
+								console.log('DEBUG - Get Many - Authentication type:', resolvedCredentials.authentication);
+								console.log('DEBUG - Get Many - Namespace:', resolvedCredentials.namespace);
+								console.log('DEBUG - Get Many - Database:', resolvedCredentials.database);
+								console.log('DEBUG - Get Many - Record IDs:', recordIdList);
+							}
+							
+							// Prepare the query based on authentication type
+							query = prepareSurrealQuery(query, resolvedCredentials);
+							
+							if (DEBUG) {
+								// DEBUG: Log modified query
+								console.log('DEBUG - Get Many - Modified query:', query);
+							}
 							
 							// Execute the query (no parameters needed for IDs now)
-							const result = await client.query<[any[]]>(query); 
+							const result = await client.query<[any[]]>(query);
 							
-							// Format the results - Check result[0] based on previous findings
-							if (Array.isArray(result) && result.length > 0 && Array.isArray(result[0])) { 
-								const records = result[0]; // Pass the inner array
+							if (DEBUG) {
+								// DEBUG: Log raw result
+								console.log('DEBUG - Get Many - Raw query result:', JSON.stringify(result));
+							}
+							
+							// Find the first non-null array in the result
+							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item) && item.length > 0) : null;
+							
+							if (recordsArray) {
+								// Format the results
+								const records = recordsArray;
 								const formattedResults = formatArrayResult(records); 
 								
 								// Add each record as a separate item
@@ -526,13 +595,22 @@ export class SurrealDb implements INodeType {
 								finalQuery += ` START ${start}`;
 							}
 							
+							// Prepare the query based on authentication type
+							finalQuery = prepareSurrealQuery(finalQuery, resolvedCredentials);
+							
 							// Execute the query
 							const result = await client.query(finalQuery, parameters);
 							
+							if (DEBUG) {
+								// DEBUG: Log raw result
+								console.log('DEBUG - Execute Query - Raw query result:', JSON.stringify(result));
+								console.log('DEBUG - Execute Query - Result structure:', JSON.stringify(result.map(r => typeof r)));
+							}
+							
 							// The result is an array of arrays, where each array contains the results of a statement
 							if (Array.isArray(result)) {
-								// Process each result set
-								for (const resultSet of result) {
+								// Process each result set, filtering out null values
+								for (const resultSet of result.filter(item => item !== null)) {
 									if (Array.isArray(resultSet)) {
 										// For array results, return each item as a separate n8n item
 										const formattedResults = formatArrayResult(resultSet);
@@ -648,7 +726,9 @@ export class SurrealDb implements INodeType {
 							
 							// First, attempt to get version using INFO FOR SERVER query
 							try {
-								const result = await client.query('INFO FOR SERVER');
+								// Prepare the query based on authentication type
+								const infoQuery = prepareSurrealQuery('INFO FOR SERVER', resolvedCredentials);
+								const result = await client.query(infoQuery);
 								
 								// Parse the version from the result
 								if (Array.isArray(result) && result.length > 0 && result[0]) {
