@@ -26,7 +26,7 @@ The SurrealDB node is currently in a partially functional state. It provides bas
 
 ### What Needs Improvement
 
-1. **Credentials Implementation**: The current credential implementation is complex and has proven difficult to refactor incrementally. It needs to be rewritten from scratch to simplify it and support standard n8n credential testing.
+1. **Credentials Implementation**: The current credential implementation is complex and has proven difficult to refactor incrementally. It needs to be rewritten from scratch based on precise, simplified requirements to support standard n8n credential testing.
 
 2. **Resource Organization**:
    - Operations are not organized by resources (Record, Table, Query, System)
@@ -148,12 +148,19 @@ Phase 2 of the refactoring plan has been completed:
    - Both operations implemented with proper error handling
    - System operations do not throw errors on failure, but return a status indicating success or failure
 
-The next milestone is to rewrite the credentials part of the node from scratch. This will involve:
+The next milestone is to rewrite the credentials part of the node from scratch based on the following precise, simplified requirements:
 
 1. **Rewrite Credentials**:
-   - Define the new credential fields (Connection String, Authentication, Username, Password, Namespace, Database) with appropriate visibility rules in `credentials/SurrealDbApi.credentials.ts`.
-   - Ensure only HTTP/HTTPS protocols are supported.
-   - Implement the standard n8n credential testing method in `credentials/SurrealDbApi.credentials.ts`.
-   - Update type definitions in `nodes/SurrealDb/surrealDb.types.ts` and connection functions in `nodes/SurrealDb/GenericFunctions.ts` and `nodes/SurrealDb/SurrealDb.node.ts` to work with the new credential structure.
+    *   **Supported Protocols:** ONLY `http://` and `https://` for the `connectionString`. No WebSocket support.
+    *   **Fields:**
+        1.  `connectionString`: (Type: string, Required) Example: `https://localhost:8000` or `https://<cloud-id>.surreal.cloud`. Must start with `http://` or `https://`.
+        2.  `authentication`: (Type: options - 'Root', 'Namespace', 'Database', Required) Determines the scope of authentication.
+        3.  `username`: (Type: string, Required) User for authentication.
+        4.  `password`: (Type: string, Password input type, Required) Password for authentication.
+        5.  `namespace`: (Type: string, Optional) The target namespace.
+            *   **Visibility:** Hidden if `authentication` is set to 'Root'.
+        6.  `database`: (Type: string, Optional) The target database.
+            *   **Visibility:** Hidden if `authentication` is set to 'Root' or 'Namespace'.
+    *   **Testing:** Must use the standard n8n credential `test` method for connection verification.
 
 Following the credentials rewrite, the next steps will be to continue with Phase 3 of the original refactoring plan: UI and UX Improvements, starting with enhancing error handling.
