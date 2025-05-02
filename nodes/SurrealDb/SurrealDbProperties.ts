@@ -10,18 +10,22 @@ export const nodeProperties: INodeProperties[] = [
 			{
 				name: 'Record',
 				value: 'record',
+				description: 'Operations on individual records',
 			},
 			{
 				name: 'Table',
 				value: 'table',
+				description: 'Operations on entire tables',
 			},
 			{
 				name: 'Query',
 				value: 'query',
+				description: 'Execute arbitrary SurrealQL queries',
 			},
 			{
 				name: 'System',
 				value: 'system',
+				description: 'Database system-level checks',
 			},
 		],
 		default: 'record',
@@ -189,34 +193,6 @@ export const nodeProperties: INodeProperties[] = [
 			},
 		},
 	},
-
-	// ----------------------------------
-	//         Record Resource
-	// ----------------------------------
-	
-	// Fields for Record operations that require a Record ID
-	{
-		displayName: 'Table',
-		name: 'table',
-		type: 'string',
-		required: true,
-		default: '',
-		description: 'SurrealDB table name',
-		displayOptions: {
-			show: {
-				resource: [
-					'record',
-				],
-				operation: [
-					'getRecord',
-					'updateRecord',
-					'mergeRecord',
-					'deleteRecord',
-					'upsertRecord',
-				],
-			},
-		},
-	},
 	{
 		displayName: 'Record ID',
 		name: 'id',
@@ -311,6 +287,7 @@ export const nodeProperties: INodeProperties[] = [
 		type: 'collection',
 		placeholder: 'Add Option',
 		default: {},
+		description: 'Additional options for retrieving records',
 		displayOptions: {
 			show: {
 				resource: [
@@ -393,6 +370,7 @@ export const nodeProperties: INodeProperties[] = [
 		type: 'collection',
 		placeholder: 'Add Option',
 		default: {},
+		description: 'Additional options for query execution',
 		displayOptions: {
 			show: {
 				resource: [

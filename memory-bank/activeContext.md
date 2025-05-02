@@ -36,6 +36,10 @@ The current focus is on refactoring the SurrealDB node to align with the require
    - Removed unused imports and variables
    - Verified system operations (health check and version) functionality
    - Resolved all TypeScript compiler warnings
+6. **Bug Fixes**: 
+   - Debugged and fixed the `getAllRecords` operation to correctly process results from `client.query`.
+   - Debugged and fixed the `createMany` operation to use `client.insert()` instead of an incorrect `client.query()` call.
+   - Debugged and fixed the `getMany` operation, confirming that interpolating Record IDs directly into the `WHERE id IN [...]` clause is the correct approach.
 
 ## Next Steps
 
@@ -122,10 +126,15 @@ According to the refactoring plan, the next steps are:
 4. **Output Formatting**: Follow consistent output formatting patterns for all operations.
 
 5. **Connection Management**: Establish connections at the beginning of execution and close them in a finally block to ensure cleanup.
+6. **`client.query` Result Processing**: When processing results from `client.query` for a single `SELECT` statement, check `Array.isArray(result) && result.length > 0 && Array.isArray(result[0])` and access the records via `result[0]`. Use appropriate generic types (e.g., `<[any[]]>`) with `client.query` to ensure type safety.
+7. **`WHERE id IN [...]` Queries**: When using `client.query` with a `WHERE id IN [...]` clause, interpolating the list of full Record IDs directly into the query string (e.g., `WHERE id IN [table:id1,table:id2]`) is necessary. Parameterizing the array of IDs (e.g., `WHERE id IN $ids`) does not seem to work correctly with the current SDK version/behavior.
 
 ## Learnings and Project Insights
 
-1. **SurrealDB SDK Usage**: The SurrealDB SDK provides a clean, intuitive API for interacting with SurrealDB. However, it requires proper handling of record IDs and connection management.
+1. **SurrealDB SDK Usage**: The SurrealDB SDK provides a clean, intuitive API for interacting with SurrealDB. However, it requires proper handling of record IDs and connection management. 
+   - The `client.query` method returns an array of results, one for each statement. For a single `SELECT` statement, the result is an array containing one element, which is the array of records (e.g., `result[0]` contains the records). Providing a generic type like `<[any[]]>` helps TypeScript understand this structure.
+   - The `client.insert()` method correctly handles inserting an array of records for bulk creation.
+   - Parameterizing arrays of Record IDs for `WHERE id IN $ids` clauses in `client.query` does not seem to work; direct interpolation of the Record ID list into the query string is required for this specific case.
 
 2. **n8n Node Development**: n8n provides a flexible framework for node development, but it requires careful attention to input/output formatting and error handling.
 

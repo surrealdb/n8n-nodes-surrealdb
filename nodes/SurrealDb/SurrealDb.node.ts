@@ -55,19 +55,6 @@ export class SurrealDb implements INodeType {
 				const credentials = credential.data as IDataObject;
 
 				try {
-					console.log('Testing SurrealDB credentials:', {
-						configurationType: credentials.configurationType,
-						connectionString: credentials.configurationType === 'connectionString' ? 
-							credentials.connectionString : undefined,
-						host: credentials.configurationType === 'values' ? credentials.host : undefined,
-						port: credentials.configurationType === 'values' ? credentials.port : undefined,
-						protocol: credentials.configurationType === 'values' ? credentials.protocol : undefined,
-						namespace: credentials.namespace,
-						database: credentials.database,
-						user: credentials.user,
-						password: credentials.password, // Show actual password for debugging
-					});
-
 					const database = ((credentials.database as string) || '').trim();
 					const namespace = ((credentials.namespace as string) || '').trim();
 					let connectionString = '';
@@ -80,8 +67,6 @@ export class SurrealDb implements INodeType {
 						);
 					}
 
-					console.log('Using connection string:', connectionString);
-
 					const client = await connectSurrealClient(
 						connectionString,
 						namespace,
@@ -91,20 +76,18 @@ export class SurrealDb implements INodeType {
 					);
 
 					// Test connection by executing a simple query
-					console.log('Executing test query: INFO FOR DB');
 					await client.query('INFO FOR DB');
 					
 					// Close the connection
-					console.log('Closing connection');
 					await client.close();
 				} catch (error) {
-					console.error('SurrealDB credential test failed:', error);
+					// console.error('SurrealDB credential test failed:', error); // Keep error log? Maybe not needed for user.
 					return {
 						status: 'Error',
 						message: (error as Error).message,
 					};
 				}
-				console.log('SurrealDB credential test successful');
+				// console.log('SurrealDB credential test successful');
 				return {
 					status: 'OK',
 					message: 'Connection successful!',
@@ -387,13 +370,16 @@ export class SurrealDb implements INodeType {
 							const limit = options.limit as number || 100;
 							const start = options.start as number || 0;
 							
-							// Execute the query with pagination
-							const result = await client.query(
-								'SELECT * FROM type::table($table) LIMIT $limit START $start',
-								{ table, limit, start }
+							// Execute the query with pagination, interpolating the table name directly
+							// Table names usually cannot be parameterized in SQL-like languages
+							// Provide generic type argument for expected result structure: [any[]] - An array containing the array of records
+							const result = await client.query<[any[]]>(
+								`SELECT * FROM ${table} LIMIT $limit START $start`,
+								{ limit, start }
 							);
 							
-							// The result is an array of arrays, where the first array contains the query results
+							// The result from client.query is an array, one element per statement.
+							// For a single SELECT, the first element (result[0]) is the array of records.
 							if (Array.isArray(result) && result.length > 0 && Array.isArray(result[0])) {
 								// Format the results
 								const records = result[0];
@@ -407,7 +393,7 @@ export class SurrealDb implements INodeType {
 									});
 								}
 							} else {
-								// If no records found, return an empty result
+								// If no records found or result structure is unexpected, return an empty result
 								returnData.push({
 									json: { result: [] },
 									pairedItem: { item: i },
@@ -445,17 +431,14 @@ export class SurrealDb implements INodeType {
 								throw new Error('Records Data must be a JSON array');
 							}
 							
-							// Execute the query to create multiple records
-							const result = await client.query(
-								'CREATE type::table($table) CONTENT $data',
-								{ table, data }
-							);
+							// Execute the insert operation to create multiple records
+							// The insert method accepts an array of objects directly
+							const result = await client.insert(table, data);
 							
-							// The result is an array of arrays, where the first array contains the created records
-							if (Array.isArray(result) && result.length > 0 && Array.isArray(result[0])) {
+							// The result from client.insert with an array is expected to be an array of created records.
+							if (Array.isArray(result)) {
 								// Format the results
-								const records = result[0];
-								const formattedResults = formatArrayResult(records);
+								const formattedResults = formatArrayResult(result);
 								
 								// Add each record as a separate item
 								for (const formattedResult of formattedResults) {
@@ -503,22 +486,19 @@ export class SurrealDb implements INodeType {
 							}
 							
 							// We need to use a query to select multiple records by ID
-							// Build a query with placeholders for each ID
-							const placeholders = ids.map((_, index) => `$id${index}`).join(', ');
-							const query = `SELECT * FROM ${table} WHERE id IN [${placeholders}]`;
+							// Build a list of full Record IDs for the IN clause, joined by comma ONLY
+							const recordIdList = ids.map(id => createRecordId(table, id)).join(',');
 							
-							// Create parameters object with all IDs
-							const params: Record<string, string> = {};
-							ids.forEach((id, index) => {
-								params[`id${index}`] = id;
-							});
+							// Build the query string with the Record IDs directly interpolated
+							const query = `SELECT * FROM ${table} WHERE id IN [${recordIdList}]`;
 							
-							// Execute the query
-							const result = await client.query(query, params);
+							// Execute the query (no parameters needed for IDs now)
+							const result = await client.query<[any[]]>(query); 
 							
-							// Format the results
-							if (Array.isArray(result)) {
-								const formattedResults = formatArrayResult(result);
+							// Format the results - Check result[0] based on previous findings
+							if (Array.isArray(result) && result.length > 0 && Array.isArray(result[0])) { 
+								const records = result[0]; // Pass the inner array
+								const formattedResults = formatArrayResult(records); 
 								
 								// Add each record as a separate item
 								for (const formattedResult of formattedResults) {
@@ -528,10 +508,10 @@ export class SurrealDb implements INodeType {
 									});
 								}
 							} else {
-								// If only one record is returned, format it as a single result
-								const formattedResult = formatSingleResult(result);
+								// If no records found or result structure is unexpected, return an empty result
+								// Corrected else block from previous attempt
 								returnData.push({
-									...formattedResult,
+									json: { result: [] },
 									pairedItem: { item: i },
 								});
 							}
