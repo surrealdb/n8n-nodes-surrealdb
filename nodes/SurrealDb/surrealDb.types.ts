@@ -1,66 +1,32 @@
-/**
- * Credentials object for SurrealDB, if using individual parameters
- */
-export interface ISurrealParametricCredentials {
-	/**
-	 * Whether to allow overriding the parametric credentials with a connection string
-	 */
-	configurationType: 'values';
+import type { IDataObject } from 'n8n-workflow';
 
-	protocol: string;
-	host: string;
-	port: number;
-	namespace: string;
-	database: string;
-	user: string;
+/**
+ * Interface for SurrealDB API credentials
+ */
+export interface ISurrealApiCredentials {
+	connectionString: string;
+	authentication: 'Root' | 'Namespace' | 'Database';
+	username: string;
 	password: string;
+	namespace?: string;
+	database?: string;
 }
 
 /**
- * Credentials object for SurrealDB, if using override connection string
+ * Interface for resolved SurrealDB credentials
  */
-export interface ISurrealOverrideCredentials {
-	/**
-	 * Whether to allow overriding the parametric credentials with a connection string
-	 */
-	configurationType: 'connectionString';
-	/**
-	 * If using an override connection string, this is where it will be.
-	 */
+export interface ISurrealCredentials {
 	connectionString: string;
-	namespace: string;
-	database: string;
-	user: string;
+	authentication: 'Root' | 'Namespace' | 'Database';
+	username: string;
 	password: string;
+	namespace?: string;
+	database?: string;
 }
 
 /**
- * Unified credential object type (whether params are overridden with a connection string or not)
+ * Interface for SurrealDB query parameters
  */
-export type ISurrealCredentialsType = ISurrealParametricCredentials | ISurrealOverrideCredentials;
-
-/**
- * Resolve the database and connection string from input credentials
- */
-export type ISurrealCredentials = {
-	/**
-	 * Namespace name
-	 */
-	namespace: string;
-	/**
-	 * Database name
-	 */
-	database: string;
-	/**
-	 * Generated connection string (after validating and figuring out overrides)
-	 */
-	connectionString: string;
-	/**
-	 * Username for authentication
-	 */
-	user: string;
-	/**
-	 * Password for authentication
-	 */
-	password: string;
-};
+export interface ISurrealQueryParameters {
+	[key: string]: IDataObject | string | number | boolean | null | undefined;
+}

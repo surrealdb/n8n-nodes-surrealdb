@@ -1,9 +1,6 @@
 import type {
 	IExecuteFunctions,
-	ICredentialsDecrypted,
-	ICredentialTestFunctions,
 	IDataObject,
-	INodeCredentialTestResult,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
@@ -12,13 +9,11 @@ import type {
 } from 'n8n-workflow';
 
 import {
-	buildParameterizedConnString,
 	connectSurrealClient,
 	validateAndResolveSurrealCredentials,
 	validateJSON,
 	validateRequiredField,
 } from './GenericFunctions';
-import type { ISurrealParametricCredentials } from './surrealDb.types';
 import { nodeProperties } from './SurrealDbProperties';
 import { createRecordId, formatSingleResult, formatArrayResult } from './utilities';
 
@@ -40,61 +35,13 @@ export class SurrealDb implements INodeType {
 			{
 				name: 'surrealDbApi',
 				required: true,
-				testedBy: 'surrealDbCredentialTest',
 			},
 		],
 		properties: nodeProperties,
 	};
 
-	methods = {
-		credentialTest: {
-			async surrealDbCredentialTest(
-				this: ICredentialTestFunctions,
-				credential: ICredentialsDecrypted,
-			): Promise<INodeCredentialTestResult> {
-				const credentials = credential.data as IDataObject;
-
-				try {
-					const database = ((credentials.database as string) || '').trim();
-					const namespace = ((credentials.namespace as string) || '').trim();
-					let connectionString = '';
-
-					if (credentials.configurationType === 'connectionString') {
-						connectionString = ((credentials.connectionString as string) || '').trim();
-					} else {
-						connectionString = buildParameterizedConnString(
-							credentials as unknown as ISurrealParametricCredentials,
-						);
-					}
-
-					const client = await connectSurrealClient(
-						connectionString,
-						namespace,
-						database,
-						credentials.user as string,
-						credentials.password as string
-					);
-
-					// Test connection by executing a simple query
-					await client.query('INFO FOR DB');
-					
-					// Close the connection
-					await client.close();
-				} catch (error) {
-					// console.error('SurrealDB credential test failed:', error); // Keep error log? Maybe not needed for user.
-					return {
-						status: 'Error',
-						message: (error as Error).message,
-					};
-				}
-				// console.log('SurrealDB credential test successful');
-				return {
-					status: 'OK',
-					message: 'Connection successful!',
-				};
-			},
-		},
-	};
+	// No custom credential test method needed as we're using the standard n8n credential test
+	methods = {};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const credentials = await this.getCredentials('surrealDbApi');
@@ -108,14 +55,14 @@ export class SurrealDb implements INodeType {
 		const nodeDatabase = advancedOptions.database?.trim() || ''; // Renamed from overrideDatabase
 
 		// Resolve credentials, passing in overrides
-		const { connectionString, namespace, database, user, password } = validateAndResolveSurrealCredentials(
+		const resolvedCredentials = validateAndResolveSurrealCredentials(
 			this,
 			credentials,
 			nodeNamespace, // Pass the renamed variable
 			nodeDatabase, // Pass the renamed variable
 		);
 
-		const client = await connectSurrealClient(connectionString, namespace, database, user, password);
+		const client = await connectSurrealClient(resolvedCredentials);
 
 		let returnData: INodeExecutionData[] = [];
 
@@ -637,7 +584,7 @@ export class SurrealDb implements INodeType {
 						try {
 							// Get the base URL from the connection string
 							// Remove /rpc if it exists
-							let baseUrl = connectionString;
+							let baseUrl = resolvedCredentials.connectionString;
 							if (baseUrl.endsWith('/rpc')) {
 								baseUrl = baseUrl.slice(0, -4);
 							}
@@ -718,7 +665,7 @@ export class SurrealDb implements INodeType {
 								try {
 									// Get the base URL from the connection string
 									// Remove /rpc if it exists
-									let baseUrl = connectionString;
+									let baseUrl = resolvedCredentials.connectionString;
 									if (baseUrl.endsWith('/rpc')) {
 										baseUrl = baseUrl.slice(0, -4);
 									}

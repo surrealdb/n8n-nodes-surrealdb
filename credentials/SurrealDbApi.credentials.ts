@@ -1,6 +1,7 @@
 import {
 	ICredentialType,
 	INodeProperties,
+	ICredentialTestRequest,
 } from 'n8n-workflow';
 
 export class SurrealDbApi implements ICredentialType {
@@ -9,129 +10,87 @@ export class SurrealDbApi implements ICredentialType {
 	documentationUrl = 'https://surrealdb.com/docs';
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Configuration Type',
-			name: 'configurationType',
-			type: 'options',
-			options: [
-				{
-					name: 'Connection String',
-					value: 'connectionString',
-				},
-				{
-					name: 'Values',
-					value: 'values',
-				},
-			],
-			default: 'values',
-		},
-		{
 			displayName: 'Connection String',
 			name: 'connectionString',
 			type: 'string',
+			required: true,
 			default: '',
-			displayOptions: {
-				show: {
-					configurationType: [
-						'connectionString',
-					],
-				},
-			},
-			placeholder: 'wss://cloud.surrealdb.com',
-			description: 'SurrealDB connection string',
+			placeholder: 'e.g. https://localhost:8000 or https://<cloud-id>.surreal.cloud',
+			description: 'The connection string to your SurrealDB instance (must start with http:// or https://)',
 		},
 		{
-			displayName: 'Host',
-			name: 'host',
-			type: 'string',
-			default: 'localhost',
-			displayOptions: {
-				show: {
-					configurationType: [
-						'values',
-					],
-				},
-			},
-			placeholder: 'localhost',
-			description: 'SurrealDB host',
-		},
-		{
-			displayName: 'Port',
-			name: 'port',
-			type: 'number',
-			default: 8000,
-			displayOptions: {
-				show: {
-					configurationType: [
-						'values',
-					],
-				},
-			},
-			description: 'SurrealDB port',
-		},
-		{
-			displayName: 'Protocol',
-			name: 'protocol',
+			displayName: 'Authentication',
+			name: 'authentication',
 			type: 'options',
 			options: [
 				{
-					name: 'HTTP',
-					value: 'http',
+					name: 'Root',
+					value: 'Root',
 				},
 				{
-					name: 'HTTPS',
-					value: 'https',
+					name: 'Namespace',
+					value: 'Namespace',
 				},
 				{
-					name: 'WebSocket',
-					value: 'ws',
-				},
-				{
-					name: 'WebSocket Secure',
-					value: 'wss',
+					name: 'Database',
+					value: 'Database',
 				},
 			],
-			default: 'ws',
-			displayOptions: {
-				show: {
-					configurationType: [
-						'values',
-					],
-				},
-			},
-			description: 'Protocol to use',
-		},
-		{
-			displayName: 'Namespace',
-			name: 'namespace',
-			type: 'string',
-			default: '',
 			required: true,
-			description: 'SurrealDB namespace',
-		},
-		{
-			displayName: 'Database',
-			name: 'database',
-			type: 'string',
-			default: '',
-			required: true,
-			description: 'SurrealDB database name',
+			default: 'Root',
+			description: 'Authentication scope',
 		},
 		{
 			displayName: 'Username',
-			name: 'user',
+			name: 'username',
 			type: 'string',
-			default: 'root',
-			description: 'SurrealDB username',
+			required: true,
+			default: '',
+			description: 'Username for authentication',
 		},
 		{
 			displayName: 'Password',
 			name: 'password',
 			type: 'string',
-			typeOptions: {
-				password: true,
+			typeOptions: { password: true },
+			required: true,
+			default: '',
+			description: 'Password for authentication',
+		},
+		{
+			displayName: 'Namespace',
+			name: 'namespace',
+			type: 'string',
+			required: false,
+			default: '',
+			displayOptions: {
+				show: {
+					authentication: ['Namespace', 'Database'],
+				},
 			},
-			default: 'root',
-			description: 'SurrealDB password',
+			description: 'Target namespace',
+		},
+		{
+			displayName: 'Database',
+			name: 'database',
+			type: 'string',
+			required: false,
+			default: '',
+			displayOptions: {
+				show: {
+					authentication: ['Database'],
+				},
+			},
+			description: 'Target database',
 		},
 	];
+
+	// Define a test request to verify credentials when they are saved
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL: '={{$credentials.connectionString.trim()}}',
+			url: '/version',
+			method: 'GET',
+		},
+	};
 }

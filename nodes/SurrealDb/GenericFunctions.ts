@@ -11,8 +11,7 @@ import type {
 
 import type {
 	ISurrealCredentials,
-	ISurrealCredentialsType,
-	ISurrealParametricCredentials,
+	ISurrealApiCredentials,
 } from './surrealDb.types';
 
 /**
@@ -94,92 +93,43 @@ export function validateArrayField(
 }
 
 /**
- * Standard way of building the SurrealDB connection string, unless overridden with a provided string
+ * Resolve credential parameters, applying node-level overrides.
  *
- * @param {ICredentialDataDecryptedObject} credentials SurrealDB credentials to use, unless conn string is overridden
- */
-export function buildParameterizedConnString(credentials: ISurrealParametricCredentials): string {
-	return `${credentials.protocol}://${credentials.host}:${credentials.port}`;
-}
-
-/**
- * Build SurrealDB connection string and resolve database name.
- * If a connection string override value is provided, that will be used in place of individual args
- *
- * @param {ICredentialDataDecryptedObject} credentials raw/input SurrealDB credentials to use
- */
-export function buildSurrealConnectionParams(
-	self: IExecuteFunctions,
-	credentials: ISurrealCredentialsType,
-): ISurrealCredentials {
-	const sanitizedDbName =
-		credentials.database && credentials.database.trim().length > 0
-			? credentials.database.trim()
-			: '';
-	
-	const sanitizedNamespace =
-		credentials.namespace && credentials.namespace.trim().length > 0
-			? credentials.namespace.trim()
-			: '';
-
-	if (credentials.configurationType === 'connectionString') {
-		if (credentials.connectionString && credentials.connectionString.trim().length > 0) {
-			return {
-				connectionString: credentials.connectionString.trim(),
-				namespace: sanitizedNamespace,
-				database: sanitizedDbName,
-				user: credentials.user,
-				password: credentials.password,
-			};
-		} else {
-			throw new NodeOperationError(
-				self.getNode(),
-				'Cannot override credentials: valid SurrealDB connection string not provided ',
-			);
-		}
-	} else {
-		return {
-			connectionString: buildParameterizedConnString(credentials),
-			namespace: sanitizedNamespace,
-			database: sanitizedDbName,
-			user: credentials.user,
-			password: credentials.password,
-		};
-	}
-}
-
-/**
- * Verify credentials. If ok, build SurrealDB connection string and resolve database name, applying node-level overrides.
- *
- * @param {ICredentialDataDecryptedObject} credentials raw/input SurrealDB credentials to use
- * @param {string} [nodeParamNamespace] Optional namespace override from node parameters
- * @param {string} [nodeParamDatabase] Optional database override from node parameters
+ * @param self The execute functions instance
+ * @param credentials Decrypted SurrealDB API credentials
+ * @param nodeParamNamespace Optional namespace override from node parameters
+ * @param nodeParamDatabase Optional database override from node parameters
+ * @returns Resolved credential parameters
+ * @throws NodeOperationError if credentials are not provided
  */
 export function validateAndResolveSurrealCredentials(
 	self: IExecuteFunctions,
 	credentials?: ICredentialDataDecryptedObject,
-	nodeParamNamespace?: string, // Renamed from overrideNamespace
-	nodeParamDatabase?: string, // Renamed from overrideDatabase
+	nodeParamNamespace?: string,
+	nodeParamDatabase?: string,
 ): ISurrealCredentials {
 	if (credentials === undefined) {
 		throw new NodeOperationError(self.getNode(), 'No credentials got returned!');
 	}
 
-	// Get base connection parameters from credentials
-	const baseParams = buildSurrealConnectionParams(self, credentials as unknown as ISurrealCredentialsType);
+	// Cast to the specific credential type
+	const surrealCredentials = credentials as unknown as ISurrealApiCredentials;
 
 	// Apply overrides if provided and not empty
 	const finalNamespace = nodeParamNamespace && nodeParamNamespace.trim() !== ''
 		? nodeParamNamespace.trim()
-		: baseParams.namespace;
+		: surrealCredentials.namespace;
 
 	const finalDatabase = nodeParamDatabase && nodeParamDatabase.trim() !== ''
 		? nodeParamDatabase.trim()
-		: baseParams.database;
+		: surrealCredentials.database;
 
 	// Return the final parameters, including overrides
 	return {
-		...baseParams,
+		connectionString: surrealCredentials.connectionString.trim(),
+		authentication: surrealCredentials.authentication,
+		username: surrealCredentials.username,
+		password: surrealCredentials.password,
 		namespace: finalNamespace,
 		database: finalDatabase,
 	};
@@ -237,51 +187,52 @@ export function prepareFields(fields: string) {
 		.filter((field) => !!field);
 }
 
+/**
+ * Connects to SurrealDB and authenticates using the provided credentials.
+ *
+ * @param credentials Resolved SurrealDB credentials
+ * @returns A connected and authenticated SurrealDB client instance
+ * @throws Error if connection or authentication fails
+ */
 export async function connectSurrealClient(
-	connectionString: string,
-	namespace: string,
-	database: string,
-	user: string,
-	password: string,
+	credentials: ISurrealCredentials,
 ) {
-	// For cloud instances, we need to ensure we're using the correct endpoint format
-	// SurrealDB cloud requires authentication at the base URL, not at the /rpc endpoint
-	const isCloudInstance = connectionString.includes('surreal.cloud');
-	
-	// Only add /rpc for non-cloud instances or if explicitly specified
-	if (!isCloudInstance && !connectionString.endsWith('/rpc')) {
-		connectionString = connectionString.endsWith('/') ? `${connectionString}rpc` : `${connectionString}/rpc`;
-	}
-	
+	const { connectionString, authentication: authType, username, password, namespace, database } = credentials;
+
 	const db = new Surreal();
-	
+
 	try {
 		// Connect to the database
 		await db.connect(connectionString);
-		
-		// Sign in as a namespace, database, or root user
-		// For cloud instances, we need to use the scope parameter
-		const isCloudInstance = connectionString.includes('surreal.cloud');
-		if (isCloudInstance) {
-			await db.signin({
-				username: user,
-				password,
-				namespace,
-				database,
-			});
-		} else {
-			await db.signin({
-				username: user,
-				password,
-			});
+
+		// Sign in based on authentication type
+		if (authType === 'Root') {
+			// For root authentication, we just need username and password
+			// @ts-ignore - The SurrealDB SDK types may not match our usage
+			await db.signin({ username, password });
+		} else if (authType === 'Namespace') {
+			if (!namespace) {
+				throw new Error('Namespace is required for Namespace authentication');
+			}
+			// For namespace authentication, we need username, password, and namespace
+			// @ts-ignore - The SurrealDB SDK types may not match our usage
+			await db.signin({ username, password, namespace });
+			// @ts-ignore - The SurrealDB SDK types may not match our usage
+			await db.use(namespace);
+		} else if (authType === 'Database') {
+			if (!namespace || !database) {
+				throw new Error('Namespace and Database are required for Database authentication');
+			}
+			// For database authentication, we need username, password, namespace, and database
+			// @ts-ignore - The SurrealDB SDK types may not match our usage
+			await db.signin({ username, password, namespace, database });
+			// @ts-ignore - The SurrealDB SDK types may not match our usage
+			await db.use(namespace, database);
 		}
-		
-		// Select a specific namespace / database
-		await db.use({ namespace, database });
-		
+
 		return db;
 	} catch (error) {
-		// console.error('Error connecting to SurrealDB:', error); // Keep error log? Maybe not needed for user.
+		console.error('Error connecting to SurrealDB:', error);
 		throw error;
 	}
 }
