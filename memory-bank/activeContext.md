@@ -100,18 +100,18 @@ According to the refactoring plan and recent discussion, the next steps are:
 
 1. **Update Node Properties & Fixes (Completed)**: Refined existing properties (`SurrealDbProperties.ts`) and fixed related bugs in Table operations (`getAllRecords`, `createMany`, `getMany` in `SurrealDb.node.ts`).
 2. **Add Optional Namespace/Database Overrides (Completed)**: Added optional fields ("Namespace", "Database") to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts`. Moved the "Advanced Options" block containing these fields to the end of the property list for better UI layout.
-3. **Rewrite Credentials (In Progress)**: Rewriting the credential definition and handling logic from scratch to simplify it and align with standard n8n credential testing. This involves:
-    - Defining the new credential fields (Connection String, Authentication, Username, Password, Namespace, Database) with appropriate visibility rules.
-    - Ensuring only HTTP/HTTPS protocols are supported.
-    - Implementing the standard n8n credential testing method.
-    - Updating type definitions and connection functions to work with the new credential structure.
-4. **Enhance Error Handling**: Review and improve error handling messages and consistency across all operations in `SurrealDb.node.ts`.
+3. **Rewrite Credentials (Completed)**: Rewrote the credential definition and handling logic to simplify it and align with standard n8n credential testing:
+    - Defined credential fields (Connection String, Authentication, Username, Password, Namespace, Database) with appropriate visibility rules.
+    - Ensured only HTTP/HTTPS protocols are supported.
+    - Implemented the standard n8n credential testing method.
+    - Updated type definitions and connection functions to work with the new credential structure.
+4. **Enhance Error Handling (In Progress)**: Reviewing and improving error handling messages and consistency across all operations in `SurrealDb.node.ts`.
 
 ## Active Decisions and Considerations
 
 1. **Incremental Approach**: The refactoring will be done in small, incremental steps to minimize the risk of breaking existing functionality. Each step will be tested before moving on to the next.
 
-2. **Credentials Rewrite**: The credentials will be rewritten from scratch to simplify the connection options to HTTP/HTTPS only and enable standard n8n credential testing. This approach:
+2. **Credentials Implementation**: The credentials have been rewritten to simplify the connection options to HTTP/HTTPS only and enable standard n8n credential testing. This approach:
    - Simplifies the code and reduces potential issues
    - Aligns with n8n credential testing standards
    - Provides a more robust connection testing mechanism

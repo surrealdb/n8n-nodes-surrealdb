@@ -26,54 +26,33 @@ The SurrealDB node is in a functional state with most of the core features imple
 
 ### What Needs Improvement
 
-1. **Credentials Implementation**: The current credential implementation is complex and has proven difficult to refactor incrementally. It needs to be rewritten from scratch based on precise, simplified requirements to support standard n8n credential testing.
-
-2. **Resource Organization**:
-   - Operations are not organized by resources (Record, Table, Query, System)
-   - UI doesn't reflect the resource-based structure
-
-3. **Operation Implementation**:
-   - Some operations are missing (Get Record, Merge, Upsert, etc.)
-   - Existing operations don't fully align with PRD specifications
-
-4. **Input Validation**:
-   - Limited validation for input fields
-   - Inconsistent error messages
-
-5. **Output Transformation**:
-   - Inconsistent output formatting across operations
-   - Array results handling could be improved
-
-6. **Error Handling**:
-   - Error messages could be more descriptive
+1. **Error Handling**:
+   - Error messages could be more descriptive and consistent across operations
    - Some edge cases may not be handled properly
+   - Error recovery mechanisms could be improved
+
+2. **UI Improvements**:
+   - Field labels and placeholders could be more descriptive and helpful
+   - Display options could be enhanced for better UX
+   - Advanced options could be better organized
 
 ### What's Left to Build
 
-1. **Credentials Rewrite**: Rewrite the credential definition and handling logic from scratch to simplify it and align with standard n8n credential testing.
+1. **Error Handling Enhancements**:
+   - Implement more descriptive error messages for specific error scenarios
+   - Add better handling for network errors and connection issues
+   - Improve error recovery mechanisms
 
-2. **Record Resource Operations**:
-   - Get: Retrieve a specific record by ID
-   - Merge: Merge data into a specific record
-   - Upsert: Create or update a record
+2. **UI Refinements**:
+   - Add more descriptive field labels and helpful placeholders
+   - Improve field descriptions with examples
+   - Enhance display options for better user experience
 
-3. **Table Resource Operations**:
-   - Get All Records: Retrieve all records with pagination
-   - Create Many: Create multiple records in a single operation
-   - Get Many: Retrieve multiple specific records by their IDs
-
-4. **Query Resource Enhancements**:
-   - Add pagination support
-   - Improve parameter handling
-
-5. **System Resource Operations**:
-   - Health Check: Check if the database instance is responsive
-   - Version: Get the version of the SurrealDB instance
-
-6. **UI Improvements**:
-   - Reorganize properties to match the resource-based structure
-   - Update display options for better UX
-   - Add more descriptive field labels and placeholders
+3. **Documentation**:
+   - Update inline code documentation
+   - Create comprehensive usage examples
+   - Document edge cases and best practices
+   - Add developer documentation for future maintenance
 
 ## Evolution of Project Decisions
 
@@ -105,15 +84,11 @@ This plan provides a structured approach to updating the node while minimizing t
 
 ## Known Issues
 
-1. **RecordId Handling**: The current implementation doesn't use the RecordId class from the SurrealDB SDK, which may cause issues with some operations.
+1. **RecordId Handling**: The current implementation uses string concatenation for record IDs rather than the RecordId class from the SurrealDB SDK, which may cause issues with some operations.
 
 2. **Cloud vs. Self-hosted**: There may be differences in how cloud and self-hosted instances of SurrealDB handle connections and authentication.
 
 3. **Error Handling**: Some error scenarios may not be handled properly, leading to unclear error messages.
-
-4. **Output Formatting**: Output formatting is inconsistent across operations, which may cause confusion for users.
-
-5. **Input Validation**: Limited validation for input fields may allow invalid inputs, leading to runtime errors.
 
 ## Next Milestone
 
@@ -148,24 +123,35 @@ Phase 2 of the refactoring plan has been completed:
    - Both operations implemented with proper error handling
    - System operations do not throw errors on failure, but return a status indicating success or failure
 
-The next milestone is to rewrite the credentials part of the node from scratch based on the following precise, simplified requirements:
+The credentials rewrite has been completed successfully:
 
-1. **Rewrite Credentials**:
-    *   **Supported Protocols:** ONLY `http://` and `https://` for the `connectionString`. No WebSocket support.
-    *   **Fields:**
-        1.  `connectionString`: (Type: string, Required) Example: `https://localhost:8000` or `https://<cloud-id>.surreal.cloud`. Must start with `http://` or `https://`.
-        2.  `authentication`: (Type: options - 'Root', 'Namespace', 'Database', Required) Determines the scope of authentication.
-        3.  `username`: (Type: string, Required) User for authentication.
-        4.  `password`: (Type: string, Password input type, Required) Password for authentication.
-        5.  `namespace`: (Type: string, Optional) The target namespace.
-            *   **Visibility:** Hidden if `authentication` is set to 'Root'.
-        6.  `database`: (Type: string, Optional) The target database.
-            *   **Visibility:** Hidden if `authentication` is set to 'Root' or 'Namespace'.
-    *   **Testing:** Must use the standard n8n credential `test` method for connection verification.
+1. **Credentials Rewrite (Completed)**:
+    * Implemented support for only HTTP/HTTPS protocols in the connection string
+    * Defined all required fields with appropriate visibility rules:
+        * `connectionString`: Required, with examples and validation
+        * `authentication`: Required, with options for Root, Namespace, and Database
+        * `username` and `password`: Required for authentication
+        * `namespace`: Optional, hidden for Root authentication
+        * `database`: Optional, hidden for Root and Namespace authentication
+    * Implemented standard n8n credential testing method
+    * Updated connection functions to work with the new credential structure
 
-Following the credentials rewrite, the next steps will be to continue with Phase 3 of the original refactoring plan: UI and UX Improvements, starting with enhancing error handling.
+The next milestone is to continue with Phase 3 of the original refactoring plan: UI and UX Improvements, focusing on enhancing error handling across all operations in `SurrealDb.node.ts`.
 
 ## Recent Improvements
+
+### Bug Fixes and Testing
+1. **Fixed Table Operations**:
+   - Debugged and fixed the `getAllRecords` operation to correctly process results from `client.query`
+   - Debugged and fixed the `createMany` operation to use `client.insert()` instead of an incorrect `client.query()` call
+   - Debugged and fixed the `getMany` operation, confirming that interpolating Record IDs directly into the `WHERE id IN [...]` clause is the correct approach
+   - Confirmed `getAllRecords`, `createMany`, `getMany`, `executeQuery`, and `version` operations are working correctly after fixes
+
+2. **Added Namespace/Database Overrides**:
+   - Implemented optional Namespace and Database overrides in the UI
+   - Added fields to allow users to specify a Namespace and Database for an operation, overriding the credential settings
+   - Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts` to support these overrides
+   - Moved the "Advanced Options" block containing these fields to the end of the node properties list for better UI layout
 
 ### Standardized Query Handling for Authentication Types
 
