@@ -97,14 +97,36 @@ According to the refactoring plan and recent discussion, the next steps are:
 
 1. **Update Node Properties & Fixes (Completed)**: Refined existing properties (`SurrealDbProperties.ts`) and fixed related bugs in Table operations (`getAllRecords`, `createMany`, `getMany` in `SurrealDb.node.ts`).
 2. **Add Optional Namespace/Database Overrides (Completed)**: Added optional fields ("Namespace", "Database") to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts`. Moved the "Advanced Options" block to the end of the properties list.
-3. **Cleanup Credentials UI (In Progress)**: Refactoring the credentials UI defined in `credentials/SurrealDbApi.credentials.ts` to align with n8n standards:
-   - Remove WebSocket (ws/wss) protocol options, keeping only HTTP/HTTPS
-   - Update default protocol to HTTPS instead of ws
+3. **Cleanup Credentials UI (In Progress)**: Refactoring the credentials UI defined in `credentials/SurrealDbApi.credentials.ts` to align with n8n standards. This task has been broken down into the following subtasks:
+
+   **Subtask 3.1: Update Credential Definition**
+   - Remove WebSocket (ws/wss) protocol options from the protocol dropdown in `SurrealDbApi.credentials.ts`
+   - Set default protocol to HTTPS instead of ws
    - Update descriptions to reflect HTTP/HTTPS only support
-   - Implement standard n8n credential testing that works with HTTP/HTTPS connections
-   - Update connection functions in `GenericFunctions.ts` to handle only HTTP/HTTPS connections
-   - Ensure proper error handling for connection failures
-   - Update type definitions in `surrealDb.types.ts` to align with the new credential structure
+   - Add a `test` property to enable standard n8n credential testing
+
+   **Subtask 3.2: Update Type Definitions**
+   - Update `surrealDb.types.ts` to remove WebSocket-related types or properties
+   - Ensure type definitions align with the new credential structure
+   - Update interfaces to reflect HTTP/HTTPS only connections
+
+   **Subtask 3.3: Update Connection Functions**
+   - Modify `buildParameterizedConnString` in `GenericFunctions.ts` to ensure it only builds HTTP/HTTPS URLs
+   - Update `connectSurrealClient` to handle only HTTP/HTTPS connections
+   - Add proper error handling for connection failures
+   - Ensure cloud vs. self-hosted instance detection still works correctly
+
+   **Subtask 3.4: Implement Standard Credential Test**
+   - Update the credential test method in `SurrealDb.node.ts` to use n8n's standard credential testing approach
+   - Ensure it properly handles HTTP/HTTPS connections
+   - Provide clear error messages for connection failures
+   - Test the credential test functionality with both valid and invalid credentials
+
+   **Subtask 3.5: Testing and Validation**
+   - Test all operations with the updated credential structure
+   - Verify that connections work correctly with both HTTP and HTTPS
+   - Ensure backward compatibility where possible
+   - Document any breaking changes
 4. **Enhance Error Handling**: Review and improve error handling messages and consistency across all operations in `SurrealDb.node.ts`.
 
 ## Active Decisions and Considerations

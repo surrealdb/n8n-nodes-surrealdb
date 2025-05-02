@@ -160,14 +160,36 @@ The next milestone is to begin Phase 3 of the refactoring plan: UI and UX Improv
    - Moved the "Advanced Options" block to the end of the properties list
 
 3. **Cleanup Credentials UI (In Progress)**
-   - Refactoring the credentials UI defined in `credentials/SurrealDbApi.credentials.ts` to align with n8n standards
-   - Removing WebSocket (ws/wss) protocol options, keeping only HTTP/HTTPS
-   - Updating default protocol to HTTPS instead of ws
-   - Updating descriptions to reflect HTTP/HTTPS only support
-   - Implementing standard n8n credential testing that works with HTTP/HTTPS connections
-   - Updating connection functions in `GenericFunctions.ts` to handle only HTTP/HTTPS connections
-   - Ensuring proper error handling for connection failures
-   - Updating type definitions in `surrealDb.types.ts` to align with the new credential structure
+   This task has been broken down into the following subtasks:
+
+   **Subtask 3.1: Update Credential Definition**
+   - Remove WebSocket (ws/wss) protocol options from the protocol dropdown in `SurrealDbApi.credentials.ts`
+   - Set default protocol to HTTPS instead of ws
+   - Update descriptions to reflect HTTP/HTTPS only support
+   - Add a `test` property to enable standard n8n credential testing
+
+   **Subtask 3.2: Update Type Definitions**
+   - Update `surrealDb.types.ts` to remove WebSocket-related types or properties
+   - Ensure type definitions align with the new credential structure
+   - Update interfaces to reflect HTTP/HTTPS only connections
+
+   **Subtask 3.3: Update Connection Functions**
+   - Modify `buildParameterizedConnString` in `GenericFunctions.ts` to ensure it only builds HTTP/HTTPS URLs
+   - Update `connectSurrealClient` to handle only HTTP/HTTPS connections
+   - Add proper error handling for connection failures
+   - Ensure cloud vs. self-hosted instance detection still works correctly
+
+   **Subtask 3.4: Implement Standard Credential Test**
+   - Update the credential test method in `SurrealDb.node.ts` to use n8n's standard credential testing approach
+   - Ensure it properly handles HTTP/HTTPS connections
+   - Provide clear error messages for connection failures
+   - Test the credential test functionality with both valid and invalid credentials
+
+   **Subtask 3.5: Testing and Validation**
+   - Test all operations with the updated credential structure
+   - Verify that connections work correctly with both HTTP and HTTPS
+   - Ensure backward compatibility where possible
+   - Document any breaking changes
 
 4. **Enhance Error Handling**
    - Review error handling across all operations
