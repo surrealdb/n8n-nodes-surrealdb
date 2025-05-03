@@ -43,16 +43,23 @@ The SurrealDB node is in a functional state with most of the core features imple
    - Add better handling for network errors and connection issues
    - Improve error recovery mechanisms
 
-2. **UI Refinements**:
+2. **Additional Table Operations**:
+   - **Update All Records**: Implement operation to update all records in a table with the same data
+   - **Delete All Records**: Implement operation to delete all records in a table (with confirmation)
+   - **Merge All Records**: Implement operation to merge the same data into all records in a table
+   - Add appropriate safeguards and clear documentation about their impact
+
+3. **UI Refinements**:
    - Add more descriptive field labels and helpful placeholders
    - Improve field descriptions with examples
    - Enhance display options for better user experience
 
-3. **Documentation**:
+4. **Documentation**:
    - Update inline code documentation
    - Create comprehensive usage examples
    - Document edge cases and best practices
    - Add developer documentation for future maintenance
+   - Include clear warnings about the impact of bulk table operations
 
 ## Evolution of Project Decisions
 

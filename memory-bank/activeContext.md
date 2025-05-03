@@ -118,6 +118,11 @@ According to the refactoring plan and recent discussion, the next steps are:
     - Implemented the standard n8n credential testing method.
     - Updated type definitions and connection functions to work with the new credential structure.
 4. **Enhance Error Handling (In Progress)**: Reviewing and improving error handling messages and consistency across all operations in `SurrealDb.node.ts`.
+5. **Additional Table Operations (Planned)**: Identified need for additional bulk operations on the Table resource:
+    - **Update All Records**: Operation to update all records in a table with the same data
+    - **Delete All Records**: Operation to delete all records in a table (with confirmation)
+    - **Merge All Records**: Operation to merge the same data into all records in a table
+    - These operations will need appropriate safeguards and clear documentation about their impact
 
 ## Active Decisions and Considerations
 
