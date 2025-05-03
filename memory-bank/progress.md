@@ -126,6 +126,14 @@ The next milestone is to implement the planned schema management operations for 
 
 ## Recent Improvements
 
+### Refactoring Progress
+1. **Completed Modular Architecture Refactoring**:
+   - Implemented a complete resource-based modular architecture
+   - Refactored System, Query, Record, and Table resources into separate modules
+   - Created IOperationHandler interface for standardized operation handling
+   - Moved UI properties into resource-specific files
+   - All tests pass with the new refactored architecture
+
 ### Bug Fixes and Testing
 1. **Fixed Table Operations**:
    - Debugged and fixed the `getAllRecords` operation to correctly process results from `client.query`

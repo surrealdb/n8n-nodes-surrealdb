@@ -4,7 +4,6 @@ import type {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	JsonObject,
 } from 'n8n-workflow';
 
 // Set to true to enable debug logging, false to disable
@@ -12,17 +11,15 @@ const DEBUG = false;
 
 import {
 	connectSurrealClient,
-	prepareSurrealQuery,
 	validateAndResolveSurrealCredentials,
-	validateJSON,
-	validateRequiredField,
 } from './GenericFunctions';
 import { nodeProperties } from './SurrealDbProperties';
-import { createRecordId, formatSingleResult, formatArrayResult, parseAndValidateRecordId } from './utilities';
 
 // Import the new resource handlers
 import { handleSystemOperations } from './resources/system';
 import { handleQueryOperations } from './resources/query';
+import { handleRecordOperations } from './resources/record';
+import { handleTableOperations } from './resources/table/table.handler';
 
 export class SurrealDb implements INodeType {
 	description: INodeTypeDescription = {
@@ -79,7 +76,6 @@ export class SurrealDb implements INodeType {
 		const resource = this.getNodeParameter('resource', 0) as string;
 		const operation = this.getNodeParameter('operation', 0) as string;
 		
-		const itemsLength = items.length;
 
 		try {
 			// Use our new resource handlers for refactored resources
@@ -87,452 +83,19 @@ export class SurrealDb implements INodeType {
 				returnData = await handleSystemOperations(operation, client, items, this);
 			}
 			// ----------------------------------------
-			// Resource: Record
+			// Resource: Record - REFACTORED (now using handleRecordOperations)
 			// ----------------------------------------
 			else if (resource === 'record') {
-				
-				// Operation: Create Record
-				if (operation === 'createRecord') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							// Get parameters
-							let table = this.getNodeParameter('table', i) as string;
-							validateRequiredField(this, table, 'Table', i);
-
-							// Ensure table is a string
-							table = String(table || '');
-							
-							// If table contains a colon, use only the part before the colon
-							if (table.includes(':')) {
-								table = table.split(':')[0];
-							}
-							
-							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
-							// Validate required field based on raw input
-							if (dataInput === undefined || dataInput === null || dataInput === '') {
-								throw new Error('Data is required');
-							}
-							
-							// Process data based on type
-							let data: any;
-							if (typeof dataInput === 'string') {
-								if (DEBUG) console.log(`DEBUG (createRecord) - Processing data parameter as string.`);
-								data = validateJSON(this, dataInput, i);
-							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-								if (DEBUG) console.log(`DEBUG (createRecord) - Processing data parameter as object.`);
-								data = dataInput;
-							} else {
-								throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
-							}
-							if (DEBUG) console.log(`DEBUG (createRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
-							
-							// Execute the create operation
-							const result = await client.create(table, data);
-							
-							// Format the result
-							const formattedResult = formatSingleResult(result);
-							returnData.push({
-								...formattedResult,
-								pairedItem: { item: i },
-							});
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
-				
-				// Operation: Get Record
-				else if (operation === 'getRecord') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							// Get parameters
-							let table = this.getNodeParameter('table', i) as string;
-							const idInput = this.getNodeParameter('id', i) as string;
-
-							// Ensure table is a string
-							table = String(table || '');
-							
-							// If table contains a colon, use only the part before the colon
-							if (table.includes(':')) {
-								table = table.split(':')[0];
-							}
-
-							// Ensure idInput is a string
-							const idInputStr = String(idInput || '');
-							
-							// If no table is specified but idInput has a table prefix, use the extracted table
-							if (!table && idInputStr.includes(':')) {
-								table = idInputStr.split(':')[0];
-							}
-							
-							// Only validate table as required if it couldn't be extracted from the Record ID
-							if (!table) {
-								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
-							}
-							validateRequiredField(this, idInput, 'Record ID', i);
-
-							// Parse and validate the record ID string
-							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
-							
-							// Create the record ID
-							const recordId = createRecordId(table, validatedId);
-							
-							// Execute the select operation
-							const result = await client.select(recordId);
-							
-							// Check if the record was found (result is not null/undefined/empty object)
-							// SurrealDB's client.select returns the record object if found, or null/undefined if not found.
-							// An empty object check is included for robustness, though less likely.
-							if (result !== null && result !== undefined && (typeof result !== 'object' || Object.keys(result).length > 0)) {
-								// Format the result only if found
-								const formattedResult = formatSingleResult(result);
-								returnData.push({
-									...formattedResult,
-									pairedItem: { item: i },
-								});
-							}
-							// If not found, do nothing, resulting in zero items for this input item
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
-				
-				// Operation: Update Record
-				else if (operation === 'updateRecord') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							// Get parameters
-							let table = this.getNodeParameter('table', i) as string;
-							const idInput = this.getNodeParameter('id', i) as string;
-
-							// Ensure table is a string
-							table = String(table || '');
-							
-							// If table contains a colon, use only the part before the colon
-							if (table.includes(':')) {
-								table = table.split(':')[0];
-							}
-
-							// Ensure idInput is a string
-							const idInputStr = String(idInput || '');
-							
-							// If no table is specified but idInput has a table prefix, use the extracted table
-							if (!table && idInputStr.includes(':')) {
-								table = idInputStr.split(':')[0];
-							}
-
-							// Only validate table as required if it couldn't be extracted from the Record ID
-							if (!table) {
-								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
-							}
-							validateRequiredField(this, idInput, 'Record ID', i);
-
-							// Parse and validate the record ID string
-							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
-							
-							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
-							// Validate required field based on raw input
-							if (dataInput === undefined || dataInput === null || dataInput === '') {
-								throw new Error('Data is required');
-							}
-							
-							// Process data based on type
-							let data: any;
-							if (typeof dataInput === 'string') {
-								if (DEBUG) console.log(`DEBUG (updateRecord) - Processing data parameter as string.`);
-								data = validateJSON(this, dataInput, i);
-							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-								if (DEBUG) console.log(`DEBUG (updateRecord) - Processing data parameter as object.`);
-								data = dataInput;
-							} else {
-								throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
-							}
-							if (DEBUG) console.log(`DEBUG (updateRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
-							
-							// Create the record ID
-							const recordId = createRecordId(table, validatedId);
-							
-							if (DEBUG) {
-								console.log('DEBUG - Update Record - Record ID:', recordId);
-								console.log('DEBUG - Update Record - Data:', JSON.stringify(data));
-							}
-
-							// Execute the update operation
-							const result = await client.update(recordId, data);
-							
-							// Format the result
-							const formattedResult = formatSingleResult(result);
-							returnData.push({
-								...formattedResult,
-								pairedItem: { item: i },
-							});
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
-				
-				// Operation: Merge Record
-				else if (operation === 'mergeRecord') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							// Get parameters
-							let table = this.getNodeParameter('table', i) as string;
-							const idInput = this.getNodeParameter('id', i) as string;
-
-							// Ensure table is a string
-							table = String(table || '');
-							
-							// If table contains a colon, use only the part before the colon
-							if (table.includes(':')) {
-								table = table.split(':')[0];
-							}
-
-							// Ensure idInput is a string
-							const idInputStr = String(idInput || '');
-							
-							// If no table is specified but idInput has a table prefix, use the extracted table
-							if (!table && idInputStr.includes(':')) {
-								table = idInputStr.split(':')[0];
-							}
-
-							// Only validate table as required if it couldn't be extracted from the Record ID
-							if (!table) {
-								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
-							}
-							validateRequiredField(this, idInput, 'Record ID', i);
-
-							// Parse and validate the record ID string
-							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
-							
-							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
-							// Validate required field based on raw input
-							if (dataInput === undefined || dataInput === null || dataInput === '') {
-								throw new Error('Data is required');
-							}
-							
-							// Process data based on type
-							let data: any;
-							if (typeof dataInput === 'string') {
-								if (DEBUG) console.log(`DEBUG (mergeRecord) - Processing data parameter as string.`);
-								data = validateJSON(this, dataInput, i);
-							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-								if (DEBUG) console.log(`DEBUG (mergeRecord) - Processing data parameter as object.`);
-								data = dataInput;
-							} else {
-								throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
-							}
-							if (DEBUG) console.log(`DEBUG (mergeRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
-							
-							// Create the record ID
-							const recordId = createRecordId(table, validatedId);
-							
-							// Execute the merge operation
-							const result = await client.merge(recordId, data);
-							
-							// Format the result
-							const formattedResult = formatSingleResult(result);
-							returnData.push({
-								...formattedResult,
-								pairedItem: { item: i },
-							});
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
-				
-				// Operation: Delete Record
-				else if (operation === 'deleteRecord') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							// Get parameters
-							let table = this.getNodeParameter('table', i) as string;
-							const idInput = this.getNodeParameter('id', i) as string;
-
-							// Ensure table is a string
-							table = String(table || '');
-							
-							// If table contains a colon, use only the part before the colon
-							if (table.includes(':')) {
-								table = table.split(':')[0];
-							}
-
-							// Ensure idInput is a string
-							const idInputStr = String(idInput || '');
-							
-							// If no table is specified but idInput has a table prefix, use the extracted table
-							if (!table && idInputStr.includes(':')) {
-								table = idInputStr.split(':')[0];
-							}
-
-							// Only validate table as required if it couldn't be extracted from the Record ID
-							if (!table) {
-								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
-							}
-							validateRequiredField(this, idInput, 'Record ID', i);
-
-							// Parse and validate the record ID string
-							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
-							
-							// Create the record ID
-							const recordId = createRecordId(table, validatedId);
-							
-							// Execute the delete operation
-							const result = await client.delete(recordId);
-							
-							// Format the result
-							const formattedResult = formatSingleResult(result);
-							returnData.push({
-								...formattedResult,
-								pairedItem: { item: i },
-							});
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
-				
-				// Operation: Upsert Record
-				else if (operation === 'upsertRecord') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							// Get parameters
-							let table = this.getNodeParameter('table', i) as string;
-							const idInput = this.getNodeParameter('id', i) as string;
-
-							// Ensure table is a string
-							table = String(table || '');
-							
-							// If table contains a colon, use only the part before the colon
-							if (table.includes(':')) {
-								table = table.split(':')[0];
-							}
-
-							// Ensure idInput is a string
-							const idInputStr = String(idInput || '');
-							
-							// If no table is specified but idInput has a table prefix, use the extracted table
-							if (!table && idInputStr.includes(':')) {
-								table = idInputStr.split(':')[0];
-							}
-
-							// Only validate table as required if it couldn't be extracted from the Record ID
-							if (!table) {
-								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
-							}
-							validateRequiredField(this, idInput, 'Record ID', i);
-
-							// Parse and validate the record ID string
-							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
-							
-							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
-							// Validate required field based on raw input
-							if (dataInput === undefined || dataInput === null || dataInput === '') {
-								throw new Error('Data is required');
-							}
-							
-							// Process data based on type
-							let data: any;
-							if (typeof dataInput === 'string') {
-								if (DEBUG) console.log(`DEBUG (upsertRecord) - Processing data parameter as string.`);
-								data = validateJSON(this, dataInput, i);
-							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-								if (DEBUG) console.log(`DEBUG (upsertRecord) - Processing data parameter as object.`);
-								data = dataInput;
-							} else {
-								throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
-							}
-							if (DEBUG) console.log(`DEBUG (upsertRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
-							
-							// Create the record ID
-							const recordId = createRecordId(table, validatedId);
-							
-							if (DEBUG) {
-								console.log('DEBUG - Upsert Record - Before client.upsert - Record ID:', recordId);
-								console.log('DEBUG - Upsert Record - Before client.upsert - Data:', JSON.stringify(data));
-								console.log('DEBUG - Upsert Record - Before client.upsert - Client state:', client);
-							}
-							
-							let formattedResult;
-							try {
-								// For upsert, we use the upsert method which will create the record if it doesn't exist
-								// According to the SurrealDB documentation, this is the correct method for upserting records
-								const result = await client.upsert(recordId, data);
-								
-								if (DEBUG) {
-									console.log('DEBUG - Upsert Record - After client.upsert - Result:', JSON.stringify(result));
-								}
-								
-								// Format the result
-								formattedResult = formatSingleResult(result);
-							} catch (upsertError) {
-								if (DEBUG) {
-									console.error('DEBUG - Upsert Record - Error during client.upsert:', upsertError);
-									console.error('DEBUG - Upsert Record - Error stack:', (upsertError as Error).stack);
-								}
-								throw upsertError;
-							}
-							
-							returnData.push({
-								...formattedResult,
-								pairedItem: { item: i },
-							});
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
+				returnData = await handleRecordOperations(operation, client, items, this);
 			}
 			
 			// ----------------------------------------
-			// Resource: Table
+			// Resource: Table - REFACTORED (now using handleTableOperations)
 			// ----------------------------------------
 			else if (resource === 'table') {
+				returnData = await handleTableOperations(operation, client, items, this);
 				
+				/* Old implementation - REMOVED
 				// Operation: Get All Records
 				if (operation === 'getAllRecords') {
 					for (let i = 0; i < itemsLength; i++) {
@@ -1113,8 +676,7 @@ export class SurrealDb implements INodeType {
 							}
 							throw error;
 						}
-					}
-				}
+					} */
 			}
 			
 			// ----------------------------------------
