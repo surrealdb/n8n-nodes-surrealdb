@@ -168,23 +168,64 @@ export const nodeProperties: INodeProperties[] = [
 	},
 
 	// Common fields for Record and Table resources
+	// Table field for operations that don't use Record IDs
 	{
 		displayName: 'Table',
 		name: 'table',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'SurrealDB table name',
+		description: 'SurrealDB table name (e.g., "person", "product", "order"). You can also use a full record ID (e.g., "person:john") and the table part will be extracted automatically.',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'getAllRecords',
+					'createMany',
+				],
+			},
+		},
+	},
+	// Table field for operations that use Record IDs (optional)
+	{
+		displayName: 'Table',
+		name: 'table',
+		type: 'string',
+		required: false,
+		default: '',
+		description: 'SurrealDB table name (e.g., "person", "product"). You can also use a full record ID (e.g., "person:john") and the table part will be extracted automatically. Optional if Record ID includes a table prefix.',
 		displayOptions: {
 			show: {
 				resource: [
 					'record',
-					'table',
+				],
+				operation: [
+					'getRecord',
+					'updateRecord',
+					'mergeRecord',
+					'deleteRecord',
+					'upsertRecord',
 				],
 			},
-			hide: {
+		},
+	},
+	// Table field for getMany operation (optional)
+	{
+		displayName: 'Table',
+		name: 'table',
+		type: 'string',
+		required: false,
+		default: '',
+		description: 'SurrealDB table name (e.g., "person", "product"). You can also use a full record ID (e.g., "person:john") and the table part will be extracted automatically. Optional if Record IDs include a table prefix.',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
 				operation: [
-					'createRecord', // Hide 'table' only for createRecord
+					'getMany',
 				],
 			},
 		},
@@ -195,7 +236,7 @@ export const nodeProperties: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'ID of the record (without the table prefix)',
+		description: 'ID of the record. Can include table prefix (e.g., "person:john", "product:abc123"). If Table field is empty, the table part will be extracted from the Record ID.',
 		displayOptions: {
 			show: {
 				resource: [
@@ -264,8 +305,8 @@ export const nodeProperties: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		placeholder: 'id1,id2,id3',
-		description: 'Comma-separated list of record IDs (without the table prefix)',
+		placeholder: 'id1,id2,id3 or table:id1,table:id2,table:id3',
+		description: 'Comma-separated list of record IDs. Can include table prefix (e.g., "person:john", "product:abc123"). If Table field is empty, the table part will be extracted from the Record IDs.',
 		displayOptions: {
 			show: {
 				resource: [

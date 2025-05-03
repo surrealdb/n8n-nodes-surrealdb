@@ -1,4 +1,5 @@
 import type { IPairedItemData, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { RecordId } from 'surrealdb';
 
 /**
@@ -19,6 +20,30 @@ export function generatePairedItemData(length: number): IPairedItemData[] {
  */
 export function createRecordId(table: string, id: string): RecordId {
 	return new RecordId(table, id);
+}
+
+/**
+ * Parses and validates a record ID string, handling composite IDs (table:id).
+ * If a composite ID is provided, it verifies that the table prefix matches the expected table.
+ * @param recordIdString The raw record ID string from the node parameter.
+ * @param expectedTable The expected table name for the operation.
+ * @param node The n8n node instance for error reporting.
+ * @param itemIndex The index of the current item for error reporting.
+ * @returns The validated and potentially stripped record ID string.
+ * @throws {NodeOperationError} If the record ID is invalid or the table prefix does not match.
+ */
+export function parseAndValidateRecordId(recordIdString: string | any, expectedTable: string, node: any, itemIndex: number): string {
+	// Ensure recordIdString is a string
+	const idStr = String(recordIdString || '');
+	
+	if (idStr.includes(':')) {
+		const [tablePrefix, id] = idStr.split(':');
+		if (tablePrefix !== expectedTable) {
+			throw new NodeOperationError(node, `Record ID table prefix "${tablePrefix}" does not match the specified table "${expectedTable}".`, { itemIndex });
+		}
+		return id;
+	}
+	return idStr;
 }
 
 /**

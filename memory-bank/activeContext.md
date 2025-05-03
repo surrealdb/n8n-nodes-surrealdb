@@ -53,6 +53,11 @@ The current focus is on implementing standardized query handling for SurrealDB a
    - Updated `SurrealDb.node.ts` to retrieve namespace/database overrides from the consolidated "Options" parameter
    - This change simplifies the UI by reducing the number of dropdowns while maintaining all functionality
 
+10. **Field Description Improvements**: Updated the descriptions for Table and Record ID fields to accurately reflect how the table extraction from record IDs works:
+   - Clarified that the table prefix in a record ID (e.g., "person:john") is only used if the Table field is empty, rather than overriding it
+   - Made it clear that any table field can accept a full record ID format (e.g., "person:john") and the table part will be automatically extracted
+   - Verified that the implementations in the code match these descriptions
+
 ## Next Steps
 
 According to the refactoring plan and recent discussion, the next steps are:

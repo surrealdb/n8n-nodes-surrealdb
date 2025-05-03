@@ -19,7 +19,7 @@ import {
 	validateRequiredField,
 } from './GenericFunctions';
 import { nodeProperties } from './SurrealDbProperties';
-import { createRecordId, formatSingleResult, formatArrayResult } from './utilities';
+import { createRecordId, formatSingleResult, formatArrayResult, parseAndValidateRecordId } from './utilities';
 
 export class SurrealDb implements INodeType {
 	description: INodeTypeDescription = {
@@ -89,8 +89,16 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
+							let table = this.getNodeParameter('table', i) as string;
 							validateRequiredField(this, table, 'Table', i);
+
+							// Ensure table is a string
+							table = String(table || '');
+							
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
 							
 							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
 							// Validate required field based on raw input
@@ -138,14 +146,36 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
-							validateRequiredField(this, table, 'Table', i);
+							let table = this.getNodeParameter('table', i) as string;
+							const idInput = this.getNodeParameter('id', i) as string;
+
+							// Ensure table is a string
+							table = String(table || '');
 							
-							const id = this.getNodeParameter('id', i) as string;
-							validateRequiredField(this, id, 'Record ID', i);
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+
+							// Ensure idInput is a string
+							const idInputStr = String(idInput || '');
+							
+							// If no table is specified but idInput has a table prefix, use the extracted table
+							if (!table && idInputStr.includes(':')) {
+								table = idInputStr.split(':')[0];
+							}
+							
+							// Only validate table as required if it couldn't be extracted from the Record ID
+							if (!table) {
+								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
+							}
+							validateRequiredField(this, idInput, 'Record ID', i);
+
+							// Parse and validate the record ID string
+							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
 							
 							// Create the record ID
-							const recordId = createRecordId(table, id);
+							const recordId = createRecordId(table, validatedId);
 							
 							// Execute the select operation
 							const result = await client.select(recordId);
@@ -180,11 +210,33 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
-							validateRequiredField(this, table, 'Table', i);
+							let table = this.getNodeParameter('table', i) as string;
+							const idInput = this.getNodeParameter('id', i) as string;
+
+							// Ensure table is a string
+							table = String(table || '');
 							
-							const id = this.getNodeParameter('id', i) as string;
-							validateRequiredField(this, id, 'Record ID', i);
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+
+							// Ensure idInput is a string
+							const idInputStr = String(idInput || '');
+							
+							// If no table is specified but idInput has a table prefix, use the extracted table
+							if (!table && idInputStr.includes(':')) {
+								table = idInputStr.split(':')[0];
+							}
+
+							// Only validate table as required if it couldn't be extracted from the Record ID
+							if (!table) {
+								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
+							}
+							validateRequiredField(this, idInput, 'Record ID', i);
+
+							// Parse and validate the record ID string
+							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
 							
 							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
 							// Validate required field based on raw input
@@ -206,7 +258,7 @@ export class SurrealDb implements INodeType {
 							if (DEBUG) console.log(`DEBUG (updateRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
 							
 							// Create the record ID
-							const recordId = createRecordId(table, id);
+							const recordId = createRecordId(table, validatedId);
 							
 							if (DEBUG) {
 								console.log('DEBUG - Update Record - Record ID:', recordId);
@@ -240,11 +292,33 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
-							validateRequiredField(this, table, 'Table', i);
+							let table = this.getNodeParameter('table', i) as string;
+							const idInput = this.getNodeParameter('id', i) as string;
+
+							// Ensure table is a string
+							table = String(table || '');
 							
-							const id = this.getNodeParameter('id', i) as string;
-							validateRequiredField(this, id, 'Record ID', i);
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+
+							// Ensure idInput is a string
+							const idInputStr = String(idInput || '');
+							
+							// If no table is specified but idInput has a table prefix, use the extracted table
+							if (!table && idInputStr.includes(':')) {
+								table = idInputStr.split(':')[0];
+							}
+
+							// Only validate table as required if it couldn't be extracted from the Record ID
+							if (!table) {
+								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
+							}
+							validateRequiredField(this, idInput, 'Record ID', i);
+
+							// Parse and validate the record ID string
+							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
 							
 							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
 							// Validate required field based on raw input
@@ -266,7 +340,7 @@ export class SurrealDb implements INodeType {
 							if (DEBUG) console.log(`DEBUG (mergeRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
 							
 							// Create the record ID
-							const recordId = createRecordId(table, id);
+							const recordId = createRecordId(table, validatedId);
 							
 							// Execute the merge operation
 							const result = await client.merge(recordId, data);
@@ -295,14 +369,36 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
-							validateRequiredField(this, table, 'Table', i);
+							let table = this.getNodeParameter('table', i) as string;
+							const idInput = this.getNodeParameter('id', i) as string;
+
+							// Ensure table is a string
+							table = String(table || '');
 							
-							const id = this.getNodeParameter('id', i) as string;
-							validateRequiredField(this, id, 'Record ID', i);
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+
+							// Ensure idInput is a string
+							const idInputStr = String(idInput || '');
+							
+							// If no table is specified but idInput has a table prefix, use the extracted table
+							if (!table && idInputStr.includes(':')) {
+								table = idInputStr.split(':')[0];
+							}
+
+							// Only validate table as required if it couldn't be extracted from the Record ID
+							if (!table) {
+								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
+							}
+							validateRequiredField(this, idInput, 'Record ID', i);
+
+							// Parse and validate the record ID string
+							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
 							
 							// Create the record ID
-							const recordId = createRecordId(table, id);
+							const recordId = createRecordId(table, validatedId);
 							
 							// Execute the delete operation
 							const result = await client.delete(recordId);
@@ -331,11 +427,33 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
-							validateRequiredField(this, table, 'Table', i);
+							let table = this.getNodeParameter('table', i) as string;
+							const idInput = this.getNodeParameter('id', i) as string;
+
+							// Ensure table is a string
+							table = String(table || '');
 							
-							const id = this.getNodeParameter('id', i) as string;
-							validateRequiredField(this, id, 'Record ID', i);
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+
+							// Ensure idInput is a string
+							const idInputStr = String(idInput || '');
+							
+							// If no table is specified but idInput has a table prefix, use the extracted table
+							if (!table && idInputStr.includes(':')) {
+								table = idInputStr.split(':')[0];
+							}
+
+							// Only validate table as required if it couldn't be extracted from the Record ID
+							if (!table) {
+								throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
+							}
+							validateRequiredField(this, idInput, 'Record ID', i);
+
+							// Parse and validate the record ID string
+							const validatedId = parseAndValidateRecordId(idInput, table, this.getNode(), i);
 							
 							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
 							// Validate required field based on raw input
@@ -357,7 +475,7 @@ export class SurrealDb implements INodeType {
 							if (DEBUG) console.log(`DEBUG (upsertRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
 							
 							// Create the record ID
-							const recordId = createRecordId(table, id);
+							const recordId = createRecordId(table, validatedId);
 							
 							if (DEBUG) {
 								console.log('DEBUG - Upsert Record - Before client.upsert - Record ID:', recordId);
@@ -413,8 +531,16 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
+							let table = this.getNodeParameter('table', i) as string;
 							validateRequiredField(this, table, 'Table', i);
+
+							// Ensure table is a string
+							table = String(table || '');
+							
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
 							
 							// Get options
 							const options = this.getNodeParameter('options', i, {}) as IDataObject;
@@ -504,9 +630,18 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
+							let table = this.getNodeParameter('table', i) as string;
 							if (DEBUG) console.log(`DEBUG (createMany) - Retrieved table parameter: ${table}`); // Log table
-							validateRequiredField(this, table, 'Table', i);
+
+							// Ensure table is a string
+							table = String(table || '');
+							
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+
+							validateRequiredField(this, table, 'Table', i); // Validate table after potential extraction
 							
 							const dataInput = this.getNodeParameter('data', i); // Get the parameter named 'data' - could be string or array
 							if (DEBUG) {
@@ -582,14 +717,36 @@ export class SurrealDb implements INodeType {
 					for (let i = 0; i < itemsLength; i++) {
 						try {
 							// Get parameters
-							const table = this.getNodeParameter('table', i) as string;
-							validateRequiredField(this, table, 'Table', i);
-							
+							let table = this.getNodeParameter('table', i) as string;
 							const idsString = this.getNodeParameter('ids', i) as string;
+
+							// Ensure table is a string
+							table = String(table || '');
+							
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+
+							// Ensure idsString is a string
+							const idsStringStr = String(idsString || '');
+							
+							// If no table is specified but idsString has a table prefix, use the extracted table from the first ID
+							if (!table && idsStringStr.includes(':')) {
+								const firstId = idsString.split(',')[0]?.trim();
+								if (firstId && firstId.includes(':')) {
+									table = firstId.split(':')[0];
+								}
+							}
+
+							// Only validate table as required if it couldn't be extracted from the Record IDs
+							if (!table) {
+								throw new Error('Either Table field must be provided or Record IDs must include a table prefix (e.g., "table:id")');
+							}
 							validateRequiredField(this, idsString, 'Record IDs', i);
 							
 							// Parse the comma-separated IDs
-							const ids = idsString.split(',').map(id => id.trim()).filter(id => id !== '');
+							const ids = idsString.split(',').map(id => id?.trim() || '').filter(id => id !== '');
 							
 							if (ids.length === 0) {
 								// If no valid IDs provided after filtering, return no results for this item
@@ -598,7 +755,13 @@ export class SurrealDb implements INodeType {
 							
 							// We need to use a query to select multiple records by ID
 							// Build a list of full Record IDs for the IN clause, joined by comma ONLY
-							const recordIdList = ids.map(id => `${table}:${id}`).join(',');
+							const recordIdList = ids.map(id => {
+								// Ensure id is a string before validation
+								const idStr = String(id);
+								// Validate each individual ID before adding to the list
+								const validatedId = parseAndValidateRecordId(idStr, table, this.getNode(), i);
+								return `${table}:${validatedId}`;
+							}).join(',');
 							
 							// Build the query string with the Record IDs directly interpolated
 							let query = `SELECT * FROM ${table} WHERE id IN [${recordIdList}]`;

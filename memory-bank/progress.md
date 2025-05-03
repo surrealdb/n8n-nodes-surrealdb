@@ -193,4 +193,11 @@ A significant improvement has been implemented to standardize query handling acr
    - Updated `SurrealDb.node.ts` to retrieve namespace/database overrides from the consolidated "Options" parameter
    - This change simplifies the UI by reducing the number of dropdowns while maintaining all functionality
 
+2. **Improved Field Descriptions**:
+   - Updated the descriptions for Table and Record ID fields to accurately reflect how the table extraction from record IDs works
+   - Clarified that the table prefix in a record ID (e.g., "person:john") is only used if the Table field is empty, rather than overriding it
+   - Made it clear that any table field can accept a full record ID format (e.g., "person:john") and the table part will be automatically extracted
+   - Verified that the implementations in the code match these descriptions
+   - These changes make the node's behavior more predictable and easier to understand for users working with SurrealDB records
+
 These improvements make the node more robust, maintainable, and user-friendly by centralizing the authentication-specific logic in one utility function and simplifying the UI, following the DRY principle.
