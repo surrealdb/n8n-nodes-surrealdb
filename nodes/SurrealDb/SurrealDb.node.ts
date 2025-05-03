@@ -820,6 +820,294 @@ export class SurrealDb implements INodeType {
 						}
 					}
 				}
+				
+				// Operation: Update All Records
+				else if (operation === 'updateAllRecords') {
+					for (let i = 0; i < itemsLength; i++) {
+						try {
+							// Get parameters
+							let table = this.getNodeParameter('table', i) as string;
+							validateRequiredField(this, table, 'Table', i);
+
+							// Ensure table is a string
+							table = String(table || '');
+							
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+							
+							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
+							// Validate required field based on raw input
+							if (dataInput === undefined || dataInput === null || dataInput === '') {
+								throw new Error('Update Data is required');
+							}
+							
+							// Process data based on type
+							let data: any;
+							if (typeof dataInput === 'string') {
+								if (DEBUG) console.log(`DEBUG (updateAllRecords) - Processing data parameter as string.`);
+								data = validateJSON(this, dataInput, i);
+							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
+								if (DEBUG) console.log(`DEBUG (updateAllRecords) - Processing data parameter as object.`);
+								data = dataInput;
+							} else {
+								throw new Error(`Update Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
+							}
+							if (DEBUG) console.log(`DEBUG (updateAllRecords) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
+							
+							// Build the update query
+							// We use UPDATE with no WHERE clause to update all records in the table
+							let query = `UPDATE ${table} CONTENT $data`;
+							
+							if (DEBUG) {
+								// DEBUG: Log original query and credentials
+								console.log('DEBUG - Update All Records - Original query:', query);
+								console.log('DEBUG - Update All Records - Authentication type:', resolvedCredentials.authentication);
+								console.log('DEBUG - Update All Records - Namespace:', resolvedCredentials.namespace);
+								console.log('DEBUG - Update All Records - Database:', resolvedCredentials.database);
+								console.log('DEBUG - Update All Records - Data:', JSON.stringify(data));
+							}
+							
+							// Prepare the query based on authentication type
+							query = prepareSurrealQuery(query, resolvedCredentials);
+							
+							if (DEBUG) {
+								// DEBUG: Log modified query
+								console.log('DEBUG - Update All Records - Modified query:', query);
+							}
+							
+							// Execute the query with the data parameter
+							const result = await client.query<[any[]]>(query, { data });
+							
+							if (DEBUG) {
+								// DEBUG: Log raw result
+								console.log('DEBUG - Update All Records - Raw query result:', JSON.stringify(result));
+							}
+							
+							// Find the first non-null array in the result
+							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null; // Find first array, even if empty
+							
+							if (recordsArray) { // Check if an array was found (could be empty)
+								// Format the results
+								const records = recordsArray;
+								const formattedResults = formatArrayResult(records); // formatArrayResult([]) returns []
+								
+								// Add each record as a separate item
+								for (const formattedResult of formattedResults) {
+									returnData.push({
+										...formattedResult,
+										pairedItem: { item: i },
+									});
+								}
+							} else {
+								// If no records were updated or the result is not as expected, return a status message
+								returnData.push({
+									json: { 
+										result: 'Update operation completed',
+										table,
+										data
+									},
+									pairedItem: { item: i },
+								});
+							}
+						} catch (error) {
+							if (this.continueOnFail()) {
+								returnData.push({
+									json: { error: (error as JsonObject).message },
+									pairedItem: { item: i },
+								});
+								continue;
+							}
+							throw error;
+						}
+					}
+				}
+				
+				// Operation: Delete All Records
+				else if (operation === 'deleteAllRecords') {
+					for (let i = 0; i < itemsLength; i++) {
+						try {
+							// Get parameters
+							let table = this.getNodeParameter('table', i) as string;
+							validateRequiredField(this, table, 'Table', i);
+
+							// Ensure table is a string
+							table = String(table || '');
+							
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+							
+							// Build the delete query
+							// We use DELETE with no WHERE clause to delete all records in the table
+							let query = `DELETE FROM ${table}`;
+							
+							if (DEBUG) {
+								// DEBUG: Log original query and credentials
+								console.log('DEBUG - Delete All Records - Original query:', query);
+								console.log('DEBUG - Delete All Records - Authentication type:', resolvedCredentials.authentication);
+								console.log('DEBUG - Delete All Records - Namespace:', resolvedCredentials.namespace);
+								console.log('DEBUG - Delete All Records - Database:', resolvedCredentials.database);
+							}
+							
+							// Prepare the query based on authentication type
+							query = prepareSurrealQuery(query, resolvedCredentials);
+							
+							if (DEBUG) {
+								// DEBUG: Log modified query
+								console.log('DEBUG - Delete All Records - Modified query:', query);
+							}
+							
+							// Execute the query
+							const result = await client.query<[any[]]>(query);
+							
+							if (DEBUG) {
+								// DEBUG: Log raw result
+								console.log('DEBUG - Delete All Records - Raw query result:', JSON.stringify(result));
+							}
+							
+							// Find the first non-null array in the result
+							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null; // Find first array, even if empty
+							
+							if (recordsArray) { // Check if an array was found (could be empty)
+								// Format the results
+								const records = recordsArray;
+								const formattedResults = formatArrayResult(records); // formatArrayResult([]) returns []
+								
+								// Add each record as a separate item
+								for (const formattedResult of formattedResults) {
+									returnData.push({
+										...formattedResult,
+										pairedItem: { item: i },
+									});
+								}
+							} else {
+								// If no records were deleted or the result is not as expected, return a status message
+								returnData.push({
+									json: { 
+										result: 'Delete operation completed',
+										table
+									},
+									pairedItem: { item: i },
+								});
+							}
+						} catch (error) {
+							if (this.continueOnFail()) {
+								returnData.push({
+									json: { error: (error as JsonObject).message },
+									pairedItem: { item: i },
+								});
+								continue;
+							}
+							throw error;
+						}
+					}
+				}
+				
+				// Operation: Merge All Records
+				else if (operation === 'mergeAllRecords') {
+					for (let i = 0; i < itemsLength; i++) {
+						try {
+							// Get parameters
+							let table = this.getNodeParameter('table', i) as string;
+							validateRequiredField(this, table, 'Table', i);
+
+							// Ensure table is a string
+							table = String(table || '');
+							
+							// If table contains a colon, use only the part before the colon
+							if (table.includes(':')) {
+								table = table.split(':')[0];
+							}
+							
+							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
+							// Validate required field based on raw input
+							if (dataInput === undefined || dataInput === null || dataInput === '') {
+								throw new Error('Merge Data is required');
+							}
+							
+							// Process data based on type
+							let data: any;
+							if (typeof dataInput === 'string') {
+								if (DEBUG) console.log(`DEBUG (mergeAllRecords) - Processing data parameter as string.`);
+								data = validateJSON(this, dataInput, i);
+							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
+								if (DEBUG) console.log(`DEBUG (mergeAllRecords) - Processing data parameter as object.`);
+								data = dataInput;
+							} else {
+								throw new Error(`Merge Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
+							}
+							if (DEBUG) console.log(`DEBUG (mergeAllRecords) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
+							
+							// Build the merge query
+							// We use UPDATE with no WHERE clause and MERGE to merge data into all records in the table
+							let query = `UPDATE ${table} MERGE $data`;
+							
+							if (DEBUG) {
+								// DEBUG: Log original query and credentials
+								console.log('DEBUG - Merge All Records - Original query:', query);
+								console.log('DEBUG - Merge All Records - Authentication type:', resolvedCredentials.authentication);
+								console.log('DEBUG - Merge All Records - Namespace:', resolvedCredentials.namespace);
+								console.log('DEBUG - Merge All Records - Database:', resolvedCredentials.database);
+								console.log('DEBUG - Merge All Records - Data:', JSON.stringify(data));
+							}
+							
+							// Prepare the query based on authentication type
+							query = prepareSurrealQuery(query, resolvedCredentials);
+							
+							if (DEBUG) {
+								// DEBUG: Log modified query
+								console.log('DEBUG - Merge All Records - Modified query:', query);
+							}
+							
+							// Execute the query with the data parameter
+							const result = await client.query<[any[]]>(query, { data });
+							
+							if (DEBUG) {
+								// DEBUG: Log raw result
+								console.log('DEBUG - Merge All Records - Raw query result:', JSON.stringify(result));
+							}
+							
+							// Find the first non-null array in the result
+							const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null; // Find first array, even if empty
+							
+							if (recordsArray) { // Check if an array was found (could be empty)
+								// Format the results
+								const records = recordsArray;
+								const formattedResults = formatArrayResult(records); // formatArrayResult([]) returns []
+								
+								// Add each record as a separate item
+								for (const formattedResult of formattedResults) {
+									returnData.push({
+										...formattedResult,
+										pairedItem: { item: i },
+									});
+								}
+							} else {
+								// If no records were merged or the result is not as expected, return a status message
+								returnData.push({
+									json: { 
+										result: 'Merge operation completed',
+										table,
+										data
+									},
+									pairedItem: { item: i },
+								});
+							}
+						} catch (error) {
+							if (this.continueOnFail()) {
+								returnData.push({
+									json: { error: (error as JsonObject).message },
+									pairedItem: { item: i },
+								});
+								continue;
+							}
+							throw error;
+						}
+					}
+				}
 			}
 			
 			// ----------------------------------------

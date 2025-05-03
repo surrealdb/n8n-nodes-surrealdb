@@ -113,6 +113,24 @@ export const nodeProperties: INodeProperties[] = [
 				description: 'Retrieve multiple specific records by their IDs',
 				action: 'Get many records',
 			},
+			{
+				name: 'Update All Records',
+				value: 'updateAllRecords',
+				description: 'Update all records in a table with the same data',
+				action: 'Update all records',
+			},
+			{
+				name: 'Delete All Records',
+				value: 'deleteAllRecords',
+				description: 'Delete all records in a table',
+				action: 'Delete all records',
+			},
+			{
+				name: 'Merge All Records',
+				value: 'mergeAllRecords',
+				description: 'Merge the same data into all records in a table',
+				action: 'Merge all records',
+			},
 		],
 		default: 'getAllRecords',
 	},
@@ -184,6 +202,9 @@ export const nodeProperties: INodeProperties[] = [
 				operation: [
 					'getAllRecords',
 					'createMany',
+					'updateAllRecords',
+					'deleteAllRecords',
+					'mergeAllRecords',
 				],
 			},
 		},
@@ -295,6 +316,42 @@ export const nodeProperties: INodeProperties[] = [
 				],
 				operation: [
 					'createMany',
+				],
+			},
+		},
+	},
+	{
+		displayName: 'Update Data (JSON)',
+		name: 'data',
+		type: 'json',
+		required: true,
+		default: '{}',
+		description: 'Data to update all records in the table with',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'updateAllRecords',
+				],
+			},
+		},
+	},
+	{
+		displayName: 'Merge Data (JSON)',
+		name: 'data',
+		type: 'json',
+		required: true,
+		default: '{}',
+		description: 'Data to merge into all records in the table',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'mergeAllRecords',
 				],
 			},
 		},
@@ -561,6 +618,117 @@ export const nodeProperties: INodeProperties[] = [
 				operation: [
 					'createMany',
 					'getMany',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
+		],
+	},
+	// Add Options for updateAllRecords operation
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Additional options for updating all records',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'updateAllRecords',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
+		],
+	},
+	// Add Options for deleteAllRecords operation
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Additional options for deleting all records',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'deleteAllRecords',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
+		],
+	},
+	// Add Options for mergeAllRecords operation
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Additional options for merging data into all records',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'mergeAllRecords',
 				],
 			},
 		},
