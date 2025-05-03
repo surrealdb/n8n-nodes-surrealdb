@@ -2,7 +2,7 @@
 
 ## Current Status
 
-The SurrealDB node is in a functional state with most of the core features implemented according to the PRD requirements. Recent improvements have focused on standardizing query handling for different authentication types and enhancing error handling.
+The SurrealDB node is in a functional state with most of the core features implemented according to the PRD requirements. Recent improvements have focused on standardizing query handling for different authentication types and enhancing error handling. The next major focus is implementing schema management operations for Tables, Fields, and Indexes, and operations for the new "Relations" resource.
 
 ### What Works
 
@@ -38,27 +38,51 @@ The SurrealDB node is in a functional state with most of the core features imple
 
 ### What's Left to Build
 
-1. **Error Handling Enhancements**:
+1. **Schema Management Operations**:
+    *   **Table Resource**:
+        *   `Create Table`
+        *   `Drop Table`
+        *   `List Tables`
+        *   `Describe Table`
+        *   `Create Field`
+        *   `Drop Field`
+        *   `List Fields`
+        *   `Describe Field`
+    *   **Index Resource**:
+        *   `Create Index`
+        *   `Drop Index`
+        *   `List Indexes`
+        *   `Describe Index`
+
+2. **Relations Resource Operations**:
+    *   **Relations Resource**:
+        *   `Create Relationship`
+        *   `Delete Relationship`
+        *   `Select Relationships`
+
+3. **Error Handling Enhancements**:
    - Implement more descriptive error messages for specific error scenarios
    - Add better handling for network errors and connection issues
    - Improve error recovery mechanisms
 
-2. **Additional Table Operations**:
+4. **Additional Table Operations**:
    - **Update All Records**: Operation to update all records in a table with the same data
    - **Delete All Records**: Operation to delete all records in a table (with confirmation)
    - **Merge All Records**: Operation to merge the same data into all records in a table
    - Add appropriate safeguards and clear documentation about the impact of these operations
 
-3. **UI Refinements**:
+5. **UI Refinements**:
    - Add more descriptive field labels and helpful placeholders
    - Improve field descriptions with examples
    - Enhance display options for better user experience
 
-4. **Documentation**:
+6. **Documentation**:
    - Update inline code documentation
    - Create comprehensive usage examples
    - Document edge cases and best practices
    - Add developer documentation for future maintenance
+
+7. **Scope Operations**: (Postponed for a later phase)
 
 ## Evolution of Project Decisions
 
@@ -86,7 +110,7 @@ Based on the PRD requirements, a comprehensive refactoring plan has been develop
 4. **Phase 4: Final Testing and Documentation**
    - Comprehensive testing and documentation updates
 
-This plan provides a structured approach to updating the node while minimizing the risk of breaking existing functionality.
+This plan provides a structured approach to updating the node while minimizing the risk of breaking existing functionality. The plan has been updated to include schema management and relations operations.
 
 ## Known Issues
 
@@ -98,66 +122,22 @@ This plan provides a structured approach to updating the node while minimizing t
 
 ## Next Milestone
 
-Phase 2 of the refactoring plan has been completed:
-
-1. **Implement Record Resource Operations (Completed)**
-   - Added Create Record operation (refactored existing create)
-   - Added Get Record operation to retrieve a specific record by ID
-   - Added Update Record operation (refactored existing update)
-   - Added Merge Record operation to merge data into a specific record
-   - Added Delete Record operation (refactored existing delete)
-   - Added Upsert Record operation to create or update a record
-   - All operations implemented with proper validation and error handling
-
-2. **Implement Table Resource Operations (Completed)**
-   - Added Get All Records operation (refactored existing select) with pagination
-   - Added Create Many operation to create multiple records in a single operation
-   - Added Get Many operation to retrieve multiple specific records by their IDs
-   - All operations implemented with proper validation and error handling
-
-3. **Implement Query Resource Operations (Completed)**
-   - Refactored existing query operation
-   - Added pagination support with LIMIT and START parameters
-   - Improved array result handling to properly return multiple items
-   - Enhanced parameter handling with validation
-
-4. **Implement System Resource Operations (Completed)**
-   - Added Health Check operation using n8n's httpRequest helper
-   - Added Version operation with fallback mechanism:
-     - First tries using `db.query('INFO FOR SERVER')`
-     - Falls back to the /version endpoint if needed
-   - Both operations implemented with proper error handling
-   - System operations do not throw errors on failure, but return a status indicating success or failure
-
-The credentials rewrite has been completed successfully:
-
-1. **Credentials Rewrite (Completed)**:
-    * Implemented support for only HTTP/HTTPS protocols in the connection string
-    * Defined all required fields with appropriate visibility rules:
-        * `connectionString`: Required, with examples and validation
-        * `authentication`: Required, with options for Root, Namespace, and Database
-        * `username` and `password`: Required for authentication
-        * `namespace`: Optional, hidden for Root authentication
-        * `database`: Optional, hidden for Root and Namespace authentication
-    * Implemented standard n8n credential testing method
-    * Updated connection functions to work with the new credential structure
-
-The next milestone is to continue with Phase 3 of the original refactoring plan: UI and UX Improvements, focusing on enhancing error handling across all operations in `SurrealDb.node.ts`.
+The next milestone is to implement the planned schema management operations for Tables, Fields, and Indexes, the "Relations" resource operations, and continue with Phase 3 of the original refactoring plan, focusing on enhancing error handling.
 
 ## Recent Improvements
 
 ### Bug Fixes and Testing
 1. **Fixed Table Operations**:
    - Debugged and fixed the `getAllRecords` operation to correctly process results from `client.query`
-   - Debugged and fixed the `createMany` operation to use `client.insert()` instead of an incorrect `client.query()` call
-   - Debugged and fixed the `getMany` operation, confirming that interpolating Record IDs directly into the `WHERE id IN [...]` clause is the correct approach
-   - Confirmed `getAllRecords`, `createMany`, `getMany`, `executeQuery`, and `version` operations are working correctly after fixes
+   - Debugged and fixed the `createMany` operation to use `client.insert()` instead of an incorrect `client.query()` call.
+   - Debugged and fixed the `getMany` operation, confirming that interpolating Record IDs directly into the `WHERE id IN [...]` clause is the correct approach.
+   - Confirmed `getAllRecords`, `createMany`, `getMany`, `executeQuery`, and `version` operations are working correctly after fixes.
 
 2. **Added Namespace/Database Overrides**:
    - Implemented optional Namespace and Database overrides in the UI
    - Added fields to allow users to specify a Namespace and Database for an operation, overriding the credential settings
    - Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts` to support these overrides
-   - Moved the "Advanced Options" block containing these fields to the end of the node properties list for better UI layout
+   - Moved the "Advanced Options" block containing these fields to the end of the node properties list for better UI layout.
 
 ### Standardized Query Handling for Authentication Types
 

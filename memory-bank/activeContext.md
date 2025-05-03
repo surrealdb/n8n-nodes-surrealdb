@@ -2,22 +2,24 @@
 
 ## Current Work Focus
 
-The current focus is on implementing standardized query handling for SurrealDB authentication types and enhancing error handling across all operations.
+The current focus is on implementing the newly planned schema management operations for Tables, Fields, and Indexes, and the "Relations" resource operations, and continuing to enhance error handling across all operations.
 
 ### Key Areas of Focus
 
-1. **Authentication-Aware Query Handling**: Implementing a centralized approach to handle query modification based on authentication type:
-   * **Root Authentication**: Adding both namespace and database to queries
-   * **Namespace Authentication**: Adding database to queries
-   * **Database Authentication**: No modification needed
+1. **Implement Schema Operations**: Adding the agreed-upon schema management operations:
+   *   **Table Resource**: Create Table, Drop Table, List Tables, Describe Table, Create Field, Drop Field, List Fields, Describe Field
+   *   **Index Resource**: Create Index, Drop Index, List Indexes, Describe Index
 
-2. **Debugging and Logging**: Adding conditional debug logging to help troubleshoot query execution and result processing.
+2. **Implement Relations Resource Operations**: Adding the planned operations for managing graph relationships:
+    *   **Relations Resource**: Create Relationship, Delete Relationship, Select Relationships
 
-3. **Result Processing Improvements**: Enhancing the handling of query results, especially for queries with USE statements.
+3. **Enhance Error Handling**: Continuing to improve error handling to provide more descriptive error messages and consistent handling across all operations.
 
-4. **Connection String Handling**: Improving connection string formatting to ensure proper /rpc endpoint handling.
+4. **Debugging and Logging**: Adding conditional debug logging to help troubleshoot query execution and result processing.
 
-5. **Error Handling**: Continuing to improve error handling to provide more descriptive error messages.
+5. **Result Processing Improvements**: Enhancing the handling of query results, especially for queries with USE statements.
+
+6. **Connection String Handling**: Improving connection string formatting to ensure proper /rpc endpoint handling.
 
 ## Recent Changes
 
@@ -39,7 +41,7 @@ The current focus is on implementing standardized query handling for SurrealDB a
    - Removed unused imports and variables
    - Verified system operations (health check and version) functionality
    - Resolved all TypeScript compiler warnings
-6. **Bug Fixes**: 
+6. **Bug Fixes**:
    - Debugged and fixed the `getAllRecords` operation to correctly process results from `client.query`.
    - Debugged and fixed the `createMany` operation to use `client.insert()` instead of an incorrect `client.query()` call.
    - Debugged and fixed the `getMany` operation, confirming that interpolating Record IDs directly into the `WHERE id IN [...]` clause is the correct approach.
@@ -58,71 +60,38 @@ The current focus is on implementing standardized query handling for SurrealDB a
    - Made it clear that any table field can accept a full record ID format (e.g., "person:john") and the table part will be automatically extracted
    - Verified that the implementations in the code match these descriptions
 
+11. **Schema Operations Planning**: Planned the inclusion of new schema management operations for Tables, Fields, and Indexes, organized into their respective resources. Scopes are postponed for a later phase.
+
+12. **Relations Resource Planning**: Planned the inclusion of a new "Relations" resource with operations for creating, deleting, and selecting graph relationships.
+
 ## Next Steps
 
-According to the refactoring plan and recent discussion, the next steps are:
+The next steps are to implement the planned schema management and relations operations, and continue enhancing error handling:
 
-### Phase 1: Preparation and Infrastructure (Completed)
+1.  **Implement Table Schema Operations**:
+    *   `Create Table`
+    *   `Drop Table`
+    *   `List Tables`
+    *   `Describe Table`
+    *   `Create Field`
+    *   `Drop Field`
+    *   `List Fields`
+    *   `Describe Field`
 
-1. **Create RecordId Utility Function (Completed)**
-   - Added a utility function to handle the creation of record ID strings
-   - Implemented as `createRecordId(table, id)` in utilities.ts
-   - Returns a string in the format "table:id"
+2.  **Implement Index Resource and Operations**:
+    *   Create the new "Index" resource definition.
+    *   Implement `Create Index` operation.
+    *   Implement `Drop Index` operation.
+    *   Implement `List Indexes` operation.
+    *   Implement `Describe Index` operation.
 
-2. **Enhance Input Validation (Completed)**
-   - Added JSON validation function (`validateJSON`)
-   - Added required field validation function (`validateRequiredField`)
-   - Added numeric field validation function (`validateNumericField`)
-   - Added array validation function (`validateArrayField`)
-   - All validation functions implemented in GenericFunctions.ts
+3.  **Implement Relations Resource and Operations**:
+    *   Create the new "Relations" resource definition.
+    *   Implement `Create Relationship` operation.
+    *   Implement `Delete Relationship` operation.
+    *   Implement `Select Relationships` operation.
 
-3. **Standardize Output Transformation (Completed)**
-   - Added helper function for single result formatting (`formatSingleResult`)
-   - Added helper function for array result formatting (`formatArrayResult`)
-   - Both functions implemented in utilities.ts
-
-### Phase 2: Resource-Based Restructuring (Completed)
-
-4. **Implement Record Resource Operations (Completed)**
-   - Added Create operation (refactored existing create)
-   - Added Get operation
-   - Added Update operation (refactored existing update)
-   - Added Merge operation
-   - Added Delete operation (refactored existing delete)
-   - Added Upsert operation
-   - All operations implemented and working correctly
-
-5. **Implement Table Resource Operations (Completed)**
-   - Added Get All Records operation (refactored existing select)
-   - Added Create Many operation
-   - Added Get Many operation
-   - All operations implemented and working correctly
-
-6. **Implement Query Resource Operations (Completed)**
-   - Refactored existing query operation
-   - Added pagination support
-   - Improved array result handling
-
-7. **Implement System Resource Operations (Completed)**
-   - Added Health Check operation using n8n's httpRequest helper
-   - Added Version operation with fallback mechanism
-   - Both operations implemented with proper error handling
-
-### Phase 3: UI and UX Improvements (In Progress)
-
-1. **Update Node Properties & Fixes (Completed)**: Refined existing properties (`SurrealDbProperties.ts`) and fixed related bugs in Table operations (`getAllRecords`, `createMany`, `getMany` in `SurrealDb.node.ts`).
-2. **Add Optional Namespace/Database Overrides (Completed)**: Added optional fields ("Namespace", "Database") to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts`. Moved the "Advanced Options" block containing these fields to the end of the node properties list for better UI layout.
-3. **Rewrite Credentials (Completed)**: Rewrote the credential definition and handling logic to simplify it and align with standard n8n credential testing:
-    - Defined credential fields (Connection String, Authentication, Username, Password, Namespace, Database) with appropriate visibility rules.
-    - Ensured only HTTP/HTTPS protocols are supported.
-    - Implemented the standard n8n credential testing method.
-    - Updated type definitions and connection functions to work with the new credential structure.
-4. **Enhance Error Handling (In Progress)**: Reviewing and improving error handling messages and consistency across all operations in `SurrealDb.node.ts`.
-5. **Additional Table Operations (Planned)**: Implement additional bulk operations for the Table resource:
-    - **Update All Records**: Operation to update all records in a table with the same data
-    - **Delete All Records**: Operation to delete all records in a table (with confirmation)
-    - **Merge All Records**: Operation to merge the same data into all records in a table
-    - Add appropriate safeguards and clear documentation about the impact of these operations
+4.  **Continue Error Handling Enhancements**: Review and improve error messages and consistency across all operations.
 
 ## Active Decisions and Considerations
 
@@ -134,7 +103,7 @@ According to the refactoring plan and recent discussion, the next steps are:
    - Provides a more robust connection testing mechanism
    - Makes the code easier to maintain and update
 
-3. **RecordId Handling**: The current implementation doesn't use the RecordId class from the SurrealDB SDK. We need to determine the correct approach for handling record IDs based on the SDK documentation.
+3. **RecordId Handling**: The current implementation uses string concatenation for record IDs rather than the RecordId class from the SurrealDB SDK. We need to determine the correct approach for handling record IDs based on the SDK documentation.
 
 4. **Backward Compatibility**: While refactoring, we need to ensure that existing functionality continues to work. This may require maintaining some backward compatibility code during the transition.
 
@@ -158,7 +127,7 @@ According to the refactoring plan and recent discussion, the next steps are:
 
 ## Learnings and Project Insights
 
-1. **SurrealDB SDK Usage**: The SurrealDB SDK provides a clean, intuitive API for interacting with SurrealDB. However, it requires proper handling of record IDs and connection management. 
+1. **SurrealDB SDK Usage**: The SurrealDB SDK provides a clean, intuitive API for interacting with SurrealDB. However, it requires proper handling of record IDs and connection management.
    - The `client.query` method returns an array of results, one for each statement. For a single `SELECT` statement, the result is an array containing one element, which is the array of records (e.g., `result[0]` contains the records). Providing a generic type like `<[any[]]>` helps TypeScript understand this structure.
    - The `client.insert()` method correctly handles inserting an array of records for bulk creation.
    - Parameterizing arrays of Record IDs for `WHERE id IN $ids` clauses in `client.query` does not seem to work; direct interpolation of the Record ID list into the query string is required for this specific case.
