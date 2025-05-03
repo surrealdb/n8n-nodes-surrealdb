@@ -5,7 +5,6 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 	JsonObject,
-	IHttpRequestOptions,
 } from 'n8n-workflow';
 
 // Set to true to enable debug logging, false to disable
@@ -20,6 +19,9 @@ import {
 } from './GenericFunctions';
 import { nodeProperties } from './SurrealDbProperties';
 import { createRecordId, formatSingleResult, formatArrayResult, parseAndValidateRecordId } from './utilities';
+
+// Import the new resource handlers
+import { handleSystemOperations } from './resources/system';
 
 export class SurrealDb implements INodeType {
 	description: INodeTypeDescription = {
@@ -79,10 +81,14 @@ export class SurrealDb implements INodeType {
 		const itemsLength = items.length;
 
 		try {
+			// Use our new resource handlers for refactored resources
+			if (resource === 'system') {
+				returnData = await handleSystemOperations(operation, client, items, this);
+			}
 			// ----------------------------------------
 			// Resource: Record
 			// ----------------------------------------
-			if (resource === 'record') {
+			else if (resource === 'record') {
 				
 				// Operation: Create Record
 				if (operation === 'createRecord') {
@@ -1215,154 +1221,8 @@ export class SurrealDb implements INodeType {
 			}
 			
 			// ----------------------------------------
-			// Resource: System
+			// Resource: System - REMOVED (now using handleSystemOperations)
 			// ----------------------------------------
-			else if (resource === 'system') {
-				
-				// Operation: Health Check
-				if (operation === 'healthCheck') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							// Get the base URL from the connection string
-							// Remove /rpc if it exists
-							let baseUrl = resolvedCredentials.connectionString;
-							if (baseUrl.endsWith('/rpc')) {
-								baseUrl = baseUrl.slice(0, -4);
-							}
-							
-							// Ensure the URL ends with a slash
-							if (!baseUrl.endsWith('/')) {
-								baseUrl += '/';
-							}
-							
-							// Create the health check URL
-							const healthUrl = `${baseUrl}health`;
-							
-							// Use n8n's httpRequest helper to perform a GET request
-							const options: IHttpRequestOptions = {
-								url: healthUrl,
-								method: 'GET',
-								returnFullResponse: true,
-							};
-							
-							try {
-								// Perform the health check request
-								const response = await this.helpers.httpRequest(options);
-								
-								// Format the result
-								returnData.push({
-									json: {
-										status: 'healthy',
-										details: response,
-									},
-									pairedItem: { item: i },
-								});
-							} catch (error) {
-								// Do not throw an error on failure, just return unhealthy status
-								returnData.push({
-									json: {
-										status: 'unhealthy',
-										details: (error as Error).message,
-									},
-									pairedItem: { item: i },
-								});
-							}
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
-				
-				// Operation: Version
-				else if (operation === 'version') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							let version = 'unknown';
-							let details = '';
-							
-							// First, attempt to get version using INFO FOR SERVER query
-							try {
-								// Prepare the query based on authentication type
-								const infoQuery = prepareSurrealQuery('INFO FOR SERVER', resolvedCredentials);
-								const result = await client.query(infoQuery);
-								
-								// Parse the version from the result
-								if (Array.isArray(result) && result.length > 0 && result[0]) {
-									const serverInfo = result[0];
-									if (typeof serverInfo === 'object' && serverInfo !== null) {
-										// Extract version from the server info
-										// The exact structure depends on SurrealDB's response format
-										// This might need adjustment based on actual response
-										version = (serverInfo as any).version || 'unknown';
-									}
-								}
-							} catch (queryError) {
-								// If the query fails, use the /version endpoint as a fallback
-								try {
-									// Get the base URL from the connection string
-									// Remove /rpc if it exists
-									let baseUrl = resolvedCredentials.connectionString;
-									if (baseUrl.endsWith('/rpc')) {
-										baseUrl = baseUrl.slice(0, -4);
-									}
-									
-									// Ensure the URL ends with a slash
-									if (!baseUrl.endsWith('/')) {
-										baseUrl += '/';
-									}
-									
-									// Create the version URL
-									const versionUrl = `${baseUrl}version`;
-									
-									// Use n8n's httpRequest helper to perform a GET request
-									const options: IHttpRequestOptions = {
-										url: versionUrl,
-										method: 'GET',
-									};
-									
-									// Perform the version request
-									const response = await this.helpers.httpRequest(options);
-									
-									// Extract version from response
-									if (response && typeof response === 'string') {
-										version = response.trim();
-									} else if (response && typeof response === 'object') {
-										version = (response as any).version || 'unknown';
-									}
-								} catch (httpError) {
-									// If both methods fail, set details to the error message
-									details = `Failed to retrieve version: ${(queryError as Error).message}, ${(httpError as Error).message}`;
-								}
-							}
-							
-							// Format the result
-							returnData.push({
-								json: {
-									version,
-									details,
-								},
-								pairedItem: { item: i },
-							});
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
-			}
 		} finally {
 			// Always close the connection
 			await client.close();

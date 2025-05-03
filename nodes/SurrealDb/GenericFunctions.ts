@@ -15,7 +15,7 @@ import type {
 import type {
 	ISurrealCredentials,
 	ISurrealApiCredentials,
-} from './surrealDb.types';
+} from './types/surrealDb.types';
 
 /**
  * Validate JSON input

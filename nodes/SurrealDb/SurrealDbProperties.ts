@@ -1,4 +1,5 @@
 import type { INodeProperties } from 'n8n-workflow';
+import { systemOperations, systemFields } from './resources/system';
 
 export const nodeProperties: INodeProperties[] = [
 	{
@@ -156,34 +157,8 @@ export const nodeProperties: INodeProperties[] = [
 		],
 		default: 'executeQuery',
 	},
-	{
-		displayName: 'Operation',
-		name: 'operation',
-		type: 'options',
-		noDataExpression: true,
-		displayOptions: {
-			show: {
-				resource: [
-					'system',
-				],
-			},
-		},
-		options: [
-			{
-				name: 'Health Check',
-				value: 'healthCheck',
-				description: 'Check if the database instance is responsive',
-				action: 'Check health',
-			},
-			{
-				name: 'Version',
-				value: 'version',
-				description: 'Get the version of the SurrealDB instance',
-				action: 'Get SurrealDB version',
-			},
-		],
-		default: 'healthCheck',
-	},
+	// Include system operations from modular file
+	...systemOperations,
 
 	// Common fields for Record and Table resources
 	// Table field for operations that don't use Record IDs
@@ -532,40 +507,8 @@ export const nodeProperties: INodeProperties[] = [
 	//         System Resource
 	// ----------------------------------
 	
-	// Add Options for System resource
-	{
-		displayName: 'Options',
-		name: 'options',
-		type: 'collection',
-		placeholder: 'Add Option',
-		default: {},
-		description: 'Additional options for system operations',
-		displayOptions: {
-			show: {
-				resource: [
-					'system',
-				],
-			},
-		},
-		options: [
-			{
-				displayName: 'Namespace',
-				name: 'namespace',
-				type: 'string',
-				default: '',
-				placeholder: 'e.g., my_namespace',
-				description: 'Optional namespace to use for this operation, overriding the credential setting',
-			},
-			{
-				displayName: 'Database',
-				name: 'database',
-				type: 'string',
-				default: '',
-				placeholder: 'e.g., my_database',
-				description: 'Optional database to use for this operation, overriding the credential setting',
-			},
-		],
-	},
+	// Include system fields from modular file
+	...systemFields,
 	
 	// Add Options for Record resource
 	{
