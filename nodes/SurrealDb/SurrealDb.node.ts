@@ -28,7 +28,8 @@ export class SurrealDb implements INodeType {
 		icon: 'file:surrealdb.svg',
 		group: ['input'],
 		version: 1,
-		description: 'Create, read, update and delete records in SurrealDB',
+		description: 'Interaction with a SurrealDB database',
+		subtitle: '={{$parameter["action"]}}',
 		defaults: {
 			name: 'SurrealDB',
 		},
@@ -91,11 +92,24 @@ export class SurrealDb implements INodeType {
 							const table = this.getNodeParameter('table', i) as string;
 							validateRequiredField(this, table, 'Table', i);
 							
-							const dataString = this.getNodeParameter('data', i) as string;
-							validateRequiredField(this, dataString, 'Data', i);
+							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
+							// Validate required field based on raw input
+							if (dataInput === undefined || dataInput === null || dataInput === '') {
+								throw new Error('Data is required');
+							}
 							
-							// Parse and validate the data JSON
-							const data = validateJSON(this, dataString, i);
+							// Process data based on type
+							let data: any;
+							if (typeof dataInput === 'string') {
+								if (DEBUG) console.log(`DEBUG (createRecord) - Processing data parameter as string.`);
+								data = validateJSON(this, dataInput, i);
+							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
+								if (DEBUG) console.log(`DEBUG (createRecord) - Processing data parameter as object.`);
+								data = dataInput;
+							} else {
+								throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
+							}
+							if (DEBUG) console.log(`DEBUG (createRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
 							
 							// Execute the create operation
 							const result = await client.create(table, data);
@@ -172,11 +186,24 @@ export class SurrealDb implements INodeType {
 							const id = this.getNodeParameter('id', i) as string;
 							validateRequiredField(this, id, 'Record ID', i);
 							
-							const dataString = this.getNodeParameter('data', i) as string;
-							validateRequiredField(this, dataString, 'Data', i);
+							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
+							// Validate required field based on raw input
+							if (dataInput === undefined || dataInput === null || dataInput === '') {
+								throw new Error('Data is required');
+							}
 							
-							// Parse and validate the data JSON
-							const data = validateJSON(this, dataString, i);
+							// Process data based on type
+							let data: any;
+							if (typeof dataInput === 'string') {
+								if (DEBUG) console.log(`DEBUG (updateRecord) - Processing data parameter as string.`);
+								data = validateJSON(this, dataInput, i);
+							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
+								if (DEBUG) console.log(`DEBUG (updateRecord) - Processing data parameter as object.`);
+								data = dataInput;
+							} else {
+								throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
+							}
+							if (DEBUG) console.log(`DEBUG (updateRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
 							
 							// Create the record ID
 							const recordId = createRecordId(table, id);
@@ -219,11 +246,24 @@ export class SurrealDb implements INodeType {
 							const id = this.getNodeParameter('id', i) as string;
 							validateRequiredField(this, id, 'Record ID', i);
 							
-							const dataString = this.getNodeParameter('data', i) as string;
-							validateRequiredField(this, dataString, 'Data', i);
+							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
+							// Validate required field based on raw input
+							if (dataInput === undefined || dataInput === null || dataInput === '') {
+								throw new Error('Data is required');
+							}
 							
-							// Parse and validate the data JSON
-							const data = validateJSON(this, dataString, i);
+							// Process data based on type
+							let data: any;
+							if (typeof dataInput === 'string') {
+								if (DEBUG) console.log(`DEBUG (mergeRecord) - Processing data parameter as string.`);
+								data = validateJSON(this, dataInput, i);
+							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
+								if (DEBUG) console.log(`DEBUG (mergeRecord) - Processing data parameter as object.`);
+								data = dataInput;
+							} else {
+								throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
+							}
+							if (DEBUG) console.log(`DEBUG (mergeRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
 							
 							// Create the record ID
 							const recordId = createRecordId(table, id);
@@ -297,11 +337,24 @@ export class SurrealDb implements INodeType {
 							const id = this.getNodeParameter('id', i) as string;
 							validateRequiredField(this, id, 'Record ID', i);
 							
-							const dataString = this.getNodeParameter('data', i) as string;
-							validateRequiredField(this, dataString, 'Data', i);
+							const dataInput = this.getNodeParameter('data', i); // Get potential object or string
+							// Validate required field based on raw input
+							if (dataInput === undefined || dataInput === null || dataInput === '') {
+								throw new Error('Data is required');
+							}
 							
-							// Parse and validate the data JSON
-							const data = validateJSON(this, dataString, i);
+							// Process data based on type
+							let data: any;
+							if (typeof dataInput === 'string') {
+								if (DEBUG) console.log(`DEBUG (upsertRecord) - Processing data parameter as string.`);
+								data = validateJSON(this, dataInput, i);
+							} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
+								if (DEBUG) console.log(`DEBUG (upsertRecord) - Processing data parameter as object.`);
+								data = dataInput;
+							} else {
+								throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
+							}
+							if (DEBUG) console.log(`DEBUG (upsertRecord) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
 							
 							// Create the record ID
 							const recordId = createRecordId(table, id);
@@ -452,18 +505,41 @@ export class SurrealDb implements INodeType {
 						try {
 							// Get parameters
 							const table = this.getNodeParameter('table', i) as string;
+							if (DEBUG) console.log(`DEBUG (createMany) - Retrieved table parameter: ${table}`); // Log table
 							validateRequiredField(this, table, 'Table', i);
 							
-							const dataString = this.getNodeParameter('data', i) as string;
-							validateRequiredField(this, dataString, 'Records Data', i);
-							
-							// Parse and validate the data JSON
-							const data = validateJSON(this, dataString, i);
-							
-							// Validate that data is an array
-							if (!Array.isArray(data)) {
-								throw new Error('Records Data must be a JSON array');
+							const dataInput = this.getNodeParameter('data', i); // Get the parameter named 'data' - could be string or array
+							if (DEBUG) {
+								console.log(`DEBUG (createMany) - Retrieved data parameter raw value:`, dataInput); // Log raw value
+								console.log(`DEBUG (createMany) - Retrieved data parameter type: ${typeof dataInput}`); // Log type
 							}
+							
+							// Validate required field based on raw input
+							if (dataInput === undefined || dataInput === null || dataInput === '') {
+								throw new Error('Records Data is required');
+							}
+							
+							// Process data based on type
+							let data: any;
+							if (typeof dataInput === 'string') {
+								// If it's a string, parse and validate as JSON
+								if (DEBUG) console.log(`DEBUG (createMany) - Processing data parameter as string.`);
+								data = validateJSON(this, dataInput, i);
+							} else if (Array.isArray(dataInput)) {
+								// If it's already an array, use it directly
+								if (DEBUG) console.log(`DEBUG (createMany) - Processing data parameter as array.`);
+								data = dataInput;
+								// Optional: Add validation here to ensure it's an array of objects if needed
+							} else {
+								// Handle unexpected types
+								throw new Error(`Records Data must be a JSON string or a JSON array, received type: ${typeof dataInput}`);
+							}
+							
+							// Validate that data is an array after processing
+							if (!Array.isArray(data)) {
+								throw new Error('Processed Records Data must be an array');
+							}
+							if (DEBUG) console.log(`DEBUG (createMany) - Processed data (type: ${typeof data}):`, JSON.stringify(data)); // Log processed data
 							
 							// Execute the insert operation to create multiple records
 							// The insert method accepts an array of objects directly
@@ -597,8 +673,21 @@ export class SurrealDb implements INodeType {
 							validateRequiredField(this, query, 'Query', i);
 							
 							// Get parameters if provided
-							const parametersString = this.getNodeParameter('parameters', i, '{}') as string;
-							const parameters = validateJSON(this, parametersString, i);
+							const parametersInput = this.getNodeParameter('parameters', i, {}); // Default to empty object if not provided
+							
+							// Process parameters based on type
+							let parameters: any;
+							if (typeof parametersInput === 'string') {
+								// If it's a string, parse and validate as JSON
+								if (DEBUG) console.log(`DEBUG (executeQuery) - Processing parameters parameter as string.`);
+								parameters = validateJSON(this, parametersInput, i);
+							} else if (typeof parametersInput === 'object' && parametersInput !== null) { // Check if it's a non-null object
+								if (DEBUG) console.log(`DEBUG (executeQuery) - Processing parameters parameter as object.`);
+								parameters = parametersInput;
+							} else {
+								throw new Error(`Parameters must be a JSON string or a JSON object, received type: ${typeof parametersInput}`);
+							}
+							if (DEBUG) console.log(`DEBUG (executeQuery) - Processed parameters (type: ${typeof parameters}):`, JSON.stringify(parameters));
 							
 							// Get options
 							const options = this.getNodeParameter('options', i, {}) as IDataObject;
