@@ -8,6 +8,7 @@ import { deleteAllRecordsOperation } from './operations/deleteAllRecords.operati
 import { mergeAllRecordsOperation } from './operations/mergeAllRecords.operation';
 import { createTableOperation } from './operations/createTable.operation';
 import { deleteTableOperation } from './operations/deleteTable.operation';
+import { listTablesOperation } from './operations/listTables.operation';
 
 /**
  * Router for table operations
@@ -19,7 +20,9 @@ export async function handleTableOperations(
 	executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
 	// Route to the appropriate operation handler
-	if (operation === 'createTable') {
+	if (operation === 'listTables') {
+		return listTablesOperation.execute(client, items, executeFunctions, 0);
+	} else if (operation === 'createTable') {
 		return createTableOperation.execute(client, items, executeFunctions, 0);
 	} else if (operation === 'deleteTable') {
 		return deleteTableOperation.execute(client, items, executeFunctions, 0);

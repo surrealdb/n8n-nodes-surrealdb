@@ -69,13 +69,18 @@ export const createTableOperation: IOperationHandler = {
 					database: nodeDatabase || (credentials.database as string),
 				};
 				
+				// Get table type and schema mode options
+				const tableType = options.tableType as string || 'NORMAL';
+				const schemaMode = options.schemaMode as string || 'SCHEMALESS';
+				
 				// Build the query to create a table
 				let query: string;
 				
-				if (schema) {
-					// Create table with schema
-					query = `DEFINE TABLE ${table} SCHEMAFULL`;
-					
+				// Start with the basic DEFINE TABLE statement with the specified type
+				query = `DEFINE TABLE ${table} TYPE ${tableType} ${schemaMode}`;
+				
+				// Add schema fields if schema is provided and mode is SCHEMAFULL
+				if (schemaMode === 'SCHEMAFULL' && schema) {
 					// Prepare the schema definition query
 					// For each field in the schema, define its type
 					if (schema.fields && Object.keys(schema.fields).length > 0) {
@@ -83,9 +88,6 @@ export const createTableOperation: IOperationHandler = {
 							query += `; DEFINE FIELD ${fieldName} ON TABLE ${table} TYPE ${fieldType}`;
 						}
 					}
-				} else {
-					// Create table without schema (schemaless)
-					query = `DEFINE TABLE ${table}`;
 				}
 				
 				const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);

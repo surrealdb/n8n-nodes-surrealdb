@@ -16,6 +16,12 @@ export const tableOperations: INodeProperties[] = [
 		options: [
 			// Table management operations
 			{
+				name: 'List Tables',
+				value: 'listTables',
+				description: 'List all tables in the database',
+				action: 'List all tables',
+			},
+			{
 				name: 'Create Table',
 				value: 'createTable',
 				description: 'Create a new table in the database',
@@ -413,11 +419,61 @@ export const tableFields: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Table Type',
+				name: 'tableType',
+				type: 'options',
+				options: [
+					{
+						name: 'Normal',
+						value: 'NORMAL',
+						description: 'Standard data table for most use cases'
+					},
+					{
+						name: 'Any',
+						value: 'ANY',
+						description: 'Flexible table that can store any type of data'
+					},
+					{
+						name: 'Relation',
+						value: 'RELATION',
+						description: 'Specialized table for graph relationships between records'
+					},
+				],
+				default: 'NORMAL',
+				description: 'The type of table to create',
+			},
+			{
+				displayName: 'Schema Mode',
+				name: 'schemaMode',
+				type: 'options',
+				options: [
+					{
+						name: 'Schemaless',
+						value: 'SCHEMALESS',
+						description: 'Flexible structure allowing any fields (default)'
+					},
+					{
+						name: 'Schemafull',
+						value: 'SCHEMAFULL',
+						description: 'Strict structure that enforces a defined schema'
+					},
+				],
+				default: 'SCHEMALESS',
+				description: 'Whether the table should enforce a schema',
+			},
+			{
 				displayName: 'Schema (JSON)',
 				name: 'schema',
 				type: 'json',
 				default: '',
-				description: 'Optional schema definition for the table in JSON format. Example: {"fields": {"name": "string", "age": "number"}}',
+				displayOptions: {
+					show: {
+						schemaMode: [
+							'SCHEMAFULL',
+						],
+					},
+				},
+				description: 'Schema definition for the table in JSON format. Example: {"fields": {"name": "string", "age": "number"}}',
 			},
 			{
 				displayName: 'Namespace',
@@ -452,6 +508,43 @@ export const tableFields: INodeProperties[] = [
 				],
 				operation: [
 					'deleteTable',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
+		],
+	},
+	// Add Options for listTables operation
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Additional options for listing tables',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'listTables',
 				],
 			},
 		},
