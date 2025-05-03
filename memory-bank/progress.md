@@ -44,10 +44,10 @@ The SurrealDB node is in a functional state with most of the core features imple
    - Improve error recovery mechanisms
 
 2. **Additional Table Operations**:
-   - **Update All Records**: Implement operation to update all records in a table with the same data
-   - **Delete All Records**: Implement operation to delete all records in a table (with confirmation)
-   - **Merge All Records**: Implement operation to merge the same data into all records in a table
-   - Add appropriate safeguards and clear documentation about their impact
+   - **Update All Records**: Operation to update all records in a table with the same data
+   - **Delete All Records**: Operation to delete all records in a table (with confirmation)
+   - **Merge All Records**: Operation to merge the same data into all records in a table
+   - Add appropriate safeguards and clear documentation about the impact of these operations
 
 3. **UI Refinements**:
    - Add more descriptive field labels and helpful placeholders
@@ -59,7 +59,6 @@ The SurrealDB node is in a functional state with most of the core features imple
    - Create comprehensive usage examples
    - Document edge cases and best practices
    - Add developer documentation for future maintenance
-   - Include clear warnings about the impact of bulk table operations
 
 ## Evolution of Project Decisions
 

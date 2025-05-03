@@ -111,18 +111,18 @@ According to the refactoring plan and recent discussion, the next steps are:
 ### Phase 3: UI and UX Improvements (In Progress)
 
 1. **Update Node Properties & Fixes (Completed)**: Refined existing properties (`SurrealDbProperties.ts`) and fixed related bugs in Table operations (`getAllRecords`, `createMany`, `getMany` in `SurrealDb.node.ts`).
-2. **Add Optional Namespace/Database Overrides (Completed)**: Added optional fields ("Namespace", "Database") to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts`. Moved the "Advanced Options" block containing these fields to the end of the property list for better UI layout.
+2. **Add Optional Namespace/Database Overrides (Completed)**: Added optional fields ("Namespace", "Database") to the node UI allowing users to specify a Namespace and Database for an operation, overriding the credential settings. Updated `SurrealDbProperties.ts`, `SurrealDb.node.ts`, and `GenericFunctions.ts`. Moved the "Advanced Options" block containing these fields to the end of the node properties list for better UI layout.
 3. **Rewrite Credentials (Completed)**: Rewrote the credential definition and handling logic to simplify it and align with standard n8n credential testing:
     - Defined credential fields (Connection String, Authentication, Username, Password, Namespace, Database) with appropriate visibility rules.
     - Ensured only HTTP/HTTPS protocols are supported.
     - Implemented the standard n8n credential testing method.
     - Updated type definitions and connection functions to work with the new credential structure.
 4. **Enhance Error Handling (In Progress)**: Reviewing and improving error handling messages and consistency across all operations in `SurrealDb.node.ts`.
-5. **Additional Table Operations (Planned)**: Identified need for additional bulk operations on the Table resource:
+5. **Additional Table Operations (Planned)**: Implement additional bulk operations for the Table resource:
     - **Update All Records**: Operation to update all records in a table with the same data
     - **Delete All Records**: Operation to delete all records in a table (with confirmation)
     - **Merge All Records**: Operation to merge the same data into all records in a table
-    - These operations will need appropriate safeguards and clear documentation about their impact
+    - Add appropriate safeguards and clear documentation about the impact of these operations
 
 ## Active Decisions and Considerations
 
