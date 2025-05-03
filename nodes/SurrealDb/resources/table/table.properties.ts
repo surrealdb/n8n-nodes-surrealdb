@@ -14,6 +14,20 @@ export const tableOperations: INodeProperties[] = [
 			},
 		},
 		options: [
+			// Table management operations
+			{
+				name: 'Create Table',
+				value: 'createTable',
+				description: 'Create a new table in the database',
+				action: 'Create a table',
+			},
+			{
+				name: 'Delete Table',
+				value: 'deleteTable',
+				description: 'Delete a table from the database',
+				action: 'Delete a table',
+			},
+			// Record operations
 			{
 				name: 'Get All Records',
 				value: 'getAllRecords',
@@ -76,6 +90,8 @@ export const tableFields: INodeProperties[] = [
 					'updateAllRecords',
 					'deleteAllRecords',
 					'mergeAllRecords',
+					'createTable',
+					'deleteTable',
 				],
 			},
 		},
@@ -355,6 +371,87 @@ export const tableFields: INodeProperties[] = [
 				],
 				operation: [
 					'mergeAllRecords',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
+		],
+	},
+	// Add Options for createTable operation
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Additional options for creating a table',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'createTable',
+				],
+			},
+		},
+		options: [
+			{
+				displayName: 'Schema (JSON)',
+				name: 'schema',
+				type: 'json',
+				default: '',
+				description: 'Optional schema definition for the table in JSON format. Example: {"fields": {"name": "string", "age": "number"}}',
+			},
+			{
+				displayName: 'Namespace',
+				name: 'namespace',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_namespace',
+				description: 'Optional namespace to use for this operation, overriding the credential setting',
+			},
+			{
+				displayName: 'Database',
+				name: 'database',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g., my_database',
+				description: 'Optional database to use for this operation, overriding the credential setting',
+			},
+		],
+	},
+	// Add Options for deleteTable operation
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		description: 'Additional options for deleting a table',
+		displayOptions: {
+			show: {
+				resource: [
+					'table',
+				],
+				operation: [
+					'deleteTable',
 				],
 			},
 		},

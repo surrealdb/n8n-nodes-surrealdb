@@ -6,6 +6,8 @@ import { getManyOperation } from './operations/getMany.operation';
 import { updateAllRecordsOperation } from './operations/updateAllRecords.operation';
 import { deleteAllRecordsOperation } from './operations/deleteAllRecords.operation';
 import { mergeAllRecordsOperation } from './operations/mergeAllRecords.operation';
+import { createTableOperation } from './operations/createTable.operation';
+import { deleteTableOperation } from './operations/deleteTable.operation';
 
 /**
  * Router for table operations
@@ -17,7 +19,11 @@ export async function handleTableOperations(
 	executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
 	// Route to the appropriate operation handler
-	if (operation === 'getAllRecords') {
+	if (operation === 'createTable') {
+		return createTableOperation.execute(client, items, executeFunctions, 0);
+	} else if (operation === 'deleteTable') {
+		return deleteTableOperation.execute(client, items, executeFunctions, 0);
+	} else if (operation === 'getAllRecords') {
 		return getAllRecordsOperation.execute(client, items, executeFunctions, 0);
 	} else if (operation === 'createMany') {
 		return createManyOperation.execute(client, items, executeFunctions, 0);
