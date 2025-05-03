@@ -1,9 +1,19 @@
 import type { INodeProperties } from 'n8n-workflow';
+
+// Import resource-specific properties from modular files
 import { systemOperations, systemFields } from './resources/system';
 import { queryOperations, queryFields } from './resources/query';
 import { recordOperations, recordFields } from './resources/record';
 import { tableOperations, tableFields } from './resources/table/table.properties';
 
+/**
+ * Node properties array for SurrealDB node
+ * 
+ * Following a modular architecture:
+ * 1. Resource selector comes first
+ * 2. Each resource module contributes its operations
+ * 3. Each resource module contributes its fields
+ */
 export const nodeProperties: INodeProperties[] = [
 	{
 		displayName: 'Resource',
