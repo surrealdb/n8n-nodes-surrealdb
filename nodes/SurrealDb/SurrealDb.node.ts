@@ -22,6 +22,7 @@ import { createRecordId, formatSingleResult, formatArrayResult, parseAndValidate
 
 // Import the new resource handlers
 import { handleSystemOperations } from './resources/system';
+import { handleQueryOperations } from './resources/query';
 
 export class SurrealDb implements INodeType {
 	description: INodeTypeDescription = {
@@ -1117,107 +1118,10 @@ export class SurrealDb implements INodeType {
 			}
 			
 			// ----------------------------------------
-			// Resource: Query
+			// Resource: Query - REFACTORED (now using handleQueryOperations)
 			// ----------------------------------------
 			else if (resource === 'query') {
-				
-				// Operation: Execute Query
-				if (operation === 'executeQuery') {
-					for (let i = 0; i < itemsLength; i++) {
-						try {
-							// Get parameters
-							const query = this.getNodeParameter('query', i) as string;
-							validateRequiredField(this, query, 'Query', i);
-							
-							// Get parameters if provided
-							const parametersInput = this.getNodeParameter('parameters', i, {}); // Default to empty object if not provided
-							
-							// Process parameters based on type
-							let parameters: any;
-							if (typeof parametersInput === 'string') {
-								// If it's a string, parse and validate as JSON
-								if (DEBUG) console.log(`DEBUG (executeQuery) - Processing parameters parameter as string.`);
-								parameters = validateJSON(this, parametersInput, i);
-							} else if (typeof parametersInput === 'object' && parametersInput !== null) { // Check if it's a non-null object
-								if (DEBUG) console.log(`DEBUG (executeQuery) - Processing parameters parameter as object.`);
-								parameters = parametersInput;
-							} else {
-								throw new Error(`Parameters must be a JSON string or a JSON object, received type: ${typeof parametersInput}`);
-							}
-							if (DEBUG) console.log(`DEBUG (executeQuery) - Processed parameters (type: ${typeof parameters}):`, JSON.stringify(parameters));
-							
-							// Get options
-							const options = this.getNodeParameter('options', i, {}) as IDataObject;
-							const limit = options.limit as number;
-							const start = options.start as number;
-							
-							// Check if the query already contains LIMIT or START clauses
-							const hasLimit = query.toUpperCase().includes('LIMIT');
-							const hasStart = query.toUpperCase().includes('START');
-							
-							// Modify the query to add pagination if needed
-							let finalQuery = query;
-							if (limit !== undefined && !hasLimit) {
-								finalQuery += ` LIMIT ${limit}`;
-							}
-							if (start !== undefined && !hasStart) {
-								finalQuery += ` START ${start}`;
-							}
-							
-							// Prepare the query based on authentication type
-							finalQuery = prepareSurrealQuery(finalQuery, resolvedCredentials);
-							
-							// Execute the query
-							const result = await client.query(finalQuery, parameters);
-							
-							if (DEBUG) {
-								// DEBUG: Log raw result
-								console.log('DEBUG - Execute Query - Raw query result:', JSON.stringify(result));
-								console.log('DEBUG - Execute Query - Result structure:', JSON.stringify(result.map(r => typeof r)));
-							}
-							
-							// The result is an array of arrays, where each array contains the results of a statement
-							if (Array.isArray(result)) {
-								// Process each result set, filtering out null values
-								for (const resultSet of result.filter(item => item !== null)) {
-									if (Array.isArray(resultSet)) {
-										// For array results, return each item as a separate n8n item
-										const formattedResults = formatArrayResult(resultSet);
-										for (const formattedResult of formattedResults) {
-											returnData.push({
-												...formattedResult,
-												pairedItem: { item: i },
-											});
-										}
-									} else {
-										// For single results, use the formatSingleResult function
-										const formattedResult = formatSingleResult(resultSet);
-										returnData.push({
-											...formattedResult,
-											pairedItem: { item: i },
-										});
-									}
-								}
-							} else {
-								// If the result is not an array, format it as a single result
-								const formattedResult = formatSingleResult(result);
-								returnData.push({
-									...formattedResult,
-									pairedItem: { item: i },
-								});
-							}
-						} catch (error) {
-							if (this.continueOnFail()) {
-								returnData.push({
-									json: { error: (error as JsonObject).message },
-									pairedItem: { item: i },
-								});
-								continue;
-							}
-							throw error;
-						}
-					}
-				}
+				returnData = await handleQueryOperations(operation, client, items, this);
 			}
 			
 			// ----------------------------------------
