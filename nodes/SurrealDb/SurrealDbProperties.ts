@@ -5,6 +5,7 @@ import { systemOperations, systemFields } from './resources/system';
 import { queryOperations, queryFields } from './resources/query';
 import { recordOperations, recordFields } from './resources/record';
 import { tableOperations, tableFields } from './resources/table/table.properties';
+import { fieldOperations, fieldFields } from './resources/field';
 
 /**
  * Node properties array for SurrealDB node
@@ -32,6 +33,11 @@ export const nodeProperties: INodeProperties[] = [
 				description: 'Operations on entire tables',
 			},
 			{
+				name: 'Field',
+				value: 'field',
+				description: 'Operations on table fields',
+			},
+			{
 				name: 'Query',
 				value: 'query',
 				description: 'Execute arbitrary SurrealQL queries',
@@ -48,6 +54,8 @@ export const nodeProperties: INodeProperties[] = [
 	...recordOperations,
 	// Include table operations from modular file
 	...tableOperations,
+	// Include field operations from modular file
+	...fieldOperations,
 	// Include query operations from modular file
 	...queryOperations,
 	// Include system operations from modular file
@@ -58,6 +66,9 @@ export const nodeProperties: INodeProperties[] = [
 	
 	// Include table fields from modular file
 	...tableFields,
+	
+	// Include field fields from modular file
+	...fieldFields,
 	
 	// Include query fields from modular file
 	...queryFields,

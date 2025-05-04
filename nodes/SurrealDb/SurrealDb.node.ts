@@ -20,6 +20,7 @@ import { handleSystemOperations } from './resources/system';
 import { handleQueryOperations } from './resources/query';
 import { handleRecordOperations } from './resources/record';
 import { handleTableOperations } from './resources/table/table.handler';
+import { handleFieldOperations } from './resources/field';
 
 export class SurrealDb implements INodeType {
 	description: INodeTypeDescription = {
@@ -92,6 +93,10 @@ export class SurrealDb implements INodeType {
 			// Resource: Query
 			else if (resource === 'query') {
 				returnData = await handleQueryOperations(operation, client, items, this);
+			}
+			// Resource: Field
+			else if (resource === 'field') {
+				returnData = await handleFieldOperations(operation, client, items, this);
 			}
 		} finally {
 			// Always close the connection

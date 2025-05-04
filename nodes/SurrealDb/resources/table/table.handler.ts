@@ -9,6 +9,7 @@ import { mergeAllRecordsOperation } from './operations/mergeAllRecords.operation
 import { createTableOperation } from './operations/createTable.operation';
 import { deleteTableOperation } from './operations/deleteTable.operation';
 import { listTablesOperation } from './operations/listTables.operation';
+import { getTableOperation } from './operations/getTable.operation';
 
 /**
  * Router for table operations
@@ -22,6 +23,8 @@ export async function handleTableOperations(
 	// Route to the appropriate operation handler
 	if (operation === 'listTables') {
 		return listTablesOperation.execute(client, items, executeFunctions, 0);
+	} else if (operation === 'getTable') {
+		return getTableOperation.execute(client, items, executeFunctions, 0);
 	} else if (operation === 'createTable') {
 		return createTableOperation.execute(client, items, executeFunctions, 0);
 	} else if (operation === 'deleteTable') {

@@ -22,6 +22,12 @@ export const tableOperations: INodeProperties[] = [
 				action: 'List all tables',
 			},
 			{
+				name: 'Get Table',
+				value: 'getTable',
+				description: 'Get detailed definition of a specific table',
+				action: 'Get table definition',
+			},
+			{
 				name: 'Create Table',
 				value: 'createTable',
 				description: 'Create a new table in the database',
@@ -98,6 +104,7 @@ export const tableFields: INodeProperties[] = [
 					'mergeAllRecords',
 					'createTable',
 					'deleteTable',
+					'getTable',
 				],
 			},
 		},
@@ -266,6 +273,7 @@ export const tableFields: INodeProperties[] = [
 				operation: [
 					'createMany',
 					'getMany',
+					'getTable',
 				],
 			},
 		},
