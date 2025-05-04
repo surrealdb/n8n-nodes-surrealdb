@@ -15,13 +15,25 @@ export const fieldOperations: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'List Fields',
+				value: 'listFields',
+				description: 'List all fields on a table',
+				action: 'List all fields',
+			},
+			{
 				name: 'Create Field',
 				value: 'createField',
 				description: 'Create a new field on a table',
 				action: 'Create a field',
 			},
+			{
+				name: 'Delete Field',
+				value: 'deleteField',
+				description: 'Delete a field from a table',
+				action: 'Delete a field',
+			},
 		],
-		default: 'createField',
+		default: 'listFields',
 	},
 ];
 
@@ -33,7 +45,7 @@ export const fieldFields: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Name of the table where the field will be created',
+		description: 'Name of the table where the field will be operated on',
 		displayOptions: {
 			show: {
 				resource: [
@@ -41,6 +53,8 @@ export const fieldFields: INodeProperties[] = [
 				],
 				operation: [
 					'createField',
+					'listFields',
+					'deleteField',
 				],
 			},
 		},
@@ -51,7 +65,7 @@ export const fieldFields: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Name of the field to create',
+		description: 'Name of the field',
 		displayOptions: {
 			show: {
 				resource: [
@@ -59,6 +73,7 @@ export const fieldFields: INodeProperties[] = [
 				],
 				operation: [
 					'createField',
+					'deleteField',
 				],
 			},
 		},
@@ -216,6 +231,41 @@ export const fieldFields: INodeProperties[] = [
 			},
 		},
 	},
+	// Special properties that should always be visible outside of Options collection
+	{
+		displayName: 'Is Flexible',
+		name: 'isFlexible',
+		type: 'boolean',
+		default: false,
+		description: 'Whether the field accepts any data type even if it doesn\'t match the defined type',
+		displayOptions: {
+			show: {
+				resource: [
+					'field',
+				],
+				operation: [
+					'createField',
+				],
+			},
+		},
+	},
+	{
+		displayName: 'Is Read-Only',
+		name: 'isReadOnly',
+		type: 'boolean',
+		default: false,
+		description: 'Whether the field can\'t be modified after it\'s initially set',
+		displayOptions: {
+			show: {
+				resource: [
+					'field',
+				],
+				operation: [
+					'createField',
+				],
+			},
+		},
+	},
 	{
 		displayName: 'Options',
 		name: 'options',
@@ -230,6 +280,8 @@ export const fieldFields: INodeProperties[] = [
 				],
 				operation: [
 					'createField',
+					'listFields',
+					'deleteField',
 				],
 			},
 		},
@@ -240,6 +292,13 @@ export const fieldFields: INodeProperties[] = [
 				type: 'string',
 				default: '',
 				description: 'Default value for the field when not specified (as a SurrealQL expression)',
+				displayOptions: {
+					show: {
+						'/operation': [
+							'createField',
+						],
+					},
+				},
 			},
 			{
 				displayName: 'Assertion',
@@ -251,6 +310,13 @@ export const fieldFields: INodeProperties[] = [
 				default: '',
 				placeholder: '$value > 0 AND $value < 100',
 				description: 'Validation rule for the field (as a SurrealQL expression)',
+				displayOptions: {
+					show: {
+						'/operation': [
+							'createField',
+						],
+					},
+				},
 			},
 			{
 				displayName: 'Is Array',
@@ -258,6 +324,13 @@ export const fieldFields: INodeProperties[] = [
 				type: 'boolean',
 				default: false,
 				description: 'Whether the field should be an array of the specified type',
+				displayOptions: {
+					show: {
+						'/operation': [
+							'createField',
+						],
+					},
+				},
 			},
 			{
 				displayName: 'Is Optional',
@@ -265,20 +338,13 @@ export const fieldFields: INodeProperties[] = [
 				type: 'boolean',
 				default: false,
 				description: 'Whether the field can be null/undefined',
-			},
-			{
-				displayName: 'Is Flexible',
-				name: 'isFlexible',
-				type: 'boolean',
-				default: false,
-				description: 'Whether the field accepts any data type even if it doesn\'t match the defined type',
-			},
-			{
-				displayName: 'Is Read-Only',
-				name: 'isReadOnly',
-				type: 'boolean',
-				default: false,
-				description: 'Whether the field can\'t be modified after it\'s initially set',
+				displayOptions: {
+					show: {
+						'/operation': [
+							'createField',
+						],
+					},
+				},
 			},
 			{
 				displayName: 'Namespace',
