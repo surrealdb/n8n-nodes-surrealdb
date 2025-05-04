@@ -81,12 +81,7 @@ export const deleteFieldOperation: IOperationHandler = {
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
 				returnData.push({
-					json: { 
-						success: false,
-						error: error.message,
-						field: executeFunctions.getNodeParameter('fieldName', itemIndex) as string,
-						table: executeFunctions.getNodeParameter('table', itemIndex) as string,
-					},
+					json: { error: error.message },
 					pairedItem: { item: itemIndex },
 				});
 			} else {

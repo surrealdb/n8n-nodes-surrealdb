@@ -1,8 +1,10 @@
-import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { formatArrayResult } from '../../../utilities';
-import { validateJSON, validateRequiredField } from '../../../GenericFunctions';
+import { prepareSurrealQuery, validateJSON, validateRequiredField } from '../../../GenericFunctions';
 import type { IOperationHandler } from '../../../types/operation.types';
+import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -17,7 +19,12 @@ export const mergeAllRecordsOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
+		const returnData: INodeExecutionData[] = [];
+		
 		try {
+			// Get credentials
+			const credentials = await executeFunctions.getCredentials('surrealDbApi');
+			
 			// Get parameters for the specific item
 			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			validateRequiredField(executeFunctions, table, 'Table', itemIndex);
@@ -30,44 +37,90 @@ export const mergeAllRecordsOperation: IOperationHandler = {
 				table = table.split(':')[0];
 			}
 			
+			// Get options
+			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
+			
+			// Get namespace/database overrides
+			const nodeNamespace = (options.namespace as string)?.trim() || '';
+			const nodeDatabase = (options.database as string)?.trim() || '';
+			
+			// Build the resolved credentials object
+			const resolvedCredentials: ISurrealCredentials = {
+				connectionString: credentials.connectionString as string,
+				authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
+				username: credentials.username as string,
+				password: credentials.password as string,
+				namespace: nodeNamespace || (credentials.namespace as string),
+				database: nodeDatabase || (credentials.database as string),
+			};
+			
 			const dataInput = executeFunctions.getNodeParameter('data', itemIndex); // Get potential object or string
 			// Validate required field based on raw input
 			if (dataInput === undefined || dataInput === null || dataInput === '') {
-				throw new Error('Merge Data is required');
+				throw new NodeOperationError(
+					executeFunctions.getNode(),
+					'Merge Data is required',
+					{ itemIndex }
+				);
 			}
 			
 			// Process data based on type
 			let data: any;
 			if (typeof dataInput === 'string') {
-				if (DEBUG) console.log(`DEBUG (mergeAllRecords) - Processing data parameter as string.`);
+				if (DEBUG) console.log(`DEBUG (mergeAllRecords) - Processing data parameter as string for item ${itemIndex}.`);
 				data = validateJSON(executeFunctions, dataInput, itemIndex);
 			} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-				if (DEBUG) console.log(`DEBUG (mergeAllRecords) - Processing data parameter as object.`);
+				if (DEBUG) console.log(`DEBUG (mergeAllRecords) - Processing data parameter as object for item ${itemIndex}.`);
 				data = dataInput;
 			} else {
-				throw new Error(`Merge Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
+				throw new NodeOperationError(
+					executeFunctions.getNode(),
+					`Merge Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`,
+					{ itemIndex }
+				);
 			}
 			
 			if (DEBUG) {
-				console.log(`DEBUG (mergeAllRecords) - Processed data:`, JSON.stringify(data));
-				console.log(`DEBUG (mergeAllRecords) - Using table:`, table);
+				console.log(`DEBUG (mergeAllRecords) - Processed data for item ${itemIndex}:`, JSON.stringify(data));
+				console.log(`DEBUG (mergeAllRecords) - Using table for item ${itemIndex}:`, table);
 			}
 			
-			// Use the SDK's merge() method directly
-			// This merges the data into all records in the table
-			const result = await client.merge(table, data);
+			// Build the query to merge data into all records in the table, including parameters directly in the query
+			const query = `UPDATE ${table} MERGE ${JSON.stringify(data)} RETURN AFTER;`;
+			
+			// Prepare the query with credentials
+			const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
 			
 			if (DEBUG) {
-				console.log('DEBUG (mergeAllRecords) - Result from merge operation:', JSON.stringify(result));
+				console.log(`DEBUG (mergeAllRecords) - Prepared query for item ${itemIndex}:`, preparedQuery);
 			}
 			
-			const formattedResults = formatArrayResult(result);
+			// Execute the query
+			const result = await client.query(preparedQuery);
 			
-			// Add each record as a separate item
-			const returnData: INodeExecutionData[] = formattedResults.map(formattedResult => ({
-				...formattedResult,
-				pairedItem: { item: itemIndex },
-			}));
+			if (DEBUG) {
+				console.log(`DEBUG (mergeAllRecords) - Result from merge operation for item ${itemIndex}:`, JSON.stringify(result));
+			}
+			
+			// Find the first non-null array in the result
+			// This matches how other operations like getAllRecords process the result
+			const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null;
+			
+			if (recordsArray) {
+				// Format the results - this converts each record to an object with json property
+				const formattedResults = formatArrayResult(recordsArray);
+				
+				// Add each record as a separate item
+				for (const formattedResult of formattedResults) {
+					returnData.push({
+						...formattedResult,
+						pairedItem: { item: itemIndex },
+					});
+				}
+			}
+			
+			// No special handling for empty results - return whatever came back from the database
+			// If no records were affected, we return an empty array
 			
 			return returnData;
 			
