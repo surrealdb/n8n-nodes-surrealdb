@@ -13,15 +13,37 @@ export async function handleFieldOperations(
 	items: INodeExecutionData[],
 	executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
-	// Route to the appropriate operation handler
-	if (operation === 'createField') {
-		return createFieldOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'listFields') {
-		return listFieldsOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'deleteField') {
-		return deleteFieldOperation.execute(client, items, executeFunctions, 0);
+	let returnData: INodeExecutionData[] = [];
+	
+	const itemsLength = items.length;
+	
+	for (let i = 0; i < itemsLength; i++) {
+		try {
+			switch (operation) {
+				case 'createField':
+					returnData = [...returnData, ...(await createFieldOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'listFields':
+					returnData = [...returnData, ...(await listFieldsOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'deleteField':
+					returnData = [...returnData, ...(await deleteFieldOperation.execute(client, items, executeFunctions, i))];
+					break;
+				default:
+					// If the operation is not recognized, just continue
+					break;
+			}
+		} catch (error) {
+			if (executeFunctions.continueOnFail()) {
+				returnData.push({
+					json: { error: (error as Error).message },
+					pairedItem: { item: i },
+				});
+				continue;
+			}
+			throw error;
+		}
 	}
-
-	// If the operation is not recognized, return an empty array
-	return [];
+	
+	return returnData;
 }
