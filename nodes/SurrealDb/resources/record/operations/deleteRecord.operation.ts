@@ -51,19 +51,6 @@ export const deleteRecordOperation: IOperationHandler = {
 			
 			// Create the record ID
 			const recordId = createRecordId(table, validatedId);
-
-			// First check if record exists
-			const existingRecord = await client.select(recordId);
-			
-			// If record doesn't exist, throw error
-			if (existingRecord === null || existingRecord === undefined || 
-				(typeof existingRecord === 'object' && Object.keys(existingRecord).length === 0)) {
-				throw new NodeOperationError(
-					executeFunctions.getNode(),
-					`Cannot delete record: Record not found: ${recordId.toString()}`,
-					{ itemIndex }
-				);
-			}
 			
 			// Execute the delete operation
 			const result = await client.delete(recordId);

@@ -15,8 +15,10 @@ export const executeQueryOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
+		const returnData: INodeExecutionData[] = [];
+
 		try {
-			// Get parameters
+			// Get parameters for the specific item
 			const query = executeFunctions.getNodeParameter('query', itemIndex) as string;
 			validateRequiredField(executeFunctions, query, 'Query', itemIndex);
 			
@@ -80,82 +82,8 @@ export const executeQueryOperation: IOperationHandler = {
 			// Execute the query
 			const result = await client.query(finalQuery, parameters);
 			
-			// Check for errors in the result
-			if (result === null || result === undefined) {
-				throw new NodeOperationError(
-					executeFunctions.getNode(),
-					'Query execution failed: No result returned',
-					{ itemIndex }
-				);
-			}
-			
-			// Check for specific error patterns in the response
-			if (Array.isArray(result)) {
-				// Check if we have completely empty results (could indicate syntax error)
-				if (result.length === 0 || 
-					(result.length === 1 && typeof result[0] === 'object' && Object.keys(result[0]).length === 0)) {
-					// This could be an invalid query - let's check by examining the original query text
-					if (!/^(SELECT|CREATE|DELETE|INSERT|RELATE|UPDATE|DEFINE|REMOVE|INFO|LET|BEGIN|CANCEL|COMMIT|IFELSE|FOR|USE)/i.test(query.trim())) {
-						throw new NodeOperationError(
-							executeFunctions.getNode(),
-							`Invalid query syntax: "${query}" is not a valid SurrealQL query. Query returned empty result.`,
-							{ itemIndex }
-						);
-					}
-				}
-				
-				// Check each result item for errors
-				for (let i = 0; i < result.length; i++) {
-					const resultSet = result[i];
-					
-					// SurrealDB can return errors in various formats
-					if (resultSet && typeof resultSet === 'object') {
-						// Check status error format
-						if ('status' in resultSet && resultSet.status === 'ERR') {
-							throw new NodeOperationError(
-								executeFunctions.getNode(),
-								`Query execution error: ${resultSet.detail || 'Unknown error'}`,
-								{ itemIndex }
-							);
-						}
-						
-						// Check error property format
-						if ('error' in resultSet && resultSet.error) {
-							throw new NodeOperationError(
-								executeFunctions.getNode(),
-								`Query execution error: ${resultSet.error}`,
-								{ itemIndex }
-							);
-						}
-						
-						// Check code error format
-						if ('code' in resultSet && 'details' in resultSet && resultSet.code !== 200) {
-							throw new NodeOperationError(
-								executeFunctions.getNode(),
-								`Query execution error (${resultSet.code}): ${resultSet.details || 'Unknown error'}`,
-								{ itemIndex }
-							);
-						}
-					}
-				}
-			}
-			
-			// Process results
-			let returnData: INodeExecutionData[] = [];
-			
 			// The result is an array of arrays, where each array contains the results of a statement
 			if (Array.isArray(result)) {
-				// Check for completely empty result with no data
-				if (result.length === 1 && typeof result[0] === 'object' && Object.keys(result[0]).length === 0) {
-					return [{
-						json: { 
-							result: null,
-							message: 'Query executed but returned an empty result set. The query may be valid but returned no data, or it may be a statement that doesn\'t return data.'
-						},
-						pairedItem: { item: itemIndex },
-					}];
-				}
-				
 				// Process each result set, filtering out null values
 				for (const resultSet of result.filter(item => item !== null)) {
 					if (Array.isArray(resultSet)) {
@@ -185,30 +113,27 @@ export const executeQueryOperation: IOperationHandler = {
 				});
 			}
 			
-			// If no results were processed, return an empty result indication
+			// If no results were added for this item, add an empty result to maintain item mapping
 			if (returnData.length === 0) {
-				returnData = [{
-					json: { 
-						result: null,
-						message: 'Query executed successfully but returned no results'
-					},
+				returnData.push({
+					json: {},
 					pairedItem: { item: itemIndex },
-				}];
+				});
 			}
-			
-			return returnData;
 			
 		} catch (error) {
 			// Handle errors based on continueOnFail setting
 			if (executeFunctions.continueOnFail()) {
-				return [{
+				returnData.push({
 					json: { error: error.message },
 					pairedItem: { item: itemIndex },
-				}];
+				});
+			} else {
+				// If continueOnFail is not enabled, re-throw the error
+				throw error;
 			}
-			
-			// If continueOnFail is not enabled, re-throw the error
-			throw error;
 		}
+		
+		return returnData;
 	},
 };

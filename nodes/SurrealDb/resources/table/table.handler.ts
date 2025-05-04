@@ -20,29 +20,58 @@ export async function handleTableOperations(
 	items: INodeExecutionData[],
 	executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
-	// Route to the appropriate operation handler
-	if (operation === 'listTables') {
-		return listTablesOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'getTable') {
-		return getTableOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'createTable') {
-		return createTableOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'deleteTable') {
-		return deleteTableOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'getAllRecords') {
-		return getAllRecordsOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'createMany') {
-		return createManyOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'getMany') {
-		return getManyOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'updateAllRecords') {
-		return updateAllRecordsOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'deleteAllRecords') {
-		return deleteAllRecordsOperation.execute(client, items, executeFunctions, 0);
-	} else if (operation === 'mergeAllRecords') {
-		return mergeAllRecordsOperation.execute(client, items, executeFunctions, 0);
+	let returnData: INodeExecutionData[] = [];
+	
+	// Process each item
+	for (let i = 0; i < items.length; i++) {
+		try {
+			// Route to the appropriate operation handler
+			switch (operation) {
+				case 'listTables':
+					returnData = [...returnData, ...(await listTablesOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'getTable':
+					returnData = [...returnData, ...(await getTableOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'createTable':
+					returnData = [...returnData, ...(await createTableOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'deleteTable':
+					returnData = [...returnData, ...(await deleteTableOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'getAllRecords':
+					returnData = [...returnData, ...(await getAllRecordsOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'createMany':
+					returnData = [...returnData, ...(await createManyOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'getMany':
+					returnData = [...returnData, ...(await getManyOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'updateAllRecords':
+					returnData = [...returnData, ...(await updateAllRecordsOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'deleteAllRecords':
+					returnData = [...returnData, ...(await deleteAllRecordsOperation.execute(client, items, executeFunctions, i))];
+					break;
+				case 'mergeAllRecords':
+					returnData = [...returnData, ...(await mergeAllRecordsOperation.execute(client, items, executeFunctions, i))];
+					break;
+				default:
+					// If the operation is not recognized, just continue
+					break;
+			}
+		} catch (error) {
+			if (executeFunctions.continueOnFail()) {
+				returnData.push({
+					json: { error: error.message },
+					pairedItem: { item: i },
+				});
+				continue;
+			}
+			throw error;
+		}
 	}
 
-	// If the operation is not recognized, return an empty array
-	return [];
+	return returnData;
 }

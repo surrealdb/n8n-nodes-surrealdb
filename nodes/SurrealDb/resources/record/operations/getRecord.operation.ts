@@ -16,7 +16,7 @@ export const getRecordOperation: IOperationHandler = {
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
 		try {
-			// Get parameters
+			// Get parameters for the specific item
 			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			const idInput = executeFunctions.getNodeParameter('id', itemIndex) as string;
 
@@ -67,12 +67,8 @@ export const getRecordOperation: IOperationHandler = {
 				}];
 			}
 			
-			// If not found, throw an operation error
-			throw new NodeOperationError(
-				executeFunctions.getNode(),
-				`Record not found: ${recordId.toString()}`,
-				{ itemIndex }
-			);
+			// If not found, return an empty array (standard n8n pattern for "not found")
+			return [];
 			
 		} catch (error) {
 			// Handle errors based on continueOnFail setting

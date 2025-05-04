@@ -73,9 +73,17 @@ export const upsertRecordOperation: IOperationHandler = {
 				...formattedResult,
 				pairedItem: { item: itemIndex },
 			}];
-		} catch (upsertError) {
-			// In case of error, provide detailed information
-			throw new Error(`Error during upsert operation: ${(upsertError as Error).message}`);
+		} catch (error) {
+			// Handle errors based on continueOnFail setting
+			if (executeFunctions.continueOnFail()) {
+				return [{
+					json: { error: error.message },
+					pairedItem: { item: itemIndex },
+				}];
+			}
+			
+			// If continueOnFail is not enabled, re-throw the error
+			throw error;
 		}
 	},
 };
