@@ -6,50 +6,34 @@ import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
 // Set to true to enable debug logging, false to disable
-const DEBUG = true;
+const DEBUG = false;
 
 /**
- * Implementation of the "Delete Table" operation
- * This operation completely removes a table from the database
+ * Implementation of the "Rebuild Index" operation
+ * This operation rebuilds an existing index on a table
  */
-export const deleteTableOperation: IOperationHandler = {
+export const rebuildIndexOperation: IOperationHandler = {
 	async execute(
 		client: Surreal,
 		items: INodeExecutionData[],
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
-		console.log("DEBUGGING: Starting deleteTableOperation execution");
 		const returnData: INodeExecutionData[] = [];
-		
-		// Ensure we have at least one item
-		if (items.length === 0) {
-			console.log("DEBUGGING: No items found, adding a default item");
-			returnData.push({
-				json: { debug: "No input items, processed with default" },
-				pairedItem: { item: 0 },
-			});
-			return returnData;
-		}
 		
 		// Process each item
 		for (let i = 0; i < items.length; i++) {
 			try {
-				console.log(`DEBUGGING: Processing item ${i}`);
 				// Get credentials
 				const credentials = await executeFunctions.getCredentials('surrealDbApi');
 				
 				// Get parameters
-				let table = executeFunctions.getNodeParameter('table', i) as string;
+				const table = executeFunctions.getNodeParameter('table', i) as string;
+				const indexName = executeFunctions.getNodeParameter('indexName', i) as string;
+				
+				// Validate required fields
 				validateRequiredField(executeFunctions, table, 'Table', i);
-				
-				// Ensure table is a string
-				table = String(table || '');
-				
-				// If table contains a colon, use only the part before the colon
-				if (table.includes(':')) {
-					table = table.split(':')[0];
-				}
+				validateRequiredField(executeFunctions, indexName, 'Index Name', i);
 				
 				// Get options
 				const options = executeFunctions.getNodeParameter('options', i, {}) as IDataObject;
@@ -68,13 +52,22 @@ export const deleteTableOperation: IOperationHandler = {
 					database: nodeDatabase || (credentials.database as string),
 				};
 				
-				// Build the query to remove the table
-				const query = `REMOVE TABLE ${table}`;
+				// Build the query to rebuild the index
+				let query = 'REBUILD INDEX';
+				
+				// Add IF EXISTS clause if specified
+				if (options.ifExists === true) {
+					query += ' IF EXISTS';
+				}
+				
+				// Add index name and table
+				query += ` ${indexName} ON TABLE ${table};`;
+				
 				const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
 				
 				if (DEBUG) {
 					// DEBUG: Log query
-					console.log('DEBUG - Delete Table query:', preparedQuery);
+					console.log('DEBUG - Rebuild Index query:', preparedQuery);
 				}
 				
 				// Execute the query
@@ -85,53 +78,35 @@ export const deleteTableOperation: IOperationHandler = {
 					console.log('DEBUG - Raw query result:', JSON.stringify(result));
 				}
 				
-				// Check if the result contains an error
-				const errorResult = Array.isArray(result) && result.length > 0 && result[0] && typeof result[0] === 'object' && 'error' in result[0];
-				
-				if (errorResult) {
-					// Use NodeOperationError for SurrealDB query errors
-					throw new NodeOperationError(
-						executeFunctions.getNode(),
-						`Error deleting table: ${String(result[0].error)}`,
-						{ itemIndex: i }
-					);
-				}
-				
 				// Add the result to the returnData
 				returnData.push({
 					json: {
 						success: true,
+						index: indexName,
 						table,
-						message: `Table ${table} deleted successfully.`,
+						message: `Index ${indexName} has been rebuilt on table ${table}`
 					},
 					pairedItem: { item: i },
 				});
 			} catch (error) {
 				if (executeFunctions.continueOnFail()) {
 					returnData.push({
-						json: { error: error.message },
+						json: { 
+							success: false,
+							error: error.message,
+							index: executeFunctions.getNodeParameter('indexName', i) as string,
+							table: executeFunctions.getNodeParameter('table', i) as string,
+						},
 						pairedItem: { item: i },
 					});
 					continue;
 				}
-				throw error;
+				throw new NodeOperationError(
+					executeFunctions.getNode(),
+					`Error rebuilding index: ${error.message}`,
+					{ itemIndex: i }
+				);
 			}
-		}
-		
-		console.log(`DEBUGGING: Finished processing, returning ${returnData.length} items`);
-		console.log(`DEBUGGING: Return data: ${JSON.stringify(returnData)}`);
-		
-		// Emergency safety - ensure we always return at least one item
-		if (returnData.length === 0) {
-			console.log("DEBUGGING: No items in returnData, adding a fallback item");
-			returnData.push({
-				json: { 
-					debug: "Failed to process input but returning fallback item",
-					success: false,
-					message: "Operation completed with no results" 
-				},
-				pairedItem: { item: 0 },
-			});
 		}
 		
 		return returnData;

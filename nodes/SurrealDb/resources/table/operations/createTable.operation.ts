@@ -1,11 +1,12 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
 // Set to true to enable debug logging, false to disable
-const DEBUG = false;
+const DEBUG = true;
 
 /**
  * Implementation of the "Create Table" operation
@@ -18,11 +19,23 @@ export const createTableOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
+		console.log("DEBUGGING: Starting createTableOperation execution");
 		const returnData: INodeExecutionData[] = [];
+		
+		// Ensure we have at least one item
+		if (items.length === 0) {
+			console.log("DEBUGGING: No items found, adding a default item");
+			returnData.push({
+				json: { debug: "No input items, processed with default" },
+				pairedItem: { item: 0 },
+			});
+			return returnData;
+		}
 		
 		// Process each item
 		for (let i = 0; i < items.length; i++) {
 			try {
+				console.log(`DEBUGGING: Processing item ${i}`);
 				// Get credentials
 				const credentials = await executeFunctions.getCredentials('surrealDbApi');
 				
@@ -105,12 +118,24 @@ export const createTableOperation: IOperationHandler = {
 					console.log('DEBUG - Raw query result:', JSON.stringify(result));
 				}
 				
+				// Check if the result contains an error
+				const errorResult = Array.isArray(result) && result.length > 0 && result[0] && typeof result[0] === 'object' && 'error' in result[0];
+				
+				if (errorResult) {
+					// Use NodeOperationError for SurrealDB query errors
+					throw new NodeOperationError(
+						executeFunctions.getNode(),
+						`Error creating table: ${String(result[0].error)}`,
+						{ itemIndex: i }
+					);
+				}
+				
 				// Add the result to the returnData
 				returnData.push({
 					json: {
 						success: true,
 						table,
-						message: `Table ${table} created successfully`,
+						message: `Table ${table} created successfully.`,
 					},
 					pairedItem: { item: i },
 				});
@@ -124,6 +149,22 @@ export const createTableOperation: IOperationHandler = {
 				}
 				throw error;
 			}
+		}
+		
+		console.log(`DEBUGGING: Finished processing, returning ${returnData.length} items`);
+		console.log(`DEBUGGING: Return data: ${JSON.stringify(returnData)}`);
+		
+		// Emergency safety - ensure we always return at least one item
+		if (returnData.length === 0) {
+			console.log("DEBUGGING: No items in returnData, adding a fallback item");
+			returnData.push({
+				json: { 
+					debug: "Failed to process input but returning fallback item",
+					success: false,
+					message: "Operation completed with no results" 
+				},
+				pairedItem: { item: 0 },
+			});
 		}
 		
 		return returnData;
