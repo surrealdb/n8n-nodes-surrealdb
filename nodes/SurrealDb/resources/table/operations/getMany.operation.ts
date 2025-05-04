@@ -1,4 +1,5 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { formatArrayResult, parseAndValidateRecordId } from '../../../utilities';
 import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
@@ -51,7 +52,11 @@ export const getManyOperation: IOperationHandler = {
 				
 				// Only validate table as required if it couldn't be extracted from the Record IDs
 				if (!table) {
-					throw new Error('Either Table field must be provided or Record IDs must include a table prefix (e.g., "table:id")');
+					throw new NodeOperationError(
+						executeFunctions.getNode(),
+						'Either Table field must be provided or Record IDs must include a table prefix (e.g., "table:id")',
+						{ itemIndex: i }
+					);
 				}
 				validateRequiredField(executeFunctions, idsString, 'Record IDs', i);
 				
@@ -59,7 +64,13 @@ export const getManyOperation: IOperationHandler = {
 				const ids = idsString.split(',').map(id => id?.trim() || '').filter(id => id !== '');
 				
 				if (ids.length === 0) {
-					// If no valid IDs provided after filtering, return no results for this item
+					// If no valid IDs provided after filtering, return empty array with explanation
+					returnData.push({
+						json: { 
+							message: 'No valid record IDs provided. Please provide at least one valid ID.' 
+						},
+						pairedItem: { item: i },
+					});
 					continue; 
 				}
 				
@@ -116,13 +127,47 @@ export const getManyOperation: IOperationHandler = {
 					console.log('DEBUG - Get Many - Raw query result:', JSON.stringify(result));
 				}
 				
-				// Find the first non-null array in the result
-				const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null; // Find first array, even if empty
+				// Check for errors in the result
+				if (result === null || result === undefined) {
+					throw new NodeOperationError(
+						executeFunctions.getNode(),
+						'Query execution failed: No result returned',
+						{ itemIndex: i }
+					);
+				}
 				
-				if (recordsArray) { // Check if an array was found (could be empty)
+				// Check for error responses in the query result
+				if (Array.isArray(result)) {
+					for (const resultItem of result) {
+						if (resultItem && typeof resultItem === 'object') {
+							// Check status error format
+							if ('status' in resultItem && resultItem.status === 'ERR') {
+								const errorDetail = 'detail' in resultItem ? resultItem.detail : 'Unknown error';
+								throw new NodeOperationError(
+									executeFunctions.getNode(),
+									`Query execution error: ${errorDetail}`,
+									{ itemIndex: i }
+								);
+							}
+							
+							// Check error property format
+							if ('error' in resultItem && resultItem.error) {
+								throw new NodeOperationError(
+									executeFunctions.getNode(),
+									`Query execution error: ${resultItem.error}`,
+									{ itemIndex: i }
+								);
+							}
+						}
+					}
+				}
+				
+				// Find the first non-null array in the result
+				const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null;
+				
+				if (recordsArray && recordsArray.length > 0) {
 					// Format the results
-					const records = recordsArray;
-					const formattedResults = formatArrayResult(records); // formatArrayResult([]) returns []
+					const formattedResults = formatArrayResult(recordsArray);
 					
 					// Add each record as a separate item
 					for (const formattedResult of formattedResults) {
@@ -131,8 +176,17 @@ export const getManyOperation: IOperationHandler = {
 							pairedItem: { item: i },
 						});
 					}
+				} else {
+					// If no records found, return a clear message
+					returnData.push({
+						json: { 
+							result: null,
+							message: `No records found for the specified IDs in table '${table}'` 
+						},
+						pairedItem: { item: i },
+					});
 				}
-				// If recordsArray is null or empty, do nothing, resulting in zero items for this input item
+				
 			} catch (error) {
 				if (executeFunctions.continueOnFail()) {
 					returnData.push({
