@@ -2,7 +2,10 @@ import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
 import { validateRequiredField, validateJSON } from '../../../GenericFunctions';
-import { formatSingleResult, createRecordId, parseAndValidateRecordId } from '../../../utilities';
+import { formatSingleResult, createRecordId, parseAndValidateRecordId, debugLog } from '../../../utilities';
+
+// Set to true to enable debug logging, false to disable
+const DEBUG = false;
 
 /**
  * Upsert Record operation handler for Record resource
@@ -14,7 +17,8 @@ export const upsertRecordOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
-		// Get parameters
+		if (DEBUG) debugLog('upsertRecord', 'Starting operation', itemIndex);
+			// Get parameters
 		let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 		const idInput = executeFunctions.getNodeParameter('id', itemIndex) as string;
 

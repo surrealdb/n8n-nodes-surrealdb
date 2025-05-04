@@ -58,7 +58,40 @@ export function formatSingleResult(result: any): INodeExecutionData {
  * Format array result output
  * Standardizes the output format for operations that return an array of results
  * Each item in the array becomes a separate n8n item
+ * @param results The array of results to format
+ * @param itemIndex Optional index of the current item for pairedItem
+ * @returns An array of INodeExecutionData with json property and optionally pairedItem
  */
-export function formatArrayResult(results: any[]): INodeExecutionData[] {
-	return results.map(item => ({ json: item }));
+export function formatArrayResult(results: any[], itemIndex?: number): INodeExecutionData[] {
+	return results.map(item => {
+		const formattedItem: INodeExecutionData = { json: item };
+		// Only add pairedItem if itemIndex is provided
+		if (itemIndex !== undefined) {
+			formattedItem.pairedItem = { item: itemIndex };
+		}
+		return formattedItem;
+	});
+}
+
+/**
+ * Standard debug logging function
+ * Use this for consistent debug log formatting across operations
+ * 
+ * @param operation The name of the operation (e.g., "createRecord", "getAllRecords")
+ * @param message The log message
+ * @param itemIndex The index of the current item (optional)
+ * @param data Additional data to log (optional)
+ */
+export function debugLog(operation: string, message: string, itemIndex?: number, data?: any): void {
+	// Determine if itemIndex should be included in the log
+	const indexPart = itemIndex !== undefined ? ` [item:${itemIndex}]` : '';
+	
+	// Basic log without additional data
+	if (data === undefined) {
+		console.log(`DEBUG (${operation})${indexPart} - ${message}`);
+	} 
+	// Log with additional data
+	else {
+		console.log(`DEBUG (${operation})${indexPart} - ${message}`, data);
+	}
 }

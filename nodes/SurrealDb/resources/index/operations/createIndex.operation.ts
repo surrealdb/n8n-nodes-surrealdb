@@ -136,72 +136,61 @@ export const createIndexOperation: IOperationHandler = {
 			// End the query
 			query += ';';
 			
-			try {
-				// Prepare query for the specific authentication type
-				const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
-				
-				if (DEBUG) {
-					// DEBUG: Log query
-					console.log('DEBUG - Create Index query:', preparedQuery);
-				}
-				
-				// Execute the query
-				const result = await client.query(preparedQuery);
-				
-				if (DEBUG) {
-					// DEBUG: Log raw result
-					console.log('DEBUG - Raw query result:', JSON.stringify(result));
-				}
-				
-				// Check if the result contains an error
-				const errorResult = Array.isArray(result) && result.length > 0 && result[0] && typeof result[0] === 'object' && 'error' in result[0];
-				
-				if (errorResult) {
-					// Use NodeOperationError for SurrealDB query errors
-					throw new NodeOperationError(
-						executeFunctions.getNode(),
-						`Error creating index: ${String(result[0].error)}`,
-						{ itemIndex }
-					);
-				}
-				
-				// No error, operation succeeded - return result WITHOUT success field
-				returnData.push({
-					json: {
-						index: indexName,
-						table,
-						fields: fieldsList,
-						type: indexType,
-						unique: options.isUnique === true,
-						message: `Index ${indexName} created on table ${table}`
-					},
-					pairedItem: { item: itemIndex },
-				});
-			} catch (error) {
-				// Handle query preparation errors
-				if (error.name === 'NodeOperationError') {
-					throw error; // Re-throw NodeOperationErrors as they already have the right format
-				} else {
-					throw new NodeOperationError(
-						executeFunctions.getNode(),
-						`Error preparing or executing query: ${error.message}`,
-						{ itemIndex }
-					);
-				}
+			// Prepare query for the specific authentication type
+			const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
+			
+			if (DEBUG) {
+				// DEBUG: Log query
+				console.log('DEBUG - Create Index query:', preparedQuery);
 			}
+			
+			// Execute the query
+			const result = await client.query(preparedQuery);
+			
+			if (DEBUG) {
+				// DEBUG: Log raw result
+				console.log('DEBUG - Raw query result:', JSON.stringify(result));
+			}
+			
+			// Check if the result contains an error
+			const errorResult = Array.isArray(result) && result.length > 0 && result[0] && typeof result[0] === 'object' && 'error' in result[0];
+			
+			if (errorResult) {
+				// Use NodeOperationError for SurrealDB query errors
+				throw new NodeOperationError(
+					executeFunctions.getNode(),
+					`Error creating index: ${String(result[0].error)}`,
+					{ itemIndex }
+				);
+			}
+			
+			// No error, operation succeeded - return result WITHOUT success field
+			returnData.push({
+				json: {
+					index: indexName,
+					table,
+					fields: fieldsList,
+					type: indexType,
+					unique: options.isUnique === true,
+					message: `Index ${indexName} created on table ${table}`
+				},
+				pairedItem: { item: itemIndex },
+			});
 		} catch (error) {
 			// Check if executeFunctions.continueOnFail() is true
 			if (executeFunctions.continueOnFail()) {
 				// Add error to returnData instead of throwing
 				returnData.push({
-					json: {
-						error: error.message,
-					},
+					json: { error: error.message },
 					pairedItem: { item: itemIndex },
 				});
 			} else {
-				// If continueOnFail is false, re-throw the error
-				throw error;
+				// If continueOnFail is false, throw a properly formatted NodeOperationError
+				throw new NodeOperationError(
+					executeFunctions.getNode(),
+					`Error creating index: ${error.message}`,
+					{ itemIndex }
+				);
 			}
 		}
 		

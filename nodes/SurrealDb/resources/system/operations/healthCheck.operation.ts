@@ -3,6 +3,9 @@ import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 import type { Surreal } from 'surrealdb';
 
+// Set to true to enable debug logging, false to disable
+const DEBUG = false;
+
 /**
  * Health Check operation handler for System resource
  */
@@ -49,6 +52,10 @@ export const healthCheckOperation: IOperationHandler = {
 			method: 'GET',
 			returnFullResponse: true,
 		};
+		
+		if (DEBUG) {
+			console.log(`DEBUG (healthCheck) - Performing health check for item ${itemIndex}:`, healthUrl);
+		}
 
 		try {
 			// Perform the health check request
@@ -63,10 +70,14 @@ export const healthCheckOperation: IOperationHandler = {
 				pairedItem: { item: itemIndex },
 			}];
 		} catch (error) {
-			// Do not throw an error on failure, just return unhealthy status
+			// Special error handling for health check - always return a result with status
+			// rather than throwing an error, regardless of continueOnFail setting.
+			// This is intentionally different from other operations because the purpose
+			// of a health check is to report on status, not throw errors.
 			return [{
 				json: {
 					status: 'unhealthy',
+					error: (error as Error).message, // Add standard 'error' property
 					details: (error as Error).message,
 				},
 				pairedItem: { item: itemIndex },

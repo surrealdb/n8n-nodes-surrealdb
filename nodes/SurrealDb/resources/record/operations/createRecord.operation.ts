@@ -3,7 +3,7 @@ import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
 import { validateRequiredField, validateJSON } from '../../../GenericFunctions';
-import { formatSingleResult } from '../../../utilities';
+import { formatSingleResult, debugLog } from '../../../utilities';
 
 // Set to false to disable debug logging
 const DEBUG = false;
@@ -18,10 +18,10 @@ export const createRecordOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
-		if (DEBUG) console.log("DEBUG - Create Record: Starting operation");
+		if (DEBUG) debugLog('createRecord', 'Starting operation');
 
 		try {
-			if (DEBUG) console.log(`DEBUG - Create Record: Processing item ${itemIndex}`);
+			if (DEBUG) debugLog('createRecord', 'Processing item', itemIndex);
 
 			// Get parameters for the specific item
 			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
@@ -48,10 +48,10 @@ export const createRecordOperation: IOperationHandler = {
 			// Process data based on type
 			let data: any;
 			if (typeof dataInput === 'string') {
-				if (DEBUG) console.log(`DEBUG - Create Record: Processing data parameter as string`);
+				if (DEBUG) debugLog('createRecord', 'Processing data parameter as string', itemIndex);
 				data = validateJSON(executeFunctions, dataInput, itemIndex);
 			} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-				if (DEBUG) console.log(`DEBUG - Create Record: Processing data parameter as object`);
+				if (DEBUG) debugLog('createRecord', 'Processing data parameter as object', itemIndex);
 				data = dataInput;
 			} else {
 				throw new NodeOperationError(
@@ -61,12 +61,12 @@ export const createRecordOperation: IOperationHandler = {
 				);
 			}
 
-			if (DEBUG) console.log(`DEBUG - Create Record: Executing create operation for table ${table}`);
+			if (DEBUG) debugLog('createRecord', `Executing create operation for table ${table}`, itemIndex);
 
 			// Execute the create operation
 			const result = await client.create(table, data);
 
-			if (DEBUG) console.log(`DEBUG - Create Record: Operation successful, formatting result`);
+			if (DEBUG) debugLog('createRecord', 'Operation successful, formatting result', itemIndex);
 
 			// Format the result
 			const formattedResult = formatSingleResult(result);

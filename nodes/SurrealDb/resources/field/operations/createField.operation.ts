@@ -2,6 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
+import { debugLog } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
@@ -26,7 +27,7 @@ export const createFieldOperation: IOperationHandler = {
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
 			
 			// Get parameters
-			const table = executeFunctions.getNodeParameter('table', itemIndex) as string;
+			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			const fieldName = executeFunctions.getNodeParameter('fieldName', itemIndex) as string;
 			const fieldMode = executeFunctions.getNodeParameter('fieldMode', itemIndex) as string;
 			let fieldType = executeFunctions.getNodeParameter('fieldType', itemIndex) as string;
@@ -34,6 +35,14 @@ export const createFieldOperation: IOperationHandler = {
 			// Validate required fields
 			validateRequiredField(executeFunctions, table, 'Table', itemIndex);
 			validateRequiredField(executeFunctions, fieldName, 'Field Name', itemIndex);
+			
+			// Ensure table is a string
+			table = String(table || '');
+			
+			// If table contains a colon, use only the part before the colon
+			if (table.includes(':')) {
+				table = table.split(':')[0];
+			}
 			
 			// Get options
 			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
@@ -120,7 +129,7 @@ export const createFieldOperation: IOperationHandler = {
 			
 			if (DEBUG) {
 				// DEBUG: Log query
-				console.log('DEBUG - Create Field query:', preparedQuery);
+				debugLog('createField', 'Prepared query', itemIndex, preparedQuery);
 			}
 			
 			// Execute the query
@@ -128,7 +137,7 @@ export const createFieldOperation: IOperationHandler = {
 			
 			if (DEBUG) {
 				// DEBUG: Log raw result
-				console.log('DEBUG - Raw query result:', JSON.stringify(result));
+				debugLog('createField', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
 			// Add the result to the returnData

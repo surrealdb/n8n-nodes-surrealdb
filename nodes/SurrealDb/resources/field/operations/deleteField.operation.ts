@@ -2,6 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
+import { debugLog } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
@@ -22,6 +23,7 @@ export const deleteFieldOperation: IOperationHandler = {
 		const returnData: INodeExecutionData[] = [];
 		
 		try {
+			if (DEBUG) debugLog('deleteField', 'Starting operation', itemIndex);
 			// Get credentials
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
 			
@@ -57,7 +59,7 @@ export const deleteFieldOperation: IOperationHandler = {
 			
 			if (DEBUG) {
 				// DEBUG: Log query
-				console.log('DEBUG - Delete Field query:', preparedQuery);
+				debugLog('deleteField', 'Prepared query', itemIndex, preparedQuery);
 			}
 			
 			// Execute the query
@@ -65,16 +67,17 @@ export const deleteFieldOperation: IOperationHandler = {
 			
 			if (DEBUG) {
 				// DEBUG: Log raw result
-				console.log('DEBUG - Raw query result:', JSON.stringify(result));
+				debugLog('deleteField', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
-			// Add the result to the returnData
+			// Add the result to the returnData using standard format
 			returnData.push({
 				json: {
-					success: true,
-					field: fieldName,
-					table,
-					message: `Field ${fieldName} has been deleted from table ${table}`
+					result: {
+						field: fieldName,
+						table,
+						message: `Field ${fieldName} has been deleted from table ${table}`
+					}
 				},
 				pairedItem: { item: itemIndex },
 			});

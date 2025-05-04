@@ -3,6 +3,10 @@ import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery } from '../../../GenericFunctions';
+import { debugLog } from '../../../utilities';
+
+// Set to true to enable debug logging, false to disable
+const DEBUG = false;
 
 /**
  * Version operation handler for System resource
@@ -14,7 +18,8 @@ export const versionOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
-		// Get the credentials from the client (they're already validated and resolved)
+		if (DEBUG) debugLog('version', 'Starting operation', itemIndex);
+			// Get the credentials from the client (they're already validated and resolved)
 		const credentials = await executeFunctions.getCredentials('surrealDbApi');
 		const nodeOptions = executeFunctions.getNodeParameter('options', itemIndex, {}) as any;
 		const nodeNamespace = (nodeOptions.namespace as string)?.trim() || '';

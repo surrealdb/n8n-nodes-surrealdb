@@ -108,15 +108,11 @@ export const mergeAllRecordsOperation: IOperationHandler = {
 			
 			if (recordsArray) {
 				// Format the results - this converts each record to an object with json property
-				const formattedResults = formatArrayResult(recordsArray);
+				// and adds pairedItem with the current itemIndex
+				const formattedResults = formatArrayResult(recordsArray, itemIndex);
 				
-				// Add each record as a separate item
-				for (const formattedResult of formattedResults) {
-					returnData.push({
-						...formattedResult,
-						pairedItem: { item: itemIndex },
-					});
-				}
+				// Add all formatted results to returnData
+				returnData.push(...formattedResults);
 			}
 			
 			// No special handling for empty results - return whatever came back from the database

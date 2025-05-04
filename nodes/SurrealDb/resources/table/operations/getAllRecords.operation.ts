@@ -106,16 +106,12 @@ export const getAllRecordsOperation: IOperationHandler = {
 			const returnData: INodeExecutionData[] = [];
 			
 			if (result && result.length > 0) {
-				// Format the results
-				const formattedResults = formatArrayResult(recordsArray ?? []);
+				// Format the results - this converts each record to an object with json property
+				// and adds pairedItem with the current itemIndex
+				const formattedResults = formatArrayResult(recordsArray ?? [], itemIndex);
 				
-				// Add each record as a separate item
-				for (const formattedResult of formattedResults) {
-					returnData.push({
-						...formattedResult,
-						pairedItem: { item: itemIndex },
-					});
-				}
+				// Add all formatted results to returnData
+				returnData.push(...formattedResults);
 			}
 			
 			return returnData;

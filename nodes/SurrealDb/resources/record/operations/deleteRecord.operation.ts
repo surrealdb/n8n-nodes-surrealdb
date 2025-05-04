@@ -3,7 +3,10 @@ import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
 import { validateRequiredField } from '../../../GenericFunctions';
-import { formatSingleResult, createRecordId, parseAndValidateRecordId } from '../../../utilities';
+import { formatSingleResult, createRecordId, parseAndValidateRecordId, debugLog } from '../../../utilities';
+
+// Set to true to enable debug logging, false to disable
+const DEBUG = false;
 
 /**
  * Delete Record operation handler for Record resource
@@ -16,6 +19,7 @@ export const deleteRecordOperation: IOperationHandler = {
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
 		try {
+			if (DEBUG) debugLog('deleteRecord', 'Starting operation', itemIndex);
 			// Get parameters
 			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			const idInput = executeFunctions.getNodeParameter('id', itemIndex) as string;

@@ -3,7 +3,10 @@ import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
 import { validateRequiredField, validateJSON, prepareSurrealQuery } from '../../../GenericFunctions';
-import { formatSingleResult, formatArrayResult } from '../../../utilities';
+import { formatSingleResult, formatArrayResult, debugLog } from '../../../utilities';
+
+// Set to true to enable debug logging, false to disable
+const DEBUG = false;
 
 /**
  * Execute Query operation handler for Query resource
@@ -18,6 +21,7 @@ export const executeQueryOperation: IOperationHandler = {
 		const returnData: INodeExecutionData[] = [];
 
 		try {
+				if (DEBUG) debugLog('executeQuery', 'Starting operation', itemIndex);
 			// Get parameters for the specific item
 			const query = executeFunctions.getNodeParameter('query', itemIndex) as string;
 			validateRequiredField(executeFunctions, query, 'Query', itemIndex);
@@ -88,13 +92,9 @@ export const executeQueryOperation: IOperationHandler = {
 				for (const resultSet of result.filter(item => item !== null)) {
 					if (Array.isArray(resultSet)) {
 						// For array results, return each item as a separate n8n item
-						const formattedResults = formatArrayResult(resultSet);
-						for (const formattedResult of formattedResults) {
-							returnData.push({
-								...formattedResult,
-								pairedItem: { item: itemIndex },
-							});
-						}
+						// with pairedItem already set
+						const formattedResults = formatArrayResult(resultSet, itemIndex);
+						returnData.push(...formattedResults);
 					} else {
 						// For single results, use the formatSingleResult function
 						const formattedResult = formatSingleResult(resultSet);

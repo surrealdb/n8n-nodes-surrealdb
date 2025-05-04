@@ -34,13 +34,8 @@ export async function handleFieldOperations(
 					break;
 			}
 		} catch (error) {
-			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: (error as Error).message },
-					pairedItem: { item: i },
-				});
-				continue;
-			}
+			// Don't handle errors here, let the operations handle them
+			// This is to avoid double-handling of errors
 			throw error;
 		}
 	}
