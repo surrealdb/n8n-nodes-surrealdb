@@ -10,12 +10,12 @@
   "license": "MIT",
   "homepage": "https://n8n.io",
   "author": {
-    "name": "Your Name",
-    "email": "your.email@example.com"
+    "name": "David Whatley",
+    "email": "nsxdavid@gmail.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/n8n-nodes-surrealdb.git"
+    "url": "https://github.com/nsxdavid/n8n-nodes-surrealdb.git"
   },
   "main": "index.js",
   "scripts": {
