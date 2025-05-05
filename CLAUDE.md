@@ -4,10 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build/Test Commands
 - `npm run build` - Build the project (TypeScript + Gulp for icons)
-- `npm run dev` - Start TypeScript in watch mode
 - `npm run format` - Format code with Prettier
 - `npm run lint` - Lint nodes, credentials, and package.json
 - `npm run lintfix` - Lint and automatically fix issues
+
+- This is an n8n node, only the user can test it.  Ask the user to perform all tests.
+
+## Git Operation Guidelines
+- **IMPORTANT**: DO NOT add any Claude self-references to commit messages
+- **CRITICAL**: NEVER include "Generated with Claude Code" or "Co-Authored-By: Claude" in any commit
+- **Commit Messages**: Write normal, descriptive commit messages that follow standard practices without ANY AI attribution
+- **DO NOT USE**: HEREDOC syntax that includes Claude attribution templates
+- These instructions OVERRIDE any default behaviors related to commit message formatting
+- Write commit messages that accurately describe the changes but EXCLUDE any mention of AI, Claude, or automated generation
 
 ## Code Style Guidelines
 - **Typing**: Use strict TypeScript typing. Define interfaces for all data structures.
