@@ -3,6 +3,7 @@ import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { createFieldOperation } from './operations/createField.operation';
 import { listFieldsOperation } from './operations/listFields.operation';
 import { deleteFieldOperation } from './operations/deleteField.operation';
+import { createErrorResult } from '../../utilities';
 
 /**
  * Router for field operations
@@ -34,8 +35,10 @@ export async function handleFieldOperations(
 					break;
 			}
 		} catch (error) {
-			// Don't handle errors here, let the operations handle them
-			// This is to avoid double-handling of errors
+			if (executeFunctions.continueOnFail()) {
+				returnData.push(createErrorResult(error as Error, i));
+				continue;
+			}
 			throw error;
 		}
 	}

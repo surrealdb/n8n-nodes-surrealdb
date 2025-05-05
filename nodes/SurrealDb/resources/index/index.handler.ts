@@ -5,6 +5,7 @@ import { dropIndexOperation } from './operations/dropIndex.operation';
 import { listIndexesOperation } from './operations/listIndexes.operation';
 import { describeIndexOperation } from './operations/describeIndex.operation';
 import { rebuildIndexOperation } from './operations/rebuildIndex.operation';
+import { createErrorResult } from '../../utilities';
 
 /**
  * Router for index operations
@@ -42,8 +43,10 @@ export async function handleIndexOperations(
 					break;
 			}
 		} catch (error) {
-			// Don't handle errors here, let the operations handle them
-			// This is to avoid double-handling of errors
+			if (executeFunctions.continueOnFail()) {
+				returnData.push(createErrorResult(error as Error, i));
+				continue;
+			}
 			throw error;
 		}
 	}
