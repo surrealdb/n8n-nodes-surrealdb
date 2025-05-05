@@ -1,8 +1,8 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { prepareSurrealQuery, validateRequiredField, cleanTableName } from '../../../GenericFunctions';
+import { prepareSurrealQuery, validateRequiredField, cleanTableName, buildCredentialsObject } from '../../../GenericFunctions';
+import { debugLog } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
-import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
 // Set to false to disable debug logging
 const DEBUG = false;
@@ -48,19 +48,8 @@ export const createTableOperation: IOperationHandler = {
 			// Get credentials
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
 			
-			// Get namespace/database overrides
-			const nodeNamespace = (options.namespace as string)?.trim() || '';
-			const nodeDatabase = (options.database as string)?.trim() || '';
-			
 			// Build the resolved credentials object
-			const resolvedCredentials: ISurrealCredentials = {
-				connectionString: credentials.connectionString as string,
-				authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
-				username: credentials.username as string,
-				password: credentials.password as string,
-				namespace: nodeNamespace || (credentials.namespace as string),
-				database: nodeDatabase || (credentials.database as string),
-			};
+			const resolvedCredentials = buildCredentialsObject(credentials, options);
 			
 			// Get table type and schema mode options
 			const tableType = options.tableType as string || 'NORMAL';
@@ -86,25 +75,28 @@ export const createTableOperation: IOperationHandler = {
 			const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
 			
 			if (DEBUG) {
-				console.log('DEBUG - Create Table query:', preparedQuery);
+				debugLog('createTable', 'Query', itemIndex, preparedQuery);
 			}
 			
 			// Execute the query
 			const result = await client.query(preparedQuery);
 			
 			if (DEBUG) {
-				console.log('DEBUG - Raw query result:', JSON.stringify(result));
+				debugLog('createTable', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
-			// Add the result to the returnData
-			returnData.push({
-				json: {
-					success: true,
-					table,
-					message: `Table ${table} created successfully.`,
-				},
-				pairedItem: { item: itemIndex },
-			});
+			// Process the result - SurrealDB typically returns arrays
+			if (Array.isArray(result)) {
+				returnData.push({
+					json: result[0] || {},
+					pairedItem: { item: itemIndex },
+				});
+			} else {
+				returnData.push({
+					json: result || {},
+					pairedItem: { item: itemIndex },
+				});
+			}
 			
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
