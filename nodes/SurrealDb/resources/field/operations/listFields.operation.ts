@@ -2,7 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField, buildCredentialsObject } from '../../../GenericFunctions';
-import { debugLog, addSuccessResult } from '../../../utilities';
+import { debugLog } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 
 // Set to true to enable debug logging, false to disable
@@ -59,63 +59,11 @@ export const listFieldsOperation: IOperationHandler = {
 			const tableInfo = result[0];
 			
 			if (tableInfo.fields && typeof tableInfo.fields === 'object') {
-				// Convert the fields object to a more user-friendly format
-				const fieldsArray = Object.entries(tableInfo.fields).map(([fieldName, definition]) => {
-					// Process the field definition to extract type, constraints, etc.
-					const definitionStr = definition as string;
-					
-					// Extract field type
-					const typeMatch = definitionStr.match(/TYPE\s+(\S+)/i);
-					const fieldType = typeMatch ? typeMatch[1] : 'unknown';
-					
-					// Check if field is computed (has VALUE keyword)
-					const isComputed = definitionStr.includes(' VALUE ');
-					
-					// Check for READONLY attribute
-					const isReadOnly = definitionStr.includes(' READONLY');
-					
-					// Check for FLEXIBLE attribute
-					const isFlexible = definitionStr.includes(' FLEXIBLE');
-					
-					// Extract permissions
-					const permissionsMatch = definitionStr.match(/PERMISSIONS\s+(\S+)/i);
-					const permissions = permissionsMatch ? permissionsMatch[1] : 'unknown';
-					
-					return {
-						name: fieldName,
-						type: fieldType,
-						definition: definitionStr,
-						isComputed,
-						isReadOnly,
-						isFlexible,
-						permissions,
-					};
+				// Simply return the fields information directly from the SurrealDB response
+				returnData.push({
+					json: tableInfo.fields,
+					pairedItem: { item: itemIndex },
 				});
-				
-				// Add each field as a separate item in the returnData for better n8n integration
-				// This intentionally creates multiple output items per input item
-				for (const field of fieldsArray) {
-					addSuccessResult(returnData, {
-						table,
-						name: field.name,
-						type: field.type,
-						definition: field.definition,
-						isComputed: field.isComputed,
-						isReadOnly: field.isReadOnly,
-						isFlexible: field.isFlexible,
-						permissions: field.permissions,
-						totalFields: fieldsArray.length
-					}, itemIndex);
-				}
-				
-				// If no fields were found, return a single item indicating this
-				if (fieldsArray.length === 0) {
-					addSuccessResult(returnData, {
-						table,
-						message: `No fields found in table ${table}`,
-						totalFields: 0
-					}, itemIndex);
-				}
 			} else {
 				throw new NodeOperationError(
 					executeFunctions.getNode(),
