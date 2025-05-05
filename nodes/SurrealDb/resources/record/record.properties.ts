@@ -104,6 +104,25 @@ export const recordFields: INodeProperties[] = [
 			},
 		},
 	},
+	// Optional Record ID field for createRecord operation
+	{
+		displayName: 'Record ID (Optional)',
+		name: 'id',
+		type: 'string',
+		required: false,
+		default: '',
+		description: 'Optional ID for the new record. If not provided, SurrealDB will auto-generate an ID. Can include table prefix (e.g., "person:john", "product:abc123").',
+		displayOptions: {
+			show: {
+				resource: [
+					'record',
+				],
+				operation: [
+					'createRecord',
+				],
+			},
+		},
+	},
 	{
 		displayName: 'Record ID',
 		name: 'id',
