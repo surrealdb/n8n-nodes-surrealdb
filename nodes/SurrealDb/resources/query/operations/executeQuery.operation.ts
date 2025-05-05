@@ -21,30 +21,30 @@ export const executeQueryOperation: IOperationHandler = {
 
 		try {
 			if (DEBUG) debugLog('executeQuery', 'Starting operation', itemIndex);
-			
+
 			// Get parameters for the specific item
 			const query = executeFunctions.getNodeParameter('query', itemIndex) as string;
 			validateRequiredField(executeFunctions, query, 'Query', itemIndex);
-			
+
 			// Get and validate parameters if provided
 			const parametersInput = executeFunctions.getNodeParameter('parameters', itemIndex, {});
 			const parameters = validateAndParseData(executeFunctions, parametersInput, 'Parameters', itemIndex);
-			
+
 			// Get options
 			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
 			const limit = options.limit as number;
 			const start = options.start as number;
-			
+
 			// Get credentials
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
-			
+
 			// Build credentials object
 			const resolvedCredentials = buildCredentialsObject(credentials, options);
-			
+
 			// Check if the query already contains LIMIT or START clauses
 			const hasLimit = query.toUpperCase().includes('LIMIT');
 			const hasStart = query.toUpperCase().includes('START');
-			
+
 			// Modify the query to add pagination if needed
 			let finalQuery = query;
 			if (limit !== undefined && !hasLimit) {
@@ -53,22 +53,22 @@ export const executeQueryOperation: IOperationHandler = {
 			if (start !== undefined && !hasStart) {
 				finalQuery += ` START ${start}`;
 			}
-			
+
 			// Prepare the query based on authentication type
 			finalQuery = prepareSurrealQuery(finalQuery, resolvedCredentials);
-			
+
 			if (DEBUG) {
 				debugLog('executeQuery', 'Prepared query', itemIndex, finalQuery);
 				debugLog('executeQuery', 'Query parameters', itemIndex, parameters);
 			}
-			
+
 			// Execute the query
 			const result = await client.query(finalQuery, parameters);
-			
+
 			if (DEBUG) {
 				debugLog('executeQuery', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
-			
+
 			// The result is an array of arrays, where each array contains the results of a statement
 			if (Array.isArray(result)) {
 				// Process each result set, filtering out null values
@@ -99,9 +99,7 @@ export const executeQueryOperation: IOperationHandler = {
 					pairedItem: { item: itemIndex },
 				});
 			}
-			
-			// If no results were found, return an empty array (consistent with other operations)
-			
+
 		} catch (error) {
 			// Handle errors based on continueOnFail setting
 			if (executeFunctions.continueOnFail()) {
@@ -113,7 +111,7 @@ export const executeQueryOperation: IOperationHandler = {
 				throw error;
 			}
 		}
-		
+
 		if (DEBUG) debugLog('executeQuery', `Completed, returning ${returnData.length} items`, itemIndex);
 		return returnData;
 	},
