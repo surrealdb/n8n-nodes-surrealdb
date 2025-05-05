@@ -1,6 +1,6 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
+import { prepareSurrealQuery, validateRequiredField, cleanTableName } from '../../../GenericFunctions';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
@@ -25,13 +25,8 @@ export const createTableOperation: IOperationHandler = {
 			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			validateRequiredField(executeFunctions, table, 'Table', itemIndex);
 			
-			// Ensure table is a string
-			table = String(table || '');
-			
-			// If table contains a colon, use only the part before the colon
-			if (table.includes(':')) {
-				table = table.split(':')[0];
-			}
+			// Clean and standardize the table name
+			table = cleanTableName(table);
 			
 			// Get options
 			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;

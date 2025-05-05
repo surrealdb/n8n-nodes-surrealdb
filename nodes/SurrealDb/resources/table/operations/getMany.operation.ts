@@ -1,8 +1,8 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { formatArrayResult, parseAndValidateRecordId } from '../../../utilities';
-import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
+import { formatArrayResult, parseAndValidateRecordId, debugLog } from '../../../utilities';
+import { prepareSurrealQuery, validateRequiredField, cleanTableName } from '../../../GenericFunctions';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
@@ -29,13 +29,8 @@ export const getManyOperation: IOperationHandler = {
 			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			const idsString = executeFunctions.getNodeParameter('ids', itemIndex) as string;
 			
-			// Ensure table is a string
-			table = String(table || '');
-			
-			// If table contains a colon, use only the part before the colon
-			if (table.includes(':')) {
-				table = table.split(':')[0];
-			}
+			// Clean and standardize the table name
+			table = cleanTableName(table);
 			
 			// Ensure idsString is a string
 			const idsStringStr = String(idsString || '');
@@ -95,28 +90,25 @@ export const getManyOperation: IOperationHandler = {
 			};
 			
 			if (DEBUG) {
-				// DEBUG: Log original query and credentials
-				console.log('DEBUG - Get Many - Original query:', query);
-				console.log('DEBUG - Get Many - Authentication type:', resolvedCredentials.authentication);
-				console.log('DEBUG - Get Many - Namespace:', resolvedCredentials.namespace);
-				console.log('DEBUG - Get Many - Database:', resolvedCredentials.database);
-				console.log('DEBUG - Get Many - Record IDs:', recordIdList);
+				debugLog('getMany', 'Original query', itemIndex, query);
+				debugLog('getMany', 'Authentication type', itemIndex, resolvedCredentials.authentication);
+				debugLog('getMany', 'Namespace', itemIndex, resolvedCredentials.namespace);
+				debugLog('getMany', 'Database', itemIndex, resolvedCredentials.database);
+				debugLog('getMany', 'Record IDs', itemIndex, recordIdList);
 			}
 			
 			// Prepare the query based on authentication type
 			query = prepareSurrealQuery(query, resolvedCredentials);
 			
 			if (DEBUG) {
-				// DEBUG: Log modified query
-				console.log('DEBUG - Get Many - Modified query:', query);
+				debugLog('getMany', 'Modified query', itemIndex, query);
 			}
 			
 			// Execute the query (no parameters needed for IDs now)
 			const result = await client.query<[any[]]>(query);
 			
 			if (DEBUG) {
-				// DEBUG: Log raw result
-				console.log('DEBUG - Get Many - Raw query result:', JSON.stringify(result));
+				debugLog('getMany', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
 			// Check for errors in the result

@@ -2,7 +2,7 @@ import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
-import { validateRequiredField } from '../../../GenericFunctions';
+import { validateRequiredField, cleanTableName } from '../../../GenericFunctions';
 import { formatSingleResult, createRecordId, parseAndValidateRecordId, debugLog } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
@@ -24,13 +24,8 @@ export const getRecordOperation: IOperationHandler = {
 			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			const idInput = executeFunctions.getNodeParameter('id', itemIndex) as string;
 
-			// Ensure table is a string
-			table = String(table || '');
-			
-			// If table contains a colon, use only the part before the colon
-			if (table.includes(':')) {
-				table = table.split(':')[0];
-			}
+			// Clean and standardize the table name
+			table = cleanTableName(table);
 
 			// Ensure idInput is a string
 			const idInputStr = String(idInput || '');

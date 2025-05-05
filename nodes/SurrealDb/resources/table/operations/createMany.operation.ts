@@ -1,7 +1,7 @@
 import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { formatArrayResult } from '../../../utilities';
-import { validateJSON, validateRequiredField } from '../../../GenericFunctions';
+import { formatArrayResult, debugLog } from '../../../utilities';
+import { validateJSON, validateRequiredField, cleanTableName } from '../../../GenericFunctions';
 import type { IOperationHandler } from '../../../types/operation.types';
 
 // Set to true to enable debug logging, false to disable
@@ -22,22 +22,17 @@ export const createManyOperation: IOperationHandler = {
 		try {
 			// Get parameters
 			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
-			if (DEBUG) console.log(`DEBUG (createMany) - Retrieved table parameter: ${table}`); // Log table
+			if (DEBUG) debugLog('createMany', 'Retrieved table parameter', itemIndex, table);
 			
-			// Ensure table is a string
-			table = String(table || '');
-			
-			// If table contains a colon, use only the part before the colon
-			if (table.includes(':')) {
-				table = table.split(':')[0];
-			}
+			// Clean and standardize the table name
+			table = cleanTableName(table);
 			
 			validateRequiredField(executeFunctions, table, 'Table', itemIndex); // Validate table after potential extraction
 			
 			const dataInput = executeFunctions.getNodeParameter('data', itemIndex); // Get the parameter named 'data' - could be string or array
 			if (DEBUG) {
-				console.log(`DEBUG (createMany) - Retrieved data parameter raw value:`, dataInput); // Log raw value
-				console.log(`DEBUG (createMany) - Retrieved data parameter type: ${typeof dataInput}`); // Log type
+				debugLog('createMany', 'Retrieved data parameter raw value', itemIndex, dataInput);
+				debugLog('createMany', 'Retrieved data parameter type', itemIndex, typeof dataInput);
 			}
 			
 			// Validate required field based on raw input
@@ -49,11 +44,11 @@ export const createManyOperation: IOperationHandler = {
 			let data: any;
 			if (typeof dataInput === 'string') {
 				// If it's a string, parse and validate as JSON
-				if (DEBUG) console.log(`DEBUG (createMany) - Processing data parameter as string.`);
+				if (DEBUG) debugLog('createMany', 'Processing data parameter as string', itemIndex);
 				data = validateJSON(executeFunctions, dataInput, itemIndex);
 			} else if (Array.isArray(dataInput)) {
 				// If it's already an array, use it directly
-				if (DEBUG) console.log(`DEBUG (createMany) - Processing data parameter as array.`);
+				if (DEBUG) debugLog('createMany', 'Processing data parameter as array', itemIndex);
 				data = dataInput;
 				// Optional: Add validation here to ensure it's an array of objects if needed
 			} else {
@@ -65,7 +60,7 @@ export const createManyOperation: IOperationHandler = {
 			if (!Array.isArray(data)) {
 				throw new Error('Processed Records Data must be an array');
 			}
-			if (DEBUG) console.log(`DEBUG (createMany) - Processed data (type: ${typeof data}):`, JSON.stringify(data)); // Log processed data
+			if (DEBUG) debugLog('createMany', 'Processed data', itemIndex, JSON.stringify(data));
 			
 			// Execute the insert operation to create multiple records
 			// The insert method accepts an array of objects directly
