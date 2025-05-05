@@ -51,7 +51,7 @@ export function parseAndValidateRecordId(recordIdString: string | any, expectedT
  * Standardizes the output format for operations that return a single result
  */
 export function formatSingleResult(result: any): INodeExecutionData {
-	return { json: { result } };
+	return { json: result };
 }
 
 /**
