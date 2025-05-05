@@ -7,10 +7,11 @@ import { recordOperations, recordFields } from './resources/record';
 import { tableOperations, tableFields } from './resources/table/table.properties';
 import { fieldOperations, fieldFields } from './resources/field';
 import { indexOperations, indexFields } from './resources/index';
+import { relationshipOperations, relationshipFields } from './resources/relationship';
 
 /**
  * Node properties array for SurrealDB node
- * 
+ *
  * Following a modular architecture:
  * 1. Resource selector comes first
  * 2. Each resource module contributes its operations
@@ -44,6 +45,11 @@ export const nodeProperties: INodeProperties[] = [
 				description: 'Operations on table indexes',
 			},
 			{
+				name: 'Relationship',
+				value: 'relationship',
+				description: 'Operations on record relationships (graph edges)',
+			},
+			{
 				name: 'Query',
 				value: 'query',
 				description: 'Execute arbitrary SurrealQL queries',
@@ -64,6 +70,8 @@ export const nodeProperties: INodeProperties[] = [
 	...fieldOperations,
 	// Include index operations from modular file
 	...indexOperations,
+	// Include relationship operations from modular file
+	...relationshipOperations,
 	// Include query operations from modular file
 	...queryOperations,
 	// Include system operations from modular file
@@ -71,16 +79,19 @@ export const nodeProperties: INodeProperties[] = [
 
 	// Include record fields from modular file
 	...recordFields,
-	
+
 	// Include table fields from modular file
 	...tableFields,
-	
+
 	// Include field fields from modular file
 	...fieldFields,
-	
+
 	// Include index fields from modular file
 	...indexFields,
-	
+
+	// Include relationship fields from modular file
+	...relationshipFields,
+
 	// Include query fields from modular file
 	...queryFields,
 
