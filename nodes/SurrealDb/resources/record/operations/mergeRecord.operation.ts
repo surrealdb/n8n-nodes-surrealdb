@@ -1,9 +1,9 @@
-import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
 import { validateRequiredField, validateAndParseData, cleanTableName } from '../../../GenericFunctions';
-import { createRecordId, parseAndValidateRecordId, debugLog, addSuccessResult, addErrorResult } from '../../../utilities';
+import { createRecordId, parseAndValidateRecordId, debugLog, addErrorResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -29,7 +29,7 @@ export const mergeRecordOperation: IOperationHandler = {
 
 			// Ensure idInput is a string
 			const idInputStr = String(idInput || '');
-			
+
 			// If no table is specified but idInput has a table prefix, use the extracted table
 			if (!table && idInputStr.includes(':')) {
 				table = idInputStr.split(':')[0];
@@ -47,17 +47,17 @@ export const mergeRecordOperation: IOperationHandler = {
 
 			// Parse and validate the record ID string
 			const validatedId = parseAndValidateRecordId(idInput, table, executeFunctions.getNode(), itemIndex);
-			
+
 			// Get and validate record data
 			const dataInput = executeFunctions.getNodeParameter('data', itemIndex);
 			const data = validateAndParseData(executeFunctions, dataInput, 'Data', itemIndex);
-			
+
 			// Create the record ID
 			const recordId = createRecordId(table, validatedId);
-			
+
 			// Execute the merge operation
 			const result = await client.merge(recordId, data);
-			
+
 			// Check if the operation was successful
 			if (result === null || result === undefined) {
 				throw new NodeOperationError(
@@ -66,30 +66,19 @@ export const mergeRecordOperation: IOperationHandler = {
 					{ itemIndex }
 				);
 			}
-			
+
 			// Initialize the return data array
 			const returnData: INodeExecutionData[] = [];
-			
-			// Check if result is an empty object
-			if (typeof result === 'object' && Object.keys(result).length === 0) {
-				// After merge, fetch the complete record to return
-				const updatedRecord = await client.select(recordId);
-				
-				if (updatedRecord === null || updatedRecord === undefined) {
-					// This shouldn't happen if merge succeeded, but just in case
-					addSuccessResult(returnData, { 
-						success: true, 
-						message: `Record ${recordId.toString()} was merged successfully but couldn't be retrieved.` 
-					}, itemIndex);
-				} else {
-					// Return the updated record
-					addSuccessResult(returnData, updatedRecord, itemIndex);
-				}
-			} else {
-				// Add the result to return data
-				addSuccessResult(returnData, result, itemIndex);
-			}
-			
+
+			// Return the raw SurrealDB response directly without transformation
+			// This respects SurrealDB's native data format and ensures future compatibility
+			if (DEBUG) debugLog('mergeRecord', 'Raw result', itemIndex, JSON.stringify(result));
+
+			returnData.push({
+				json: result as unknown as IDataObject,
+				pairedItem: { item: itemIndex },
+			});
+
 			return returnData;
 		} catch (error) {
 			// Handle errors based on continueOnFail setting
@@ -98,7 +87,7 @@ export const mergeRecordOperation: IOperationHandler = {
 				addErrorResult(returnData, error, itemIndex);
 				return returnData;
 			}
-			
+
 			// If continueOnFail is not enabled, re-throw the error
 			throw error;
 		}
