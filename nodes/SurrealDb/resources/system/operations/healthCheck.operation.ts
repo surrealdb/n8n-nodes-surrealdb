@@ -68,12 +68,10 @@ export const healthCheckOperation: IOperationHandler = {
 
 			if (DEBUG) debugLog('healthCheck', 'Health check successful', itemIndex);
 
-			// Format the result with standard result structure using the utility function
+			// Format the result directly without result wrapper
 			addSuccessResult(returnData, {
-				result: {
-					status: 'healthy',
-					details: response,
-				}
+				status: 'healthy',
+				details: response,
 			}, itemIndex);
 		} catch (error) {
 			// Special error handling for health check - always return a result with status
@@ -84,11 +82,9 @@ export const healthCheckOperation: IOperationHandler = {
 
 			// Add unhealthy status result using the utility function
 			addSuccessResult(returnData, {
-				result: {
-					status: 'unhealthy',
-					error: (error as Error).message,
-					details: (error as Error).message,
-				}
+				status: 'unhealthy',
+				error: (error as Error).message,
+				details: (error as Error).message,
 			}, itemIndex);
 		}
 

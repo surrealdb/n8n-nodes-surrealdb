@@ -25,30 +25,7 @@ This document serves as a checklist of remaining inconsistencies and issues in t
 *** RESOLVED ***
 
 ### 3.2. Inconsistent Return Data Structure
-- **Files**: System operations (healthCheck.operation.ts, version.operation.ts)
-  - **Issue**: Different return data structures across operations
-  - **Fix**: Standardize return data structure to consistently use the `result` property wrapper:
-    ```typescript
-    // Replace this (in version.operation.ts):
-    return [{
-        json: {
-            version,
-            details,
-        },
-        pairedItem: { item: itemIndex },
-    }];
-
-    // With this:
-    return [{
-        json: {
-            result: {
-                version,
-                details,
-            }
-        },
-        pairedItem: { item: itemIndex },
-    }];
-    ```
+*** RESOLVED ***
 
 ## 4. Debug Logging Inconsistencies
 
