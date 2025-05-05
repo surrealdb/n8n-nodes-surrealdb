@@ -1,6 +1,7 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery } from '../../../GenericFunctions';
+import { debugLog, addErrorResult } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
@@ -46,14 +47,14 @@ export const listTablesOperation: IOperationHandler = {
 			const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
 			
 			if (DEBUG) {
-				console.log('DEBUG - List Tables query:', preparedQuery);
+				debugLog('listTables', 'Query', itemIndex, preparedQuery);
 			}
 			
 			// Execute the query
 			const result = await client.query(preparedQuery);
 			
 			if (DEBUG) {
-				console.log('DEBUG - Raw query result:', JSON.stringify(result));
+				debugLog('listTables', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
 			// Process the result based on the observed structure in debug output
@@ -112,10 +113,7 @@ export const listTablesOperation: IOperationHandler = {
 			}
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				});
+				addErrorResult(returnData, error, itemIndex);
 			} else {
 				throw error;
 			}

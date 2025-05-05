@@ -2,7 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
-import { debugLog } from '../../../utilities';
+import { debugLog, addErrorResult } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
@@ -83,10 +83,7 @@ export const deleteFieldOperation: IOperationHandler = {
 			});
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				});
+				addErrorResult(returnData, error, itemIndex);
 			} else {
 				throw new NodeOperationError(
 					executeFunctions.getNode(),

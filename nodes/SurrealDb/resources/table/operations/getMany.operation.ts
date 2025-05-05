@@ -1,7 +1,7 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { formatArrayResult, parseAndValidateRecordId, debugLog } from '../../../utilities';
+import { formatArrayResult, parseAndValidateRecordId, debugLog, addErrorResult } from '../../../utilities';
 import { prepareSurrealQuery, validateRequiredField, cleanTableName } from '../../../GenericFunctions';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
@@ -165,10 +165,7 @@ export const getManyOperation: IOperationHandler = {
 			
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				});
+				addErrorResult(returnData, error, itemIndex);
 			} else {
 				throw error;
 			}

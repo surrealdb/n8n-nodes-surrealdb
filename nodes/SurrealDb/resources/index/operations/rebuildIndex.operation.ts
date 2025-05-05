@@ -2,6 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
+import { debugLog, addErrorResult } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
@@ -65,7 +66,7 @@ export const rebuildIndexOperation: IOperationHandler = {
 			
 			if (DEBUG) {
 				// DEBUG: Log query
-				console.log('DEBUG - Rebuild Index query:', preparedQuery);
+				debugLog('rebuildIndex', 'Query', itemIndex, preparedQuery);
 			}
 			
 			// Execute the query
@@ -73,7 +74,7 @@ export const rebuildIndexOperation: IOperationHandler = {
 			
 			if (DEBUG) {
 				// DEBUG: Log raw result
-				console.log('DEBUG - Raw query result:', JSON.stringify(result));
+				debugLog('rebuildIndex', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
 			// Add the result to the returnData
@@ -88,15 +89,7 @@ export const rebuildIndexOperation: IOperationHandler = {
 			});
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { 
-						success: false,
-						error: error.message,
-						index: executeFunctions.getNodeParameter('indexName', itemIndex) as string,
-						table: executeFunctions.getNodeParameter('table', itemIndex) as string,
-					},
-					pairedItem: { item: itemIndex },
-				});
+				addErrorResult(returnData, error, itemIndex);
 			} else {
 				throw new NodeOperationError(
 					executeFunctions.getNode(),

@@ -6,6 +6,7 @@ import { updateRecordOperation } from './operations/updateRecord.operation';
 import { mergeRecordOperation } from './operations/mergeRecord.operation';
 import { deleteRecordOperation } from './operations/deleteRecord.operation';
 import { upsertRecordOperation } from './operations/upsertRecord.operation';
+import { createErrorResult } from '../../utilities';
 
 /**
  * Handle all operations for the Record resource
@@ -46,10 +47,7 @@ export async function handleRecordOperations(
 			}
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: (error as Error).message },
-					pairedItem: { item: i },
-				});
+				returnData.push(createErrorResult(error as Error, i));
 				continue;
 			}
 			throw error;

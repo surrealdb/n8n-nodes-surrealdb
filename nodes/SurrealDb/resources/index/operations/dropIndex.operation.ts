@@ -2,7 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField, buildCredentialsObject, checkQueryResult } from '../../../GenericFunctions';
-import { debugLog } from '../../../utilities';
+import { debugLog, addErrorResult } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 
 // Set to true to enable debug logging, false to disable
@@ -92,11 +92,8 @@ export const dropIndexOperation: IOperationHandler = {
 				// Handle error based on continueOnFail setting
 				if (executeFunctions.continueOnFail()) {
 					if (DEBUG) debugLog('dropIndex', 'Error in result with continueOnFail enabled', itemIndex, resultCheck.errorMessage);
-					// Add error information to output
-					returnData.push({
-						json: { error: resultCheck.errorMessage },
-						pairedItem: { item: itemIndex },
-					});
+					// Add error information to output using utility function
+					addErrorResult(returnData, resultCheck.errorMessage || 'Unknown error', itemIndex);
 				} else {
 					// If continueOnFail is not enabled, throw a properly formatted NodeOperationError
 					if (DEBUG) debugLog('dropIndex', 'Error in result, stopping execution', itemIndex, resultCheck.errorMessage);
@@ -111,11 +108,8 @@ export const dropIndexOperation: IOperationHandler = {
 			// Handle errors based on continueOnFail setting
 			if (executeFunctions.continueOnFail()) {
 				if (DEBUG) debugLog('dropIndex', 'Error with continueOnFail enabled', itemIndex, error.message);
-				// Add error information to output
-				returnData.push({
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				});
+				// Add error information to output using utility function
+				addErrorResult(returnData, error, itemIndex);
 			} else {
 				// If continueOnFail is not enabled, throw a properly formatted NodeOperationError
 				if (DEBUG) debugLog('dropIndex', 'Error, stopping execution', itemIndex, error.message);

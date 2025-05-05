@@ -10,6 +10,7 @@ import { createTableOperation } from './operations/createTable.operation';
 import { deleteTableOperation } from './operations/deleteTable.operation';
 import { listTablesOperation } from './operations/listTables.operation';
 import { getTableOperation } from './operations/getTable.operation';
+import { createErrorResult } from '../../utilities';
 
 /**
  * Router for table operations
@@ -63,10 +64,7 @@ export async function handleTableOperations(
 			}
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: error.message },
-					pairedItem: { item: i },
-				});
+				returnData.push(createErrorResult(error, i));
 				continue;
 			}
 			throw error;

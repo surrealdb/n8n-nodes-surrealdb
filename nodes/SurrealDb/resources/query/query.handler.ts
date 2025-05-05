@@ -1,6 +1,7 @@
 import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { executeQueryOperation } from './operations/executeQuery.operation';
+import { createErrorResult } from '../../utilities';
 
 /**
  * Handle all operations for the Query resource
@@ -26,10 +27,7 @@ export async function handleQueryOperations(
 			}
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: (error as Error).message },
-					pairedItem: { item: i },
-				});
+				returnData.push(createErrorResult(error as Error, i));
 				continue;
 			}
 			throw error;

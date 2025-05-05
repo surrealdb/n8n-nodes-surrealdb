@@ -2,6 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
+import { addErrorResult } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
@@ -208,14 +209,8 @@ export const listIndexesOperation: IOperationHandler = {
 		} catch (error) {
 			// Check if executeFunctions.continueOnFail() is true
 			if (executeFunctions.continueOnFail()) {
-				// Add error to returnData instead of throwing
-				returnData.push({
-					json: {
-						error: error.message,
-						table: executeFunctions.getNodeParameter('table', itemIndex, ''),
-					},
-					pairedItem: { item: itemIndex },
-				});
+				// Add error to returnData using utility function
+				addErrorResult(returnData, error, itemIndex);
 			} else {
 				// If continueOnFail is false, re-throw the error
 				throw error;
