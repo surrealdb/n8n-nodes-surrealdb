@@ -3,7 +3,7 @@ import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
 import { validateRequiredField, validateAndParseData, cleanTableName, buildCredentialsObject } from '../../../GenericFunctions';
-import { createRecordId, debugLog, addErrorResult } from '../../../utilities';
+import { createRecordId, debugLog, addErrorResult, addSuccessResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -73,15 +73,9 @@ export const createRecordOperation: IOperationHandler = {
 
 			// Handle null/undefined result
 			if (result === null || result === undefined) {
-				returnData.push({
-					json: {} as IDataObject, // Empty object for null/undefined results
-					pairedItem: { item: itemIndex },
-				});
+				addSuccessResult(returnData, {} as IDataObject, itemIndex); // Empty object for null/undefined results
 			} else {
-				returnData.push({
-					json: result as unknown as IDataObject,
-					pairedItem: { item: itemIndex },
-				});
+				addSuccessResult(returnData, result as unknown as IDataObject, itemIndex);
 			}
 
 		} catch (error) {

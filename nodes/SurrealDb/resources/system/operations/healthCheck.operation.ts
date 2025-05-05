@@ -2,7 +2,7 @@ import type { IExecuteFunctions, INodeExecutionData, IHttpRequestOptions } from 
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 import type { Surreal } from 'surrealdb';
-import { debugLog } from '../../../utilities';
+import { debugLog, addSuccessResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -18,15 +18,15 @@ export const healthCheckOperation: IOperationHandler = {
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
 		const returnData: INodeExecutionData[] = [];
-		
+
 		if (DEBUG) debugLog('healthCheck', 'Starting operation', itemIndex);
-		
+
 		// Get the credentials from the client (they're already validated and resolved)
 		const credentials = await executeFunctions.getCredentials('surrealDbApi');
 		const nodeOptions = executeFunctions.getNodeParameter('options', itemIndex, {}) as any;
 		const nodeNamespace = (nodeOptions.namespace as string)?.trim() || '';
 		const nodeDatabase = (nodeOptions.database as string)?.trim() || '';
-		
+
 		const resolvedCredentials = {
 			connectionString: credentials.connectionString as string,
 			authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
@@ -57,7 +57,7 @@ export const healthCheckOperation: IOperationHandler = {
 			method: 'GET',
 			returnFullResponse: true,
 		};
-		
+
 		if (DEBUG) {
 			debugLog('healthCheck', 'Performing health check', itemIndex, healthUrl);
 		}
@@ -67,36 +67,31 @@ export const healthCheckOperation: IOperationHandler = {
 			const response = await executeFunctions.helpers.httpRequest(requestOptions);
 
 			if (DEBUG) debugLog('healthCheck', 'Health check successful', itemIndex);
-			
-			// Format the result with standard result structure
-			returnData.push({
-				json: {
-					result: {
-						status: 'healthy',
-						details: response,
-					}
-				},
-				pairedItem: { item: itemIndex },
-			});
+
+			// Format the result with standard result structure using the utility function
+			addSuccessResult(returnData, {
+				result: {
+					status: 'healthy',
+					details: response,
+				}
+			}, itemIndex);
 		} catch (error) {
 			// Special error handling for health check - always return a result with status
 			// rather than throwing an error, regardless of continueOnFail setting.
 			// This is intentionally different from other operations because the purpose
 			// of a health check is to report on status, not throw errors.
 			if (DEBUG) debugLog('healthCheck', 'Health check failed', itemIndex, (error as Error).message);
-			
-			returnData.push({
-				json: {
-					result: {
-						status: 'unhealthy',
-						error: (error as Error).message,
-						details: (error as Error).message,
-					}
-				},
-				pairedItem: { item: itemIndex },
-			});
+
+			// Add unhealthy status result using the utility function
+			addSuccessResult(returnData, {
+				result: {
+					status: 'unhealthy',
+					error: (error as Error).message,
+					details: (error as Error).message,
+				}
+			}, itemIndex);
 		}
-		
+
 		if (DEBUG) debugLog('healthCheck', `Completed, returning ${returnData.length} items`, itemIndex);
 		return returnData;
 	},

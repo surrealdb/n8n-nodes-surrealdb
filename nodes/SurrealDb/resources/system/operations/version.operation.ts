@@ -3,7 +3,7 @@ import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery } from '../../../GenericFunctions';
-import { debugLog } from '../../../utilities';
+import { debugLog, addSuccessResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -24,7 +24,7 @@ export const versionOperation: IOperationHandler = {
 		const nodeOptions = executeFunctions.getNodeParameter('options', itemIndex, {}) as any;
 		const nodeNamespace = (nodeOptions.namespace as string)?.trim() || '';
 		const nodeDatabase = (nodeOptions.database as string)?.trim() || '';
-		
+
 		const resolvedCredentials = {
 			connectionString: credentials.connectionString as string,
 			authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
@@ -91,13 +91,12 @@ export const versionOperation: IOperationHandler = {
 			}
 		}
 
-		// Format the result
-		return [{
-			json: {
-				version,
-				details,
-			},
-			pairedItem: { item: itemIndex },
-		}];
+		// Format the result using the utility function
+		const returnData: INodeExecutionData[] = [];
+		addSuccessResult(returnData, {
+			version,
+			details,
+		}, itemIndex);
+		return returnData;
 	},
 };

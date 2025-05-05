@@ -2,7 +2,7 @@ import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-wor
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField, buildCredentialsObject, checkQueryResult } from '../../../GenericFunctions';
-import { debugLog } from '../../../utilities';
+import { debugLog, addSuccessResult } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 
 // Set to true to enable debug logging, false to disable
@@ -109,10 +109,7 @@ export const createIndexOperation: IOperationHandler = {
 			if (DEBUG) debugLog('createIndex', 'Success for item', itemIndex);
 			// For CREATE INDEX operations, SurrealDB typically returns [null]
 			// We need to ensure we always return a valid json property for n8n
-			returnData.push({
-				json: {}, // Empty object is the minimal valid json property
-				pairedItem: { item: itemIndex },
-			});
+			addSuccessResult(returnData, {}, itemIndex); // Empty object is the minimal valid json property
 		} else {
 			// If there's an error in the result, throw it to be handled at the handler level
 			throw new NodeOperationError(
