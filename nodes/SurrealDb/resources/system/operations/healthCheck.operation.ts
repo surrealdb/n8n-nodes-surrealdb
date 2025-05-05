@@ -1,7 +1,7 @@
-import type { IExecuteFunctions, INodeExecutionData, IHttpRequestOptions } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, IHttpRequestOptions, IDataObject } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
-import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 import type { Surreal } from 'surrealdb';
+import { buildCredentialsObject } from '../../../GenericFunctions';
 import { debugLog, addSuccessResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
@@ -23,18 +23,10 @@ export const healthCheckOperation: IOperationHandler = {
 
 		// Get the credentials from the client (they're already validated and resolved)
 		const credentials = await executeFunctions.getCredentials('surrealDbApi');
-		const nodeOptions = executeFunctions.getNodeParameter('options', itemIndex, {}) as any;
-		const nodeNamespace = (nodeOptions.namespace as string)?.trim() || '';
-		const nodeDatabase = (nodeOptions.database as string)?.trim() || '';
+		const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
 
-		const resolvedCredentials = {
-			connectionString: credentials.connectionString as string,
-			authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
-			username: credentials.username as string,
-			password: credentials.password as string,
-			namespace: nodeNamespace || (credentials.namespace as string),
-			database: nodeDatabase || (credentials.database as string),
-		} as ISurrealCredentials;
+		// Build the resolved credentials object using utility function
+		const resolvedCredentials = buildCredentialsObject(credentials, options);
 
 		// Get the base URL from the connection string
 		// Remove /rpc if it exists

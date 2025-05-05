@@ -30,39 +30,12 @@ This document serves as a checklist of remaining inconsistencies and issues in t
 ## 4. Debug Logging Inconsistencies
 
 ### 4.1. Inconsistent Debug Logging Patterns
-- **Files**: rebuildIndex.operation.ts and some older operations
-  - **Issue**: Some operations use direct console.log calls instead of the debugLog utility function
-  - **Fix**: Replace all direct console.log calls with the debugLog utility function:
-    ```typescript
-    // Replace this:
-    if (DEBUG) {
-        console.log('DEBUG - Operation: message', data);
-    }
-
-    // With this:
-    if (DEBUG) debugLog('operation', 'message', itemIndex, data);
-    ```
+*** RESOLVED ***
 
 ## 5. Credentials Handling Inconsistencies
 
 ### 5.1. Inconsistent Credentials Object Creation
-- **Files**: healthCheck.operation.ts and some older operations
-  - **Issue**: Some operations manually build the credentials object while others use the utility function
-  - **Fix**: Standardize all operations to use the buildCredentialsObject utility function:
-    ```typescript
-    // Replace this:
-    const resolvedCredentials: ISurrealCredentials = {
-        connectionString: credentials.connectionString as string,
-        authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
-        username: credentials.username as string,
-        password: credentials.password as string,
-        namespace: nodeNamespace || (credentials.namespace as string),
-        database: nodeDatabase || (credentials.database as string),
-    };
-
-    // With this:
-    const resolvedCredentials = buildCredentialsObject(credentials, options);
-    ```
+*** RESOLVED ***
 
 ## 6. Empty Result Handling Inconsistencies
 
