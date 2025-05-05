@@ -5,7 +5,7 @@ import { dropIndexOperation } from './operations/dropIndex.operation';
 import { listIndexesOperation } from './operations/listIndexes.operation';
 import { describeIndexOperation } from './operations/describeIndex.operation';
 import { rebuildIndexOperation } from './operations/rebuildIndex.operation';
-import { createErrorResult } from '../../utilities';
+//import { createErrorResult } from '../../utilities';
 
 /**
  * Router for index operations
@@ -44,7 +44,13 @@ export async function handleIndexOperations(
 			}
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push(createErrorResult(error as Error, i));
+				// Structure the error object exactly as n8n expects
+				returnData.push({
+					json: {
+						error: error.message || String(error)
+					},
+					pairedItem: { item: i },
+				});
 				continue;
 			}
 			throw error;

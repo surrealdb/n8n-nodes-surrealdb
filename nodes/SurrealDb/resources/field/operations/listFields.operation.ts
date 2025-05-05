@@ -21,62 +21,74 @@ export const listFieldsOperation: IOperationHandler = {
 	): Promise<INodeExecutionData[]> {
 		const returnData: INodeExecutionData[] = [];
 		
-		// Get credentials
-		const credentials = await executeFunctions.getCredentials('surrealDbApi');
-		
-		// Get parameters
-		const table = executeFunctions.getNodeParameter('table', itemIndex) as string;
-		
-		// Validate required fields
-		validateRequiredField(executeFunctions, table, 'Table', itemIndex);
-		
-		// Get options
-		const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
-		
-		// Build the resolved credentials object
-		const resolvedCredentials = buildCredentialsObject(credentials, options);
-		
-		// Build the query to get table definition
-		const query = `INFO FOR TABLE ${table};`;
-		
-		const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
-		
-		if (DEBUG) {
-			// DEBUG: Log query
-			debugLog('listFields', 'Query', itemIndex, preparedQuery);
-		}
-		
-		// Execute the query
-		const result = await client.query(preparedQuery);
-		
-		if (DEBUG) {
-			// DEBUG: Log raw result
-			debugLog('listFields', 'Raw query result', itemIndex, JSON.stringify(result));
-		}
-		
-		// Process the result
-		if (Array.isArray(result) && result.length > 0) {
-			const tableInfo = result[0];
+		try {
+			// Get credentials
+			const credentials = await executeFunctions.getCredentials('surrealDbApi');
 			
-			if (tableInfo.fields && typeof tableInfo.fields === 'object') {
-				// Simply return the fields information directly from the SurrealDB response
+			// Get parameters
+			const table = executeFunctions.getNodeParameter('table', itemIndex) as string;
+			
+			// Validate required fields
+			validateRequiredField(executeFunctions, table, 'Table', itemIndex);
+			
+			// Get options
+			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
+			
+			// Build the resolved credentials object
+			const resolvedCredentials = buildCredentialsObject(credentials, options);
+			
+			// Build the query to get table definition
+			const query = `INFO FOR TABLE ${table};`;
+			
+			const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
+			
+			if (DEBUG) {
+				// DEBUG: Log query
+				debugLog('listFields', 'Query', itemIndex, preparedQuery);
+			}
+			
+			// Execute the query
+			const result = await client.query(preparedQuery);
+			
+			if (DEBUG) {
+				// DEBUG: Log raw result
+				debugLog('listFields', 'Raw query result', itemIndex, JSON.stringify(result));
+			}
+			
+			// Process the result
+			if (Array.isArray(result) && result.length > 0) {
+				const tableInfo = result[0];
+				
+				if (tableInfo.fields && typeof tableInfo.fields === 'object') {
+					// Simply return the fields information directly from the SurrealDB response
+					returnData.push({
+						json: tableInfo.fields,
+						pairedItem: { item: itemIndex },
+					});
+				} else {
+					throw new Error(`No fields found for table ${table}`);
+				}
+			} else {
+				throw new Error(`Unable to retrieve information for table ${table}`);
+			}
+		} catch (error) {
+			if (executeFunctions.continueOnFail()) {
 				returnData.push({
-					json: tableInfo.fields,
+					json: { 
+						error: error.message 
+					},
 					pairedItem: { item: itemIndex },
 				});
 			} else {
+				if (error.name === 'NodeOperationError') {
+					throw error;
+				}
 				throw new NodeOperationError(
 					executeFunctions.getNode(),
-					`No fields found for table ${table}`,
+					`Error listing fields: ${error.message}`,
 					{ itemIndex }
 				);
 			}
-		} else {
-			throw new NodeOperationError(
-				executeFunctions.getNode(),
-				`Unable to retrieve information for table ${table}`,
-				{ itemIndex }
-			);
 		}
 		
 		return returnData;

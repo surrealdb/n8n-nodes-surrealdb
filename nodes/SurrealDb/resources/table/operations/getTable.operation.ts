@@ -71,7 +71,7 @@ export const getTableOperation: IOperationHandler = {
 			if (executeFunctions.continueOnFail()) {
 				returnData.push({
 					json: { 
-						error: error.message,
+						error: error.message 
 					},
 					pairedItem: { item: itemIndex },
 				});

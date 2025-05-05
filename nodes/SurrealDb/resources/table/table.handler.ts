@@ -10,7 +10,6 @@ import { createTableOperation } from './operations/createTable.operation';
 import { deleteTableOperation } from './operations/deleteTable.operation';
 import { listTablesOperation } from './operations/listTables.operation';
 import { getTableOperation } from './operations/getTable.operation';
-import { createErrorResult } from '../../utilities';
 
 /**
  * Router for table operations
@@ -22,51 +21,66 @@ export async function handleTableOperations(
 	executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
 	let returnData: INodeExecutionData[] = [];
-	
+
+	// Debug logging removed
+
 	// Process each item
 	for (let i = 0; i < items.length; i++) {
 		try {
+			let operationResult;
+
 			// Route to the appropriate operation handler
 			switch (operation) {
 				case 'listTables':
-					returnData = [...returnData, ...(await listTablesOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await listTablesOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'getTable':
-					returnData = [...returnData, ...(await getTableOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await getTableOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'createTable':
-					returnData = [...returnData, ...(await createTableOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await createTableOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'deleteTable':
-					returnData = [...returnData, ...(await deleteTableOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await deleteTableOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'getAllRecords':
-					returnData = [...returnData, ...(await getAllRecordsOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await getAllRecordsOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'createMany':
-					returnData = [...returnData, ...(await createManyOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await createManyOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'getMany':
-					returnData = [...returnData, ...(await getManyOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await getManyOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'updateAllRecords':
-					returnData = [...returnData, ...(await updateAllRecordsOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await updateAllRecordsOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'deleteAllRecords':
-					returnData = [...returnData, ...(await deleteAllRecordsOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await deleteAllRecordsOperation.execute(client, items, executeFunctions, i);
 					break;
 				case 'mergeAllRecords':
-					returnData = [...returnData, ...(await mergeAllRecordsOperation.execute(client, items, executeFunctions, i))];
+					operationResult = await mergeAllRecordsOperation.execute(client, items, executeFunctions, i);
 					break;
 				default:
 					// If the operation is not recognized, just continue
-					break;
+					continue;
 			}
+
+			// Add the operation result to returnData
+			returnData = [...returnData, ...operationResult];
+
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push(createErrorResult(error, i));
+				// Structure the error object exactly as n8n expects
+				returnData.push({
+					json: {
+						error: error.message || String(error)
+					},
+					pairedItem: { item: i },
+				});
 				continue;
 			}
+
 			throw error;
 		}
 	}

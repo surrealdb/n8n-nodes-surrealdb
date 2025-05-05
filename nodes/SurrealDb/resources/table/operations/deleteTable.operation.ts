@@ -1,9 +1,8 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { prepareSurrealQuery, validateRequiredField, cleanTableName } from '../../../GenericFunctions';
-import { addErrorResult, debugLog } from '../../../utilities';
+import { prepareSurrealQuery, validateRequiredField, cleanTableName, buildCredentialsObject } from '../../../GenericFunctions';
+import { debugLog } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
-import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
 // Set to false to disable debug logging
 const DEBUG = false;
@@ -35,19 +34,8 @@ export const deleteTableOperation: IOperationHandler = {
 			// Get credentials
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
 
-			// Get namespace/database overrides
-			const nodeNamespace = (options.namespace as string)?.trim() || '';
-			const nodeDatabase = (options.database as string)?.trim() || '';
-
 			// Build the resolved credentials object
-			const resolvedCredentials: ISurrealCredentials = {
-				connectionString: credentials.connectionString as string,
-				authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
-				username: credentials.username as string,
-				password: credentials.password as string,
-				namespace: nodeNamespace || (credentials.namespace as string),
-				database: nodeDatabase || (credentials.database as string),
-			};
+			const resolvedCredentials = buildCredentialsObject(credentials, options);
 
 			// Build the query to remove the table
 			const query = `REMOVE TABLE ${table}`;
@@ -64,20 +52,15 @@ export const deleteTableOperation: IOperationHandler = {
 				debugLog('deleteTable', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 
-			// Return the raw SurrealDB response directly without modification
 			// For DELETE TABLE operations, SurrealDB typically returns [null]
+			// We need to ensure we always return a valid json property for n8n
 			returnData.push({
-				json: result[0] as unknown as IDataObject,
+				json: {}, // Empty object is the minimal valid json property
 				pairedItem: { item: itemIndex },
 			});
-
 		} catch (error) {
-			if (executeFunctions.continueOnFail()) {
-				// Use the standard error handling utility
-				addErrorResult(returnData, error, itemIndex);
-			} else {
-				throw error;
-			}
+			// Let the handler deal with error handling and continueOnFail logic
+			throw error;
 		}
 
 		return returnData;

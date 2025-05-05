@@ -13,44 +13,7 @@ This document serves as a checklist of remaining inconsistencies and issues in t
 *** RESOLVED ***
 
 ### 2.2. Inconsistent Error Handling in Resource Handlers
-- **Files**: Some resource handler files handle errors differently than others
-  - **Issue**: Some handlers (query, system, record, table) handle errors at the handler level with continueOnFail logic, while others (field, index) delegate error handling to the operations with a comment: "Don't handle errors here, let the operations handle them. This is to avoid double-handling of errors."
-  - **Fix**: Standardize all resource handlers to use the same approach - delegate error handling to operations to avoid double-handling:
-
-    ```typescript
-    // CURRENT INCONSISTENT APPROACH IN SOME HANDLERS:
-    try {
-        // Operation execution
-    } catch (error) {
-        if (executeFunctions.continueOnFail()) {
-            returnData.push(createErrorResult(error, i));
-            continue;
-        }
-        throw error;
-    }
-
-    // STANDARDIZED APPROACH FOR ALL HANDLERS:
-    try {
-        // Operation execution
-    } catch (error) {
-        // Don't handle errors here, let the operations handle them
-        // This is to avoid double-handling of errors
-        throw error;
-    }
-    ```
-
-    **Guidelines**:
-    - All resource handlers should delegate error handling to their operations
-    - All operations must properly handle errors with continueOnFail using addErrorResult()
-    - Add the explanatory comment to all handlers for clarity
-
-    **Files to Fix**:
-
-    ## Resource Handler Files (Need to delegate error handling)
-    1. nodes/SurrealDb/resources/query/query.handler.ts
-    2. nodes/SurrealDb/resources/system/system.handler.ts
-    3. nodes/SurrealDb/resources/record/record.handler.ts
-    4. nodes/SurrealDb/resources/table/table.handler.ts
+*** RESOLVED ***
 
 ### 2.3. Nested Try-Catch Blocks
 - **Files**: listIndexes.operation.ts and others
@@ -181,9 +144,309 @@ This document serves as a checklist of remaining inconsistencies and issues in t
     }
     ```
 
-## 7. Special Cases
+## 7. Response Transformation Issues
 
-### 7.1. Special Error Handling in healthCheck.operation.ts
-*** RESOLVED ***
+**General Issue**: Many operations transform SurrealDB's response data instead of returning it directly, adding unnecessary properties, custom messages, or restructuring the data.
+
+**Principles for Refactoring**:
+1. Return SurrealDB's data in its native format without transformation
+2. Don't add "user-friendly" properties or restructure responses
+3. Let SurrealDB's API design shine through our integration
+4. Keep our code simple and focused on facilitating the interaction, not reimagining it
+5. Ensure future compatibility by not making assumptions about response structures
+
+**Remember**: We are providing a layer to allow n8n to interact with SurrealDB. We respect how SurrealDB does things.
+
+### 7.1. Inconsistent Result Handling in List Fields Operation
+- **File**: nodes/SurrealDb/resources/field/operations/listFields.operation.ts
+  - **Issue**: The List Fields operation adds unnecessary properties and restructures the field information instead of simply returning the field data from SurrealDB
+  - **Fix**: Return just the field information directly from the SurrealDB response:
+    ```typescript
+    // Replace this complex code:
+    if (tableInfo.fields && typeof tableInfo.fields === 'object') {
+        // Convert the fields object to a more user-friendly format
+        const fieldsArray = Object.entries(tableInfo.fields).map(([fieldName, definition]) => {
+            // Process the field definition to extract type, constraints, etc.
+            const definitionStr = definition as string;
+
+            // Extract field type
+            const typeMatch = definitionStr.match(/TYPE\s+(\S+)/i);
+            const fieldType = typeMatch ? typeMatch[1] : 'unknown';
+
+            // Check if field is computed (has VALUE keyword)
+            const isComputed = definitionStr.includes(' VALUE ');
+
+            // Check for READONLY attribute
+            const isReadOnly = definitionStr.includes(' READONLY');
+
+            // Check for FLEXIBLE attribute
+            const isFlexible = definitionStr.includes(' FLEXIBLE');
+
+            // Extract permissions
+            const permissionsMatch = definitionStr.match(/PERMISSIONS\s+(\S+)/i);
+            const permissions = permissionsMatch ? permissionsMatch[1] : 'unknown';
+
+            return {
+                name: fieldName,
+                type: fieldType,
+                definition: definitionStr,
+                isComputed,
+                isReadOnly,
+                isFlexible,
+                permissions,
+            };
+        });
+
+        // Add each field as a separate item in the returnData for better n8n integration
+        for (const field of fieldsArray) {
+            returnData.push({
+                json: {
+                    success: true,
+                    table,
+                    name: field.name,
+                    type: field.type,
+                    definition: field.definition,
+                    isComputed: field.isComputed,
+                    isReadOnly: field.isReadOnly,
+                    isFlexible: field.isFlexible,
+                    permissions: field.permissions,
+                    totalFields: fieldsArray.length
+                },
+                pairedItem: { item: itemIndex },
+            });
+        }
+    }
+
+    // With this simple approach that just returns the field information:
+    if (tableInfo.fields && typeof tableInfo.fields === 'object') {
+        returnData.push({
+            json: tableInfo.fields,
+            pairedItem: { item: itemIndex },
+        });
+    }
+    ```
+  - **Note**: This operation should simply return the field information from the SurrealDB response without adding any extra properties or restructuring. This ensures we're returning exactly what SurrealDB provides.
+
+### 7.2. Custom Success Message in Create Table Operation
+- **File**: nodes/SurrealDb/resources/table/operations/createTable.operation.ts
+  - **Issue**: Returns a custom success message instead of the SurrealDB response
+  - **Fix**: Return the SurrealDB response directly:
+    ```typescript
+    // Replace this:
+    returnData.push({
+        json: {
+            success: true,
+            table,
+            message: `Table ${table} created successfully.`,
+        },
+        pairedItem: { item: itemIndex },
+    });
+
+    // With this:
+    returnData.push({
+        json: result,
+        pairedItem: { item: itemIndex },
+    });
+    ```
+
+### 7.3. Custom Success Message in Delete Table Operation
+- **File**: nodes/SurrealDb/resources/table/operations/deleteTable.operation.ts
+  - **Issue**: Returns a custom success message instead of the SurrealDB response
+  - **Fix**: Return the SurrealDB response directly:
+    ```typescript
+    // Replace this:
+    returnData.push({
+        json: {
+            success: true,
+            table,
+            message: `Table ${table} deleted successfully.`,
+        },
+        pairedItem: { item: itemIndex },
+    });
+
+    // With this:
+    returnData.push({
+        json: result,
+        pairedItem: { item: itemIndex },
+    });
+    ```
+
+### 7.4. Custom Success Message in Rebuild Index Operation
+- **File**: nodes/SurrealDb/resources/index/operations/rebuildIndex.operation.ts
+  - **Issue**: Returns a custom success message instead of the SurrealDB response
+  - **Fix**: Return the SurrealDB response directly:
+    ```typescript
+    // Replace this:
+    returnData.push({
+        json: {
+            success: true,
+            index: indexName,
+            table,
+            message: `Index ${indexName} has been rebuilt on table ${table}`
+        },
+        pairedItem: { item: itemIndex },
+    });
+
+    // With this:
+    returnData.push({
+        json: result,
+        pairedItem: { item: itemIndex },
+    });
+    ```
+
+### 7.5. Custom Structure in Get Table Operation
+- **File**: nodes/SurrealDb/resources/table/operations/getTable.operation.ts
+  - **Issue**: Wraps the table definition in a custom structure with success flag
+  - **Fix**: Return the table information directly:
+    ```typescript
+    // Replace this:
+    returnData.push({
+        json: {
+            success: true,
+            table,
+            definition: tableInfo,
+            message: `Retrieved definition for table ${table}`
+        },
+        pairedItem: { item: itemIndex },
+    });
+
+    // With this:
+    returnData.push({
+        json: tableInfo,
+        pairedItem: { item: itemIndex },
+    });
+    ```
+
+### 7.6. Custom Properties in Describe Index Operation
+- **File**: nodes/SurrealDb/resources/index/operations/describeIndex.operation.ts
+  - **Issue**: Adds custom properties to the index information
+  - **Fix**: Return the index information directly:
+    ```typescript
+    // Replace this:
+    returnData.push({
+        json: {
+            success: true,
+            table,
+            name: indexName,
+            isBuilding,
+            ...(buildingProgress && { buildingProgress }),
+            details: indexInfo,
+            message: `Retrieved details for index ${indexName} on table ${table}`
+        },
+        pairedItem: { item: itemIndex },
+    });
+
+    // With this:
+    returnData.push({
+        json: indexInfo,
+        pairedItem: { item: itemIndex },
+    });
+    ```
+
+### 7.7. Custom Success Message in Create Index Operation
+- **File**: nodes/SurrealDb/resources/index/operations/createIndex.operation.ts
+  - **Issue**: Returns a custom success message instead of the SurrealDB response
+  - **Fix**: Return the SurrealDB response directly:
+    ```typescript
+    // Replace this:
+    addSuccessResult(returnData, {
+        index: indexName,
+        table,
+        fields: fieldsList,
+        type: indexType,
+        unique: options.isUnique === true,
+        message: `Index ${indexName} created on table ${table}`
+    }, itemIndex);
+
+    // With this:
+    returnData.push({
+        json: result,
+        pairedItem: { item: itemIndex },
+    });
+    ```
+
+### 7.8. Custom Success Message in Merge Record Operation
+- **File**: nodes/SurrealDb/resources/record/operations/mergeRecord.operation.ts
+  - **Issue**: Adds a custom success message when result is empty
+  - **Fix**: Return the SurrealDB response directly:
+    ```typescript
+    // Replace this:
+    if (typeof result === 'object' && Object.keys(result).length === 0) {
+        // After merge, fetch the complete record to return
+        const updatedRecord = await client.select(recordId);
+
+        if (updatedRecord === null || updatedRecord === undefined) {
+            // This shouldn't happen if merge succeeded, but just in case
+            addSuccessResult(returnData, {
+                success: true,
+                message: `Record ${recordId.toString()} was merged successfully but couldn't be retrieved.`
+            }, itemIndex);
+        } else {
+            // Return the updated record
+            addSuccessResult(returnData, updatedRecord, itemIndex);
+        }
+    } else {
+        // Add the result to return data
+        addSuccessResult(returnData, result, itemIndex);
+    }
+
+    // With this:
+    returnData.push({
+        json: result,
+        pairedItem: { item: itemIndex },
+    });
+    ```
+
+### 7.9. Custom Message in Create Record Operation
+- **File**: nodes/SurrealDb/resources/record/operations/createRecord.operation.ts
+  - **Issue**: Adds a custom message when result is null/undefined
+  - **Fix**: Return the SurrealDB response directly:
+    ```typescript
+    // Replace this:
+    if (result) {
+        // Format the result
+        const formattedResult = formatSingleResult(result);
+        returnData.push({
+            ...formattedResult,
+            pairedItem: { item: itemIndex },
+        });
+    } else {
+        // If result is null/undefined but no exception was thrown, return an empty result
+        if (DEBUG) debugLog('createRecord', 'Null/undefined result, but no exception thrown', itemIndex);
+        addSuccessResult(returnData, {
+            message: 'Record created but no data returned',
+            table,
+        }, itemIndex);
+    }
+
+    // With this:
+    returnData.push({
+        json: result || null,
+        pairedItem: { item: itemIndex },
+    });
+    ```
+
+### 7.10. Result Wrapping in Utility Functions
+- **File**: nodes/SurrealDb/utilities.ts
+  - **Issue**: The `addSuccessResult()` and `createSuccessResult()` functions wrap data in a `result` property
+  - **Fix**: Modify these functions to not wrap the data:
+    ```typescript
+    // Replace this:
+    export function createSuccessResult(data: Record<string, any>, itemIndex: number): INodeExecutionData {
+        return {
+            json: {
+                result: data
+            },
+            pairedItem: { item: itemIndex }
+        };
+    }
+
+    // With this:
+    export function createSuccessResult(data: Record<string, any>, itemIndex: number): INodeExecutionData {
+        return {
+            json: data,
+            pairedItem: { item: itemIndex }
+        };
+    }
     ```
 
