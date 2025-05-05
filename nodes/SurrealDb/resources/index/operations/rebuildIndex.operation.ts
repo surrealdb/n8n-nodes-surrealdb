@@ -1,7 +1,7 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
 import { prepareSurrealQuery, validateRequiredField, buildCredentialsObject } from '../../../GenericFunctions';
-import { debugLog, addSuccessResult } from '../../../utilities';
+import { debugLog } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
 
 // Set to true to enable debug logging, false to disable
@@ -63,12 +63,18 @@ export const rebuildIndexOperation: IOperationHandler = {
 			debugLog('rebuildIndex', 'Raw query result', itemIndex, JSON.stringify(result));
 		}
 		
-		// Add the result to the returnData using the utility function
-		addSuccessResult(returnData, {
-			index: indexName,
-			table,
-			message: `Index ${indexName} has been rebuilt on table ${table}`
-		}, itemIndex);
+		// Process the result - SurrealDB typically returns arrays
+		if (Array.isArray(result)) {
+			returnData.push({
+				json: result[0] || {},
+				pairedItem: { item: itemIndex },
+			});
+		} else {
+			returnData.push({
+				json: result || {},
+				pairedItem: { item: itemIndex },
+			});
+		}
 		
 		return returnData;
 	},
