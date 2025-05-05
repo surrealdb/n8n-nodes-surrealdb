@@ -35,7 +35,7 @@ export function createRecordId(table: string, id: string): RecordId {
 export function parseAndValidateRecordId(recordIdString: string | any, expectedTable: string, node: any, itemIndex: number): string {
 	// Ensure recordIdString is a string
 	const idStr = String(recordIdString || '');
-	
+
 	if (idStr.includes(':')) {
 		const [tablePrefix, id] = idStr.split(':');
 		if (tablePrefix !== expectedTable) {
@@ -66,7 +66,7 @@ export function formatArrayResult(results: any[]): INodeExecutionData[] {
 /**
  * Standard debug logging function
  * Use this for consistent debug log formatting across operations
- * 
+ *
  * @param operation The name of the operation (e.g., "createRecord", "getAllRecords")
  * @param message The log message
  * @param itemIndex The index of the current item (optional)
@@ -75,11 +75,11 @@ export function formatArrayResult(results: any[]): INodeExecutionData[] {
 export function debugLog(operation: string, message: string, itemIndex?: number, data?: any): void {
 	// Determine if itemIndex should be included in the log
 	const indexPart = itemIndex !== undefined ? ` [item:${itemIndex}]` : '';
-	
+
 	// Basic log without additional data
 	if (data === undefined) {
 		console.log(`DEBUG (${operation})${indexPart} - ${message}`);
-	} 
+	}
 	// Log with additional data
 	else {
 		console.log(`DEBUG (${operation})${indexPart} - ${message}`, data);
@@ -88,23 +88,21 @@ export function debugLog(operation: string, message: string, itemIndex?: number,
 
 /**
  * Create a standardized success result item with consistent structure
- * 
+ *
  * @param data The operation-specific data to include in the result
  * @param itemIndex The index of the current item for pairedItem
  * @returns An INodeExecutionData object with standardized structure
  */
 export function createSuccessResult(data: Record<string, any>, itemIndex: number): INodeExecutionData {
 	return {
-		json: {
-			result: data
-		},
+		json: data,
 		pairedItem: { item: itemIndex }
 	};
 }
 
 /**
  * Add a standardized success result to the returnData array
- * 
+ *
  * @param returnData The array to add the result to
  * @param data The operation-specific data to include in the result
  * @param itemIndex The index of the current item for pairedItem
@@ -115,17 +113,17 @@ export function addSuccessResult(returnData: INodeExecutionData[], data: Record<
 
 /**
  * Create a standardized error result item for continueOnFail=true scenarios
- * 
+ *
  * @param error The error object or message
  * @param itemIndex The index of the current item for pairedItem
  * @returns An INodeExecutionData object with standardized error structure
  */
 export function createErrorResult(error: Error | string, itemIndex: number): INodeExecutionData {
 	const errorMessage = typeof error === 'string' ? error : error.message;
-	
+
 	return {
-		json: { 
-			error: errorMessage 
+		json: {
+			error: errorMessage
 		},
 		pairedItem: { item: itemIndex }
 	};
@@ -133,7 +131,7 @@ export function createErrorResult(error: Error | string, itemIndex: number): INo
 
 /**
  * Add a standardized error result to the returnData array
- * 
+ *
  * @param returnData The array to add the error to
  * @param error The error object or message
  * @param itemIndex The index of the current item for pairedItem
