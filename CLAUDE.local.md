@@ -3,3 +3,4 @@
 - Always do a build before asking for a test
 - When code is able to be tested (even if partially complete) stop and ask user to perform a test with details about expected results. Only the user runs tests (because this is n8n)
 - Never consider anything done until it passes user testing. Don't mark off progress or suggest a commit until then.
+- NEVER mention AI or yourself in a commit message

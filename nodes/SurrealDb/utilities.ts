@@ -58,19 +58,9 @@ export function formatSingleResult(result: any): INodeExecutionData {
  * Format array result output
  * Standardizes the output format for operations that return an array of results
  * Each item in the array becomes a separate n8n item
- * @param results The array of results to format
- * @param itemIndex Optional index of the current item for pairedItem
- * @returns An array of INodeExecutionData with json property and optionally pairedItem
  */
-export function formatArrayResult(results: any[], itemIndex?: number): INodeExecutionData[] {
-	return results.map(item => {
-		const formattedItem: INodeExecutionData = { json: item };
-		// Only add pairedItem if itemIndex is provided
-		if (itemIndex !== undefined) {
-			formattedItem.pairedItem = { item: itemIndex };
-		}
-		return formattedItem;
-	});
+export function formatArrayResult(results: any[]): INodeExecutionData[] {
+	return results.map(item => ({ json: item }));
 }
 
 /**
@@ -94,4 +84,60 @@ export function debugLog(operation: string, message: string, itemIndex?: number,
 	else {
 		console.log(`DEBUG (${operation})${indexPart} - ${message}`, data);
 	}
+}
+
+/**
+ * Create a standardized success result item with consistent structure
+ * 
+ * @param data The operation-specific data to include in the result
+ * @param itemIndex The index of the current item for pairedItem
+ * @returns An INodeExecutionData object with standardized structure
+ */
+export function createSuccessResult(data: Record<string, any>, itemIndex: number): INodeExecutionData {
+	return {
+		json: {
+			result: data
+		},
+		pairedItem: { item: itemIndex }
+	};
+}
+
+/**
+ * Add a standardized success result to the returnData array
+ * 
+ * @param returnData The array to add the result to
+ * @param data The operation-specific data to include in the result
+ * @param itemIndex The index of the current item for pairedItem
+ */
+export function addSuccessResult(returnData: INodeExecutionData[], data: Record<string, any>, itemIndex: number): void {
+	returnData.push(createSuccessResult(data, itemIndex));
+}
+
+/**
+ * Create a standardized error result item for continueOnFail=true scenarios
+ * 
+ * @param error The error object or message
+ * @param itemIndex The index of the current item for pairedItem
+ * @returns An INodeExecutionData object with standardized error structure
+ */
+export function createErrorResult(error: Error | string, itemIndex: number): INodeExecutionData {
+	const errorMessage = typeof error === 'string' ? error : error.message;
+	
+	return {
+		json: { 
+			error: errorMessage 
+		},
+		pairedItem: { item: itemIndex }
+	};
+}
+
+/**
+ * Add a standardized error result to the returnData array
+ * 
+ * @param returnData The array to add the error to
+ * @param error The error object or message
+ * @param itemIndex The index of the current item for pairedItem
+ */
+export function addErrorResult(returnData: INodeExecutionData[], error: Error | string, itemIndex: number): void {
+	returnData.push(createErrorResult(error, itemIndex));
 }

@@ -2,6 +2,7 @@ import type { IExecuteFunctions, INodeExecutionData, IHttpRequestOptions } from 
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 import type { Surreal } from 'surrealdb';
+import { debugLog } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -16,6 +17,10 @@ export const healthCheckOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
+		const returnData: INodeExecutionData[] = [];
+		
+		if (DEBUG) debugLog('healthCheck', 'Starting operation', itemIndex);
+		
 		// Get the credentials from the client (they're already validated and resolved)
 		const credentials = await executeFunctions.getCredentials('surrealDbApi');
 		const nodeOptions = executeFunctions.getNodeParameter('options', itemIndex, {}) as any;
@@ -54,34 +59,45 @@ export const healthCheckOperation: IOperationHandler = {
 		};
 		
 		if (DEBUG) {
-			console.log(`DEBUG (healthCheck) - Performing health check for item ${itemIndex}:`, healthUrl);
+			debugLog('healthCheck', 'Performing health check', itemIndex, healthUrl);
 		}
 
 		try {
 			// Perform the health check request
 			const response = await executeFunctions.helpers.httpRequest(requestOptions);
 
-			// Format the result
-			return [{
+			if (DEBUG) debugLog('healthCheck', 'Health check successful', itemIndex);
+			
+			// Format the result with standard result structure
+			returnData.push({
 				json: {
-					status: 'healthy',
-					details: response,
+					result: {
+						status: 'healthy',
+						details: response,
+					}
 				},
 				pairedItem: { item: itemIndex },
-			}];
+			});
 		} catch (error) {
 			// Special error handling for health check - always return a result with status
 			// rather than throwing an error, regardless of continueOnFail setting.
 			// This is intentionally different from other operations because the purpose
 			// of a health check is to report on status, not throw errors.
-			return [{
+			if (DEBUG) debugLog('healthCheck', 'Health check failed', itemIndex, (error as Error).message);
+			
+			returnData.push({
 				json: {
-					status: 'unhealthy',
-					error: (error as Error).message, // Add standard 'error' property
-					details: (error as Error).message,
+					result: {
+						status: 'unhealthy',
+						error: (error as Error).message,
+						details: (error as Error).message,
+					}
 				},
 				pairedItem: { item: itemIndex },
-			}];
+			});
 		}
+		
+		if (DEBUG) debugLog('healthCheck', `Completed, returning ${returnData.length} items`, itemIndex);
+		return returnData;
 	},
 };

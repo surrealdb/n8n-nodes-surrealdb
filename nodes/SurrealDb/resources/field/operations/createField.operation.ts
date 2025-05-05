@@ -1,10 +1,9 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
-import { debugLog } from '../../../utilities';
+import { prepareSurrealQuery, validateRequiredField, cleanTableName, buildCredentialsObject } from '../../../GenericFunctions';
+import { debugLog, addSuccessResult, addErrorResult } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
-import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -23,26 +22,23 @@ export const createFieldOperation: IOperationHandler = {
 		const returnData: INodeExecutionData[] = [];
 		
 		try {
+			if (DEBUG) debugLog('createField', 'Starting operation', itemIndex);
+			
 			// Get credentials
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
 			
 			// Get parameters
-			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
+			const tableInput = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			const fieldName = executeFunctions.getNodeParameter('fieldName', itemIndex) as string;
 			const fieldMode = executeFunctions.getNodeParameter('fieldMode', itemIndex) as string;
 			let fieldType = executeFunctions.getNodeParameter('fieldType', itemIndex) as string;
 			
 			// Validate required fields
-			validateRequiredField(executeFunctions, table, 'Table', itemIndex);
+			validateRequiredField(executeFunctions, tableInput, 'Table', itemIndex);
 			validateRequiredField(executeFunctions, fieldName, 'Field Name', itemIndex);
 			
-			// Ensure table is a string
-			table = String(table || '');
-			
-			// If table contains a colon, use only the part before the colon
-			if (table.includes(':')) {
-				table = table.split(':')[0];
-			}
+			// Clean the table name
+			const table = cleanTableName(tableInput);
 			
 			// Get options
 			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
@@ -65,19 +61,8 @@ export const createFieldOperation: IOperationHandler = {
 				fieldType = `option<${fieldType}>`;
 			}
 			
-			// Get namespace/database overrides
-			const nodeNamespace = (options.namespace as string)?.trim() || '';
-			const nodeDatabase = (options.database as string)?.trim() || '';
-			
-			// Build the resolved credentials object
-			const resolvedCredentials: ISurrealCredentials = {
-				connectionString: credentials.connectionString as string,
-				authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
-				username: credentials.username as string,
-				password: credentials.password as string,
-				namespace: nodeNamespace || (credentials.namespace as string),
-				database: nodeDatabase || (credentials.database as string),
-			};
+			// Build credentials object
+			const resolvedCredentials = buildCredentialsObject(credentials, options);
 			
 			// Build the query to create a field
 			let query = `DEFINE FIELD ${fieldName} ON TABLE ${table} TYPE ${fieldType}`;
@@ -140,27 +125,23 @@ export const createFieldOperation: IOperationHandler = {
 				debugLog('createField', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
-			// Add the result to the returnData
-			returnData.push({
-				json: {
-					success: true,
-					field: fieldName,
-					table,
-					type: fieldType,
-					mode: fieldMode,
-					flexible: options.isFlexible === true,
-					readonly: options.isReadOnly === true,
-					message: `Field ${fieldName} of type ${fieldType} created on table ${table}`
-				},
-				pairedItem: { item: itemIndex },
-			});
+			// Add the result to the returnData using our helper function
+			addSuccessResult(returnData, {
+				field: fieldName,
+				table,
+				type: fieldType,
+				mode: fieldMode,
+				flexible: options.isFlexible === true,
+				readonly: options.isReadOnly === true,
+				message: `Field ${fieldName} of type ${fieldType} created on table ${table}`
+			}, itemIndex);
+			
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				});
+				if (DEBUG) debugLog('createField', 'Error with continueOnFail enabled', itemIndex, error.message);
+				addErrorResult(returnData, error, itemIndex);
 			} else {
+				if (DEBUG) debugLog('createField', 'Error, stopping execution', itemIndex, error.message);
 				throw new NodeOperationError(
 					executeFunctions.getNode(),
 					`Error creating field: ${error.message}`,
@@ -169,6 +150,7 @@ export const createFieldOperation: IOperationHandler = {
 			}
 		}
 		
+		if (DEBUG) debugLog('createField', `Completed, returning ${returnData.length} items`, itemIndex);
 		return returnData;
 	},
 };

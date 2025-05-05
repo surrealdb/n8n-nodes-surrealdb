@@ -3,7 +3,7 @@ import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
 import { validateRequiredField } from '../../../GenericFunctions';
-import { formatSingleResult, createRecordId, parseAndValidateRecordId, debugLog } from '../../../utilities';
+import { createRecordId, parseAndValidateRecordId, debugLog, addSuccessResult, addErrorResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -18,6 +18,8 @@ export const deleteRecordOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
+		const returnData: INodeExecutionData[] = [];
+		
 		try {
 			if (DEBUG) debugLog('deleteRecord', 'Starting operation', itemIndex);
 			// Get parameters
@@ -68,23 +70,22 @@ export const deleteRecordOperation: IOperationHandler = {
 				);
 			}
 			
-			// Format the result
-			const formattedResult = formatSingleResult(result);
-			return [{
-				...formattedResult,
-				pairedItem: { item: itemIndex },
-			}];
+			// Add a success result to the returnData array
+			addSuccessResult(returnData, result, itemIndex);
+			
 		} catch (error) {
 			// Handle errors based on continueOnFail setting
 			if (executeFunctions.continueOnFail()) {
-				return [{
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				}];
+				if (DEBUG) debugLog('deleteRecord', 'Error with continueOnFail enabled', itemIndex, error.message);
+				addErrorResult(returnData, error, itemIndex);
+			} else {
+				// If continueOnFail is not enabled, re-throw the error
+				if (DEBUG) debugLog('deleteRecord', 'Error, stopping execution', itemIndex, error.message);
+				throw error;
 			}
-			
-			// If continueOnFail is not enabled, re-throw the error
-			throw error;
 		}
+		
+		if (DEBUG) debugLog('deleteRecord', `Completed, returning ${returnData.length} items`, itemIndex);
+		return returnData;
 	},
 };

@@ -77,6 +77,24 @@ export function validateNumericField(
 }
 
 /**
+ * Clean and validate a table name
+ * Handles table names with colons and ensures consistent formatting
+ * @param tableInput The raw table name input from node parameters
+ * @returns The cleaned table name, with everything after a colon (if present) removed
+ */
+export function cleanTableName(tableInput: any): string {
+	// Ensure table is a string
+	const table = String(tableInput || '');
+	
+	// If table contains a colon, use only the part before the colon
+	if (table.includes(':')) {
+		return table.split(':')[0];
+	}
+	
+	return table;
+}
+
+/**
  * Validate array field
  * @param self The execute functions instance
  * @param field The field value to validate
@@ -92,6 +110,48 @@ export function validateArrayField(
 ): void {
 	if (!Array.isArray(field)) {
 		throw new NodeOperationError(self.getNode(), `${fieldName} must be an array`, { itemIndex });
+	}
+}
+
+/**
+ * Validate and parse data input
+ * Handles both string and object inputs, converting string inputs to objects via JSON parsing
+ * @param self The execute functions instance
+ * @param dataInput The data input from node parameters (can be string or object)
+ * @param fieldName The name of the field for error messages
+ * @param itemIndex The index of the current item
+ * @returns The parsed data object
+ * @throws NodeOperationError if the data is invalid
+ */
+export function validateAndParseData(
+	self: IExecuteFunctions,
+	dataInput: any,
+	fieldName: string,
+	itemIndex: number,
+): any {
+	// Check if data is provided
+	if (dataInput === undefined || dataInput === null || dataInput === '') {
+		throw new NodeOperationError(
+			self.getNode(),
+			`${fieldName} is required`,
+			{ itemIndex }
+		);
+	}
+	
+	// Process data based on type
+	if (typeof dataInput === 'string') {
+		// If it's a string, parse and validate as JSON
+		return validateJSON(self, dataInput, itemIndex);
+	} else if (typeof dataInput === 'object' && dataInput !== null) {
+		// If it's already an object, use it directly
+		return dataInput;
+	} else {
+		// If it's neither string nor object, throw an error
+		throw new NodeOperationError(
+			self.getNode(),
+			`${fieldName} must be a JSON string or a JSON object, received type: ${typeof dataInput}`,
+			{ itemIndex }
+		);
 	}
 }
 
@@ -239,6 +299,237 @@ export function prepareSurrealQuery(
  * @returns A connected and authenticated SurrealDB client instance
  * @throws Error if connection or authentication fails
  */
+/**
+ * Build a SELECT query with pagination options.
+ * 
+ * @param table The table name to select from
+ * @param options Optional pagination options (limit, start)
+ * @param where Optional WHERE clause
+ * @param orderBy Optional ORDER BY clause
+ * @param fields Optional fields to select (defaults to *)
+ * @returns An object with the query string and parameters
+ */
+export function buildSelectQuery(
+	table: string,
+	options: { limit?: number; start?: number } = {},
+	where?: string,
+	orderBy?: string,
+	fields: string = '*'
+): { query: string; params: Record<string, any> } {
+	// Initialize the query and parameters
+	let query = `SELECT ${fields} FROM ${table}`;
+	const params: Record<string, any> = {};
+	
+	// Add WHERE clause if provided
+	if (where) {
+		query += ` WHERE ${where}`;
+	}
+	
+	// Add ORDER BY clause if provided
+	if (orderBy) {
+		query += ` ORDER BY ${orderBy}`;
+	}
+	
+	// Add LIMIT if provided
+	if (options.limit !== undefined) {
+		query += ` LIMIT $limit`;
+		params.limit = options.limit;
+	}
+	
+	// Add START if provided and greater than 0
+	if (options.start !== undefined && options.start > 0) {
+		query += ` START $start`;
+		params.start = options.start;
+	}
+	
+	return { query, params };
+}
+
+/**
+ * Build an INFO query for a table or index.
+ * 
+ * @param objectType Type of object to get info for ("TABLE" or "INDEX")
+ * @param name Name of the table or index
+ * @param table Table name (required for indexes)
+ * @returns The info query string
+ */
+export function buildInfoQuery(
+	objectType: 'TABLE' | 'INDEX',
+	name: string,
+	table?: string
+): string {
+	if (objectType === 'INDEX' && !table) {
+		throw new Error('Table name is required for INDEX info queries');
+	}
+	
+	return objectType === 'TABLE' 
+		? `INFO FOR TABLE ${name};`
+		: `INFO FOR INDEX ${name} ON TABLE ${table};`;
+}
+
+/**
+ * Build a DELETE query for records or entire tables.
+ * 
+ * @param table The table name
+ * @param where Optional WHERE clause to filter records (if not provided, deletes all records)
+ * @returns The delete query string
+ */
+export function buildDeleteQuery(
+	table: string,
+	where?: string
+): string {
+	let query = `DELETE FROM ${table}`;
+	
+	// Add WHERE clause if provided
+	if (where) {
+		query += ` WHERE ${where}`;
+	}
+	
+	return query;
+}
+
+/**
+ * Build an UPDATE query for records.
+ * 
+ * @param table The table name
+ * @param where Optional WHERE clause to filter records (if not provided, updates all records)
+ * @param paramName The parameter name to use for the data content
+ * @returns The update query string
+ */
+export function buildUpdateQuery(
+	table: string,
+	where?: string,
+	paramName: string = 'data'
+): string {
+	let query = `UPDATE ${table} CONTENT $${paramName}`;
+	
+	// Add WHERE clause if provided
+	if (where) {
+		query += ` WHERE ${where}`;
+	}
+	
+	return query;
+}
+
+/**
+ * Build a MERGE query for records.
+ * 
+ * @param table The table name
+ * @param where Optional WHERE clause to filter records (if not provided, merges all records)
+ * @param paramName The parameter name to use for the data content
+ * @returns The merge query string
+ */
+export function buildMergeQuery(
+	table: string,
+	where?: string,
+	paramName: string = 'data'
+): string {
+	let query = `UPDATE ${table} MERGE $${paramName}`;
+	
+	// Add WHERE clause if provided
+	if (where) {
+		query += ` WHERE ${where}`;
+	}
+	
+	return query;
+}
+
+/**
+ * Build a CREATE query for records.
+ * 
+ * @param table The table name
+ * @param paramName The parameter name to use for the data content
+ * @returns The create query string
+ */
+export function buildCreateQuery(
+	table: string,
+	paramName: string = 'data'
+): string {
+	return `CREATE ${table} CONTENT $${paramName}`;
+}
+
+/**
+ * Build the resolved credentials object from n8n credentials and node parameters.
+ * 
+ * @param credentials The credentials from executeFunctions.getCredentials
+ * @param options The node options object that may contain namespace/database overrides
+ * @returns The resolved SurrealDB credentials object
+ */
+export function buildCredentialsObject(
+	credentials: any,
+	options: IDataObject
+): ISurrealCredentials {
+	const nodeNamespace = (options.namespace as string)?.trim() || '';
+	const nodeDatabase = (options.database as string)?.trim() || '';
+	
+	return {
+		connectionString: credentials.connectionString as string,
+		authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
+		username: credentials.username as string,
+		password: credentials.password as string,
+		namespace: nodeNamespace || (credentials.namespace as string),
+		database: nodeDatabase || (credentials.database as string),
+	};
+}
+
+/**
+ * Check if a SurrealDB query result contains an error.
+ * SurrealDB typically returns errors in the results array with an 'error' property.
+ * 
+ * @param result The query result from SurrealDB
+ * @param executeFunctions n8n execution functions
+ * @param errorPrefix A prefix for the error message
+ * @param itemIndex The index of the current item
+ * @returns True if no error was found, false if processing should stop due to error
+ * @throws NodeOperationError if an error is found and continueOnFail is false
+ */
+/**
+ * Result of checking a SurrealDB query result for errors
+ */
+export interface IQueryResultCheck {
+	success: boolean;
+	errorMessage?: string;
+}
+
+/**
+ * Check if a SurrealDB query result contains an error.
+ * SurrealDB typically returns errors in the results array with an 'error' property.
+ * 
+ * @param result The query result from SurrealDB
+ * @param errorPrefix A prefix for the error message
+ * @param itemIndex The index of the current item
+ * @returns An object with success status and optional error message
+ */
+export function checkQueryResult(
+	result: any,
+	errorPrefix: string,
+	itemIndex: number,
+): IQueryResultCheck {
+	// Check if the result is an array and if the first element has an error property
+	const hasError = Array.isArray(result) && 
+		result.length > 0 && 
+		result[0] && 
+		typeof result[0] === 'object' && 
+		'error' in result[0];
+	
+	if (hasError) {
+		// Extract the error message safely
+		const errorObj = result[0] as Record<string, unknown>;
+		const errorText = String(errorObj.error || 'Unknown error');
+		const errorMessage = `${errorPrefix}: ${errorText}`;
+		
+		return {
+			success: false,
+			errorMessage,
+		};
+	}
+	
+	// No error found
+	return {
+		success: true,
+	};
+}
+
 export async function connectSurrealClient(
 	credentials: ISurrealCredentials,
 ) {

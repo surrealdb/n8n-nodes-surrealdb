@@ -1,9 +1,8 @@
 import type { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
-import { validateRequiredField, validateJSON, prepareSurrealQuery } from '../../../GenericFunctions';
-import { formatSingleResult, formatArrayResult, debugLog } from '../../../utilities';
+import { validateRequiredField, validateAndParseData, prepareSurrealQuery, buildCredentialsObject } from '../../../GenericFunctions';
+import { formatSingleResult, formatArrayResult, debugLog, createErrorResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -21,29 +20,15 @@ export const executeQueryOperation: IOperationHandler = {
 		const returnData: INodeExecutionData[] = [];
 
 		try {
-				if (DEBUG) debugLog('executeQuery', 'Starting operation', itemIndex);
+			if (DEBUG) debugLog('executeQuery', 'Starting operation', itemIndex);
+			
 			// Get parameters for the specific item
 			const query = executeFunctions.getNodeParameter('query', itemIndex) as string;
 			validateRequiredField(executeFunctions, query, 'Query', itemIndex);
 			
-			// Get parameters if provided
+			// Get and validate parameters if provided
 			const parametersInput = executeFunctions.getNodeParameter('parameters', itemIndex, {});
-			
-			// Process parameters based on type
-			let parameters: any;
-			if (typeof parametersInput === 'string') {
-				// If it's a string, parse and validate as JSON
-				parameters = validateJSON(executeFunctions, parametersInput, itemIndex);
-			} else if (typeof parametersInput === 'object' && parametersInput !== null) {
-				// If it's already an object, use it directly
-				parameters = parametersInput;
-			} else {
-				throw new NodeOperationError(
-					executeFunctions.getNode(),
-					`Parameters must be a JSON string or a JSON object, received type: ${typeof parametersInput}`,
-					{ itemIndex }
-				);
-			}
+			const parameters = validateAndParseData(executeFunctions, parametersInput, 'Parameters', itemIndex);
 			
 			// Get options
 			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
@@ -53,19 +38,8 @@ export const executeQueryOperation: IOperationHandler = {
 			// Get credentials
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
 			
-			// Get namespace/database overrides
-			const nodeNamespace = (options.namespace as string)?.trim() || '';
-			const nodeDatabase = (options.database as string)?.trim() || '';
-			
-			// Build the resolved credentials object
-			const resolvedCredentials = {
-				connectionString: credentials.connectionString as string,
-				authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
-				username: credentials.username as string,
-				password: credentials.password as string,
-				namespace: nodeNamespace || (credentials.namespace as string),
-				database: nodeDatabase || (credentials.database as string),
-			};
+			// Build credentials object
+			const resolvedCredentials = buildCredentialsObject(credentials, options);
 			
 			// Check if the query already contains LIMIT or START clauses
 			const hasLimit = query.toUpperCase().includes('LIMIT');
@@ -83,8 +57,17 @@ export const executeQueryOperation: IOperationHandler = {
 			// Prepare the query based on authentication type
 			finalQuery = prepareSurrealQuery(finalQuery, resolvedCredentials);
 			
+			if (DEBUG) {
+				debugLog('executeQuery', 'Prepared query', itemIndex, finalQuery);
+				debugLog('executeQuery', 'Query parameters', itemIndex, parameters);
+			}
+			
 			// Execute the query
 			const result = await client.query(finalQuery, parameters);
+			
+			if (DEBUG) {
+				debugLog('executeQuery', 'Raw query result', itemIndex, JSON.stringify(result));
+			}
 			
 			// The result is an array of arrays, where each array contains the results of a statement
 			if (Array.isArray(result)) {
@@ -92,9 +75,13 @@ export const executeQueryOperation: IOperationHandler = {
 				for (const resultSet of result.filter(item => item !== null)) {
 					if (Array.isArray(resultSet)) {
 						// For array results, return each item as a separate n8n item
-						// with pairedItem already set
-						const formattedResults = formatArrayResult(resultSet, itemIndex);
-						returnData.push(...formattedResults);
+						const formattedResults = formatArrayResult(resultSet);
+						for (const formattedResult of formattedResults) {
+							returnData.push({
+								...formattedResult,
+								pairedItem: { item: itemIndex },
+							});
+						}
 					} else {
 						// For single results, use the formatSingleResult function
 						const formattedResult = formatSingleResult(resultSet);
@@ -113,27 +100,21 @@ export const executeQueryOperation: IOperationHandler = {
 				});
 			}
 			
-			// If no results were added for this item, add an empty result to maintain item mapping
-			if (returnData.length === 0) {
-				returnData.push({
-					json: {},
-					pairedItem: { item: itemIndex },
-				});
-			}
+			// If no results were found, return an empty array (consistent with other operations)
 			
 		} catch (error) {
 			// Handle errors based on continueOnFail setting
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				});
+				if (DEBUG) debugLog('executeQuery', 'Error with continueOnFail enabled', itemIndex, error.message);
+				returnData.push(createErrorResult(error, itemIndex));
 			} else {
 				// If continueOnFail is not enabled, re-throw the error
+				if (DEBUG) debugLog('executeQuery', 'Error, stopping execution', itemIndex, error.message);
 				throw error;
 			}
 		}
 		
+		if (DEBUG) debugLog('executeQuery', `Completed, returning ${returnData.length} items`, itemIndex);
 		return returnData;
 	},
 };

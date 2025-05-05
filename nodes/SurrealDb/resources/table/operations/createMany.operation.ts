@@ -83,13 +83,9 @@ export const createManyOperation: IOperationHandler = {
 						pairedItem: { item: itemIndex },
 					});
 				}
-			} else {
-				// If no records created, return an empty result
-				returnData.push({
-					json: { result: [] },
-					pairedItem: { item: itemIndex },
-				});
 			}
+			// If no records created, return an empty array
+			
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
 				returnData.push({

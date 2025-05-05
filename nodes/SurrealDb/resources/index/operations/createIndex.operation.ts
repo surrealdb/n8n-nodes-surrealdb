@@ -1,9 +1,9 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { prepareSurrealQuery, validateRequiredField } from '../../../GenericFunctions';
+import { prepareSurrealQuery, validateRequiredField, buildCredentialsObject, checkQueryResult } from '../../../GenericFunctions';
+import { debugLog } from '../../../utilities';
 import type { IOperationHandler } from '../../../types/operation.types';
-import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -21,6 +21,8 @@ export const createIndexOperation: IOperationHandler = {
 	): Promise<INodeExecutionData[]> {
 		const returnData: INodeExecutionData[] = [];
 		
+		if (DEBUG) debugLog('createIndex', 'Starting operation', itemIndex);
+		
 		try {
 			// Get credentials
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
@@ -28,94 +30,42 @@ export const createIndexOperation: IOperationHandler = {
 			// Get parameters
 			const table = executeFunctions.getNodeParameter('table', itemIndex) as string;
 			const indexName = executeFunctions.getNodeParameter('indexName', itemIndex) as string;
-			const indexFields = executeFunctions.getNodeParameter('indexFields', itemIndex) as string;
 			const indexType = executeFunctions.getNodeParameter('indexType', itemIndex) as string;
+			const indexFields = executeFunctions.getNodeParameter('indexFields', itemIndex) as string;
 			
 			// Validate required fields
 			validateRequiredField(executeFunctions, table, 'Table', itemIndex);
 			validateRequiredField(executeFunctions, indexName, 'Index Name', itemIndex);
 			validateRequiredField(executeFunctions, indexFields, 'Index Fields', itemIndex);
 			
+			// Process fields
+			const fieldsList = indexFields.split(',').map(field => field.trim()).filter(field => field);
+			
 			// Get options
 			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
 			
 			// Get namespace/database overrides
-			const nodeNamespace = (options.namespace as string)?.trim() || '';
-			const nodeDatabase = (options.database as string)?.trim() || '';
-			
-			// Build the resolved credentials object
-			const resolvedCredentials: ISurrealCredentials = {
-				connectionString: credentials.connectionString as string,
-				authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
-				username: credentials.username as string,
-				password: credentials.password as string,
-				namespace: nodeNamespace || (credentials.namespace as string),
-				database: nodeDatabase || (credentials.database as string),
-			};
+			const resolvedCredentials = buildCredentialsObject(credentials, options);
 			
 			// Build the query to create an index
-			let query = 'DEFINE INDEX';
+			let query = '';
 			
-			// Add IF NOT EXISTS clause if specified
-			if (options.ifNotExists === true) {
-				query += ' IF NOT EXISTS';
-			}
+			// If using IF NOT EXISTS
+			const ifNotExists = options.ifNotExists === true;
 			
-			// Add OVERWRITE clause if specified
-			if (options.overwrite === true) {
-				query += ' OVERWRITE';
-			}
-			
-			// Add index name and table
-			query += ` ${indexName} ON TABLE ${table}`;
-			
-			// Add fields
-			// Trim and split by comma, then remove any empty entries and trim each field
-			const fieldsList = indexFields
-				.split(',')
-				.map(field => field.trim())
-				.filter(field => field !== '');
-			
-			query += ` FIELDS ${fieldsList.join(', ')}`;
-			
-			// Add UNIQUE constraint if specified
-			if (options.isUnique === true) {
-				query += ' UNIQUE';
-			}
-			
-			// Handle specific index types
-			if (indexType === 'search') {
-				query += ' SEARCH';
+			// Build the base query according to index type
+			if (indexType === 'standard') {
+				query = `DEFINE INDEX ${ifNotExists ? 'IF NOT EXISTS ' : ''}${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(', ')}`;
 				
-				// Add analyzer if provided
-				const ftsAnalyzer = executeFunctions.getNodeParameter('ftsAnalyzer', itemIndex, '') as string;
-				if (ftsAnalyzer) {
-					query += ` ANALYZER ${ftsAnalyzer}`;
+				// Add UNIQUE if specified
+				if (options.isUnique === true) {
+					query += ' UNIQUE';
 				}
-				
-				// Add BM25 for search ranking
-				query += ' BM25';
-				
-				// Add HIGHLIGHTS if enabled
-				const enableHighlights = executeFunctions.getNodeParameter('enableHighlights', itemIndex, false) as boolean;
-				if (enableHighlights) {
-					query += ' HIGHLIGHTS';
-				}
-			} 
-			else if (indexType === 'mtree') {
-				query += ' MTREE';
-				
-				// Add dimension for vector index
-				const vectorDimension = executeFunctions.getNodeParameter('vectorDimension', itemIndex, 0) as number;
-				if (vectorDimension > 0) {
-					query += ` DIMENSION ${vectorDimension}`;
-				} else {
-					throw new NodeOperationError(
-						executeFunctions.getNode(),
-						'Vector dimension must be specified for MTREE indexes',
-						{ itemIndex }
-					);
-				}
+			} else if (indexType === 'search') {
+				query = `DEFINE ANALYZER ${ifNotExists ? 'IF NOT EXISTS ' : ''}${indexName} TOKENIZERS blank,class,punct FILTERS lowercase,snowball(english) TOKENIZER blank;`;
+				query += `\nDEFINE INDEX ${ifNotExists ? 'IF NOT EXISTS ' : ''}${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(', ')} SEARCH ANALYZER ${indexName}`;
+			} else if (indexType === 'mtree') {
+				query = `DEFINE INDEX ${ifNotExists ? 'IF NOT EXISTS ' : ''}${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(', ')} VECTOR`;
 				
 				// Add vector data type if specified
 				const vectorType = options.vectorType as string;
@@ -141,7 +91,7 @@ export const createIndexOperation: IOperationHandler = {
 			
 			if (DEBUG) {
 				// DEBUG: Log query
-				console.log('DEBUG - Create Index query:', preparedQuery);
+				debugLog('createIndex', 'Prepared query', itemIndex, preparedQuery);
 			}
 			
 			// Execute the query
@@ -149,43 +99,59 @@ export const createIndexOperation: IOperationHandler = {
 			
 			if (DEBUG) {
 				// DEBUG: Log raw result
-				console.log('DEBUG - Raw query result:', JSON.stringify(result));
+				debugLog('createIndex', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
 			// Check if the result contains an error
-			const errorResult = Array.isArray(result) && result.length > 0 && result[0] && typeof result[0] === 'object' && 'error' in result[0];
+			const resultCheck = checkQueryResult(result, `Error creating index`, itemIndex);
 			
-			if (errorResult) {
-				// Use NodeOperationError for SurrealDB query errors
-				throw new NodeOperationError(
-					executeFunctions.getNode(),
-					`Error creating index: ${String(result[0].error)}`,
-					{ itemIndex }
-				);
+			if (resultCheck.success) {
+				// No error, operation succeeded - return result with standard format
+				if (DEBUG) debugLog('createIndex', 'Success for item', itemIndex);
+				returnData.push({
+					json: {
+						result: {
+							index: indexName,
+							table,
+							fields: fieldsList,
+							type: indexType,
+							unique: options.isUnique === true,
+							message: `Index ${indexName} created on table ${table}`
+						}
+					},
+					pairedItem: { item: itemIndex },
+				});
+			} else {
+				// Handle error based on continueOnFail setting
+				if (executeFunctions.continueOnFail()) {
+					if (DEBUG) debugLog('createIndex', 'Error in result with continueOnFail enabled', itemIndex, resultCheck.errorMessage);
+					// Add error information to output
+					returnData.push({
+						json: { error: resultCheck.errorMessage },
+						pairedItem: { item: itemIndex },
+					});
+				} else {
+					// If continueOnFail is not enabled, throw a properly formatted NodeOperationError
+					if (DEBUG) debugLog('createIndex', 'Error in result, stopping execution', itemIndex, resultCheck.errorMessage);
+					throw new NodeOperationError(
+						executeFunctions.getNode(),
+						resultCheck.errorMessage || 'Unknown error',
+						{ itemIndex }
+					);
+				}
 			}
-			
-			// No error, operation succeeded - return result WITHOUT success field
-			returnData.push({
-				json: {
-					index: indexName,
-					table,
-					fields: fieldsList,
-					type: indexType,
-					unique: options.isUnique === true,
-					message: `Index ${indexName} created on table ${table}`
-				},
-				pairedItem: { item: itemIndex },
-			});
 		} catch (error) {
-			// Check if executeFunctions.continueOnFail() is true
+			// Handle errors based on continueOnFail setting
 			if (executeFunctions.continueOnFail()) {
-				// Add error to returnData instead of throwing
+				if (DEBUG) debugLog('createIndex', 'Error with continueOnFail enabled', itemIndex, error.message);
+				// Add error information to output
 				returnData.push({
 					json: { error: error.message },
 					pairedItem: { item: itemIndex },
 				});
 			} else {
-				// If continueOnFail is false, throw a properly formatted NodeOperationError
+				// If continueOnFail is not enabled, throw a properly formatted NodeOperationError
+				if (DEBUG) debugLog('createIndex', 'Error, stopping execution', itemIndex, error.message);
 				throw new NodeOperationError(
 					executeFunctions.getNode(),
 					`Error creating index: ${error.message}`,
@@ -194,6 +160,7 @@ export const createIndexOperation: IOperationHandler = {
 			}
 		}
 		
+		if (DEBUG) debugLog('createIndex', `Completed, returning ${returnData.length} items`, itemIndex);
 		return returnData;
 	},
 };

@@ -1,15 +1,16 @@
 import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import type { Surreal } from 'surrealdb';
-import { formatArrayResult } from '../../../utilities';
-import { prepareSurrealQuery, validateJSON, validateRequiredField } from '../../../GenericFunctions';
+import { formatArrayResult, debugLog, createErrorResult } from '../../../utilities';
+import { validateRequiredField, validateAndParseData, cleanTableName, buildUpdateQuery, prepareSurrealQuery, buildCredentialsObject } from '../../../GenericFunctions';
 import type { IOperationHandler } from '../../../types/operation.types';
-import type { ISurrealCredentials } from '../../../types/surrealDb.types';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
 
 /**
- * Implementation of the "Update All Records" operation
+ * Update All Records operation handler for Table resource
+ * This operation replaces the content of all records in a table with the provided data
  */
 export const updateAllRecordsOperation: IOperationHandler = {
 	async execute(
@@ -18,124 +19,92 @@ export const updateAllRecordsOperation: IOperationHandler = {
 		executeFunctions: IExecuteFunctions,
 		itemIndex: number,
 	): Promise<INodeExecutionData[]> {
-		const returnData: INodeExecutionData[] = [];
-		
 		try {
+			if (DEBUG) debugLog('updateAllRecords', 'Starting operation', itemIndex);
+			
 			// Get credentials
 			const credentials = await executeFunctions.getCredentials('surrealDbApi');
 			
-			// Get parameters
-			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
-			validateRequiredField(executeFunctions, table, 'Table', itemIndex);
+			// Get parameters for the specific item
+			const tableInput = executeFunctions.getNodeParameter('table', itemIndex) as string;
+			validateRequiredField(executeFunctions, tableInput, 'Table', itemIndex);
+			const table = cleanTableName(tableInput);
 			
-			// Ensure table is a string
-			table = String(table || '');
+			// Get data to update the records with
+			const dataInput = executeFunctions.getNodeParameter('data', itemIndex);
+			const data = validateAndParseData(executeFunctions, dataInput, 'Data', itemIndex);
 			
-			// If table contains a colon, use only the part before the colon
-			if (table.includes(':')) {
-				table = table.split(':')[0];
+			// Validate data is an object
+			if (typeof data !== 'object' || Array.isArray(data) || data === null) {
+				throw new NodeOperationError(
+					executeFunctions.getNode(),
+					'Data must be a JSON object with fields to update',
+					{ itemIndex }
+				);
 			}
-			
-			const dataInput = executeFunctions.getNodeParameter('data', itemIndex); // Get potential object or string
-			// Validate required field based on raw input
-			if (dataInput === undefined || dataInput === null || dataInput === '') {
-				throw new Error('Update Data is required');
-			}
-			
-			// Process data based on type
-			let data: any;
-			if (typeof dataInput === 'string') {
-				if (DEBUG) console.log(`DEBUG (updateAllRecords) - Processing data parameter as string.`);
-				data = validateJSON(executeFunctions, dataInput, itemIndex);
-			} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-				if (DEBUG) console.log(`DEBUG (updateAllRecords) - Processing data parameter as object.`);
-				data = dataInput;
-			} else {
-				throw new Error(`Update Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
-			}
-			if (DEBUG) console.log(`DEBUG (updateAllRecords) - Processed data (type: ${typeof data}):`, JSON.stringify(data));
-			
-			// Build the update query
-			// We use UPDATE with no WHERE clause to update all records in the table
-			let query = `UPDATE ${table} CONTENT $data`;
 			
 			// Get options
 			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
-			const nodeNamespace = (options.namespace as string)?.trim() || '';
-			const nodeDatabase = (options.database as string)?.trim() || '';
 			
-			// Build the resolved credentials object
-			const resolvedCredentials: ISurrealCredentials = {
-				connectionString: credentials.connectionString as string,
-				authentication: credentials.authentication as 'Root' | 'Namespace' | 'Database',
-				username: credentials.username as string,
-				password: credentials.password as string,
-				namespace: nodeNamespace || (credentials.namespace as string),
-				database: nodeDatabase || (credentials.database as string),
-			};
+			// Get where clause if provided
+			const where = options.where as string || '';
+			
+			// Use helper function to build the update query
+			const query = buildUpdateQuery(table, where);
+			
+			// Build credentials object
+			const resolvedCredentials = buildCredentialsObject(credentials, options);
 			
 			if (DEBUG) {
-				// DEBUG: Log original query and credentials
-				console.log('DEBUG - Update All Records - Original query:', query);
-				console.log('DEBUG - Update All Records - Authentication type:', resolvedCredentials.authentication);
-				console.log('DEBUG - Update All Records - Namespace:', resolvedCredentials.namespace);
-				console.log('DEBUG - Update All Records - Database:', resolvedCredentials.database);
-				console.log('DEBUG - Update All Records - Data:', JSON.stringify(data));
+				debugLog('updateAllRecords', 'Original query', itemIndex, query);
+				debugLog('updateAllRecords', 'Data for update', itemIndex, data);
+				debugLog('updateAllRecords', 'Authentication', itemIndex, resolvedCredentials.authentication);
+				debugLog('updateAllRecords', 'Namespace', itemIndex, resolvedCredentials.namespace);
+				debugLog('updateAllRecords', 'Database', itemIndex, resolvedCredentials.database);
 			}
 			
 			// Prepare the query based on authentication type
-			query = prepareSurrealQuery(query, resolvedCredentials);
+			const finalQuery = prepareSurrealQuery(query, resolvedCredentials);
 			
 			if (DEBUG) {
-				// DEBUG: Log modified query
-				console.log('DEBUG - Update All Records - Modified query:', query);
+				debugLog('updateAllRecords', 'Final query', itemIndex, finalQuery);
 			}
 			
-			// Execute the query with the data parameter
-			const result = await client.query<[any[]]>(query, { data });
+			// Execute the query
+			const result = await client.query<[any[]]>(finalQuery, { data });
 			
 			if (DEBUG) {
-				// DEBUG: Log raw result
-				console.log('DEBUG - Update All Records - Raw query result:', JSON.stringify(result));
+				debugLog('updateAllRecords', 'Raw query result', itemIndex, JSON.stringify(result));
 			}
 			
 			// Find the first non-null array in the result
-			const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null; // Find first array, even if empty
+			const recordsArray = Array.isArray(result) ? result.find(item => Array.isArray(item)) : null;
 			
-			if (recordsArray) { // Check if an array was found (could be empty)
+			const returnData: INodeExecutionData[] = [];
+			
+			if (recordsArray) {
 				// Format the results
-				const records = recordsArray;
-				const formattedResults = formatArrayResult(records); // formatArrayResult([]) returns []
+				const formattedResults = formatArrayResult(recordsArray);
 				
-				// Add each record as a separate item
+				// Add each formatted result to returnData with pairedItem
 				for (const formattedResult of formattedResults) {
 					returnData.push({
 						...formattedResult,
 						pairedItem: { item: itemIndex },
 					});
 				}
-			} else {
-				// If no records were updated or the result is not as expected, return a status message
-				returnData.push({
-					json: { 
-						result: 'Update operation completed',
-						table,
-						data
-					},
-					pairedItem: { item: itemIndex },
-				});
 			}
+			
+			if (DEBUG) debugLog('updateAllRecords', `Completed, returning ${returnData.length} items`, itemIndex);
+			return returnData;
+			
 		} catch (error) {
 			if (executeFunctions.continueOnFail()) {
-				returnData.push({
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				});
-			} else {
-				throw error;
+				if (DEBUG) debugLog('updateAllRecords', 'Error with continueOnFail enabled', itemIndex, error.message);
+				return [createErrorResult(error, itemIndex)];
 			}
+			if (DEBUG) debugLog('updateAllRecords', 'Error, stopping execution', itemIndex, error.message);
+			throw error;
 		}
-		
-		return returnData;
 	},
 };

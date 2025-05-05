@@ -2,8 +2,8 @@ import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
-import { validateRequiredField, validateJSON } from '../../../GenericFunctions';
-import { formatSingleResult, createRecordId, parseAndValidateRecordId, debugLog } from '../../../utilities';
+import { validateRequiredField, validateAndParseData } from '../../../GenericFunctions';
+import { createRecordId, parseAndValidateRecordId, debugLog, addSuccessResult, addErrorResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -53,29 +53,9 @@ export const mergeRecordOperation: IOperationHandler = {
 			// Parse and validate the record ID string
 			const validatedId = parseAndValidateRecordId(idInput, table, executeFunctions.getNode(), itemIndex);
 			
-			const dataInput = executeFunctions.getNodeParameter('data', itemIndex); // Get potential object or string
-			// Validate required field based on raw input
-			if (dataInput === undefined || dataInput === null || dataInput === '') {
-				throw new NodeOperationError(
-					executeFunctions.getNode(),
-					'Data is required',
-					{ itemIndex }
-				);
-			}
-			
-			// Process data based on type
-			let data: any;
-			if (typeof dataInput === 'string') {
-				data = validateJSON(executeFunctions, dataInput, itemIndex);
-			} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-				data = dataInput;
-			} else {
-				throw new NodeOperationError(
-					executeFunctions.getNode(),
-					`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`,
-					{ itemIndex }
-				);
-			}
+			// Get and validate record data
+			const dataInput = executeFunctions.getNodeParameter('data', itemIndex);
+			const data = validateAndParseData(executeFunctions, dataInput, 'Data', itemIndex);
 			
 			// Create the record ID
 			const recordId = createRecordId(table, validatedId);
@@ -92,6 +72,9 @@ export const mergeRecordOperation: IOperationHandler = {
 				);
 			}
 			
+			// Initialize the return data array
+			const returnData: INodeExecutionData[] = [];
+			
 			// Check if result is an empty object
 			if (typeof result === 'object' && Object.keys(result).length === 0) {
 				// After merge, fetch the complete record to return
@@ -99,35 +82,26 @@ export const mergeRecordOperation: IOperationHandler = {
 				
 				if (updatedRecord === null || updatedRecord === undefined) {
 					// This shouldn't happen if merge succeeded, but just in case
-					return [{
-						json: { 
-							success: true, 
-							message: `Record ${recordId.toString()} was merged successfully but couldn't be retrieved.` 
-						},
-						pairedItem: { item: itemIndex },
-					}];
+					addSuccessResult(returnData, { 
+						success: true, 
+						message: `Record ${recordId.toString()} was merged successfully but couldn't be retrieved.` 
+					}, itemIndex);
+				} else {
+					// Return the updated record
+					addSuccessResult(returnData, updatedRecord, itemIndex);
 				}
-				
-				// Return the updated record
-				return [{
-					json: { result: updatedRecord },
-					pairedItem: { item: itemIndex },
-				}];
+			} else {
+				// Add the result to return data
+				addSuccessResult(returnData, result, itemIndex);
 			}
 			
-			// Format the result
-			const formattedResult = formatSingleResult(result);
-			return [{
-				...formattedResult,
-				pairedItem: { item: itemIndex },
-			}];
+			return returnData;
 		} catch (error) {
 			// Handle errors based on continueOnFail setting
 			if (executeFunctions.continueOnFail()) {
-				return [{
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				}];
+				const returnData: INodeExecutionData[] = [];
+				addErrorResult(returnData, error, itemIndex);
+				return returnData;
 			}
 			
 			// If continueOnFail is not enabled, re-throw the error

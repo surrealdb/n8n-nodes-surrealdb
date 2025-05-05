@@ -1,8 +1,9 @@
 import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import type { IOperationHandler } from '../../../types/operation.types';
 import type { Surreal } from 'surrealdb';
-import { validateRequiredField, validateJSON } from '../../../GenericFunctions';
-import { formatSingleResult, createRecordId, parseAndValidateRecordId, debugLog } from '../../../utilities';
+import { validateRequiredField, validateAndParseData } from '../../../GenericFunctions';
+import { createRecordId, parseAndValidateRecordId, debugLog, addSuccessResult, addErrorResult } from '../../../utilities';
 
 // Set to true to enable debug logging, false to disable
 const DEBUG = false;
@@ -40,28 +41,16 @@ export const upsertRecordOperation: IOperationHandler = {
 
 		// Only validate table as required if it couldn't be extracted from the Record ID
 		if (!table) {
-			throw new Error('Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")');
+			throw new NodeOperationError(executeFunctions.getNode(), 'Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")', { itemIndex });
 		}
 		validateRequiredField(executeFunctions, idInput, 'Record ID', itemIndex);
 
 		// Parse and validate the record ID string
 		const validatedId = parseAndValidateRecordId(idInput, table, executeFunctions.getNode(), itemIndex);
 		
-		const dataInput = executeFunctions.getNodeParameter('data', itemIndex); // Get potential object or string
-		// Validate required field based on raw input
-		if (dataInput === undefined || dataInput === null || dataInput === '') {
-			throw new Error('Data is required');
-		}
-		
-		// Process data based on type
-		let data: any;
-		if (typeof dataInput === 'string') {
-			data = validateJSON(executeFunctions, dataInput, itemIndex);
-		} else if (typeof dataInput === 'object' && dataInput !== null) { // Check if it's a non-null object
-			data = dataInput;
-		} else {
-			throw new Error(`Data must be a JSON string or a JSON object, received type: ${typeof dataInput}`);
-		}
+		// Get and validate record data
+		const dataInput = executeFunctions.getNodeParameter('data', itemIndex);
+		const data = validateAndParseData(executeFunctions, dataInput, 'Data', itemIndex);
 		
 		// Create the record ID
 		const recordId = createRecordId(table, validatedId);
@@ -71,23 +60,20 @@ export const upsertRecordOperation: IOperationHandler = {
 			// According to the SurrealDB documentation, this is the correct method for upserting records
 			const result = await client.upsert(recordId, data);
 			
-			// Format the result
-			const formattedResult = formatSingleResult(result);
-			return [{
-				...formattedResult,
-				pairedItem: { item: itemIndex },
-			}];
+			// Add success result with standardized format
+			const returnData: INodeExecutionData[] = [];
+			addSuccessResult(returnData, result, itemIndex);
+			return returnData;
 		} catch (error) {
 			// Handle errors based on continueOnFail setting
 			if (executeFunctions.continueOnFail()) {
-				return [{
-					json: { error: error.message },
-					pairedItem: { item: itemIndex },
-				}];
+				const returnData: INodeExecutionData[] = [];
+				addErrorResult(returnData, error, itemIndex);
+				return returnData;
 			}
 			
-			// If continueOnFail is not enabled, re-throw the error
-			throw error;
+			// If continueOnFail is not enabled, throw a properly formatted error
+			throw new NodeOperationError(executeFunctions.getNode(), error.message, { itemIndex });
 		}
 	},
 };
