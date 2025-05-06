@@ -4,7 +4,7 @@ import type { INodeProperties } from 'n8n-workflow';
 import { systemOperations, systemFields } from './resources/system';
 import { queryOperations, queryFields } from './resources/query';
 import { recordOperations, recordFields } from './resources/record';
-import { tableOperations, tableFields } from './resources/table/table.properties';
+import { tableOperations, tableFields } from './resources/table';
 import { fieldOperations, fieldFields } from './resources/field';
 import { indexOperations, indexFields } from './resources/index';
 import { relationshipOperations, relationshipFields } from './resources/relationship';

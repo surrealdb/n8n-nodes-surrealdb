@@ -1,8 +1,2 @@
-import { relationshipOperations, relationshipFields } from './relationship.properties';
-import { handleRelationshipOperations } from './relationship.handler';
-
-export {
-	relationshipOperations,
-	relationshipFields,
-	handleRelationshipOperations,
-};
+export * from './relationship.handler';
+export * from './relationship.properties';

@@ -24,7 +24,7 @@ export const systemOperations: INodeProperties[] = [
 				action: 'Check health',
 			},
 			{
-				name: 'Version',
+				name: 'Get Version',
 				value: 'version',
 				description: 'Get the version of the SurrealDB instance',
 				action: 'Get SurrealDB version',

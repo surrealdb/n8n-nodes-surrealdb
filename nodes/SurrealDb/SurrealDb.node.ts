@@ -19,7 +19,7 @@ import { nodeProperties } from './SurrealDbProperties';
 import { handleSystemOperations } from './resources/system';
 import { handleQueryOperations } from './resources/query';
 import { handleRecordOperations } from './resources/record';
-import { handleTableOperations } from './resources/table/table.handler';
+import { handleTableOperations } from './resources/table';
 import { handleFieldOperations } from './resources/field';
 import { handleIndexOperations } from './resources/index';
 import { handleRelationshipOperations } from './resources/relationship';
@@ -32,7 +32,6 @@ export class SurrealDb implements INodeType {
 		group: ['input'],
 		version: 1,
 		description: 'Interaction with a SurrealDB database',
-		subtitle: '={{$parameter["action"]}}',
 		defaults: {
 			name: 'SurrealDB',
 		},

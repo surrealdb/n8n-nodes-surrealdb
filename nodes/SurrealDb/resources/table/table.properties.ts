@@ -47,13 +47,13 @@ export const tableOperations: INodeProperties[] = [
 				action: 'Get all records',
 			},
 			{
-				name: 'Create Many',
+				name: 'Create Many Records',
 				value: 'createMany',
 				description: 'Create multiple records in a single operation',
 				action: 'Create many records',
 			},
 			{
-				name: 'Get Many',
+				name: 'Get Many Records',
 				value: 'getMany',
 				description: 'Retrieve multiple specific records by their IDs',
 				action: 'Get many records',
@@ -128,7 +128,7 @@ export const tableFields: INodeProperties[] = [
 			},
 		},
 	},
-	
+
 	// Fields for Table operations
 	{
 		displayName: 'Records Data (JSON)',
@@ -256,7 +256,7 @@ export const tableFields: INodeProperties[] = [
 			},
 		],
 	},
-	
+
 	// Add Options for Table resource (createMany and getMany operations)
 	{
 		displayName: 'Options',

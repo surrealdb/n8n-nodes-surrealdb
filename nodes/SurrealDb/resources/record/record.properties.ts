@@ -18,37 +18,37 @@ export const recordOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Create',
+				name: 'Create Record',
 				value: 'createRecord',
 				description: 'Create a new record',
 				action: 'Create record',
 			},
 			{
-				name: 'Get',
+				name: 'Get Record',
 				value: 'getRecord',
 				description: 'Retrieve a specific record',
 				action: 'Get record',
 			},
 			{
-				name: 'Update',
+				name: 'Update Record',
 				value: 'updateRecord',
 				description: 'Replace the content of a specific record',
 				action: 'Update record',
 			},
 			{
-				name: 'Merge',
+				name: 'Merge Record',
 				value: 'mergeRecord',
 				description: 'Merge data into a specific record',
 				action: 'Merge record',
 			},
 			{
-				name: 'Delete',
+				name: 'Delete Record',
 				value: 'deleteRecord',
 				description: 'Delete a specific record',
 				action: 'Delete record',
 			},
 			{
-				name: 'Upsert',
+				name: 'Upsert Record',
 				value: 'upsertRecord',
 				description: 'Create a record if it doesn\'t exist, or update it if it does',
 				action: 'Upsert record',
