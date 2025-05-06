@@ -62,5 +62,5 @@ This document provides instructions for setting up the GitHub repository for the
 Once your GitHub repository is set up, you can proceed with:
 
 1. Sharing the repository with the n8n community
-2. Publishing the package to npm (see NPM_PUBLISHING.md)
+2. Publishing the package to npm
 3. Gathering feedback and making improvements
