@@ -21,6 +21,6 @@
     "skipLibCheck": true,
     "outDir": "./dist"
   },
-  "include": ["credentials/**/*.ts", "nodes/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules/**/*", "**/*.spec.ts", "**/*.test.ts"]
 }

@@ -16,14 +16,16 @@
     "type": "git",
     "url": "https://github.com/nsxdavid/n8n-nodes-surrealdb.git"
   },
-  "main": "index.js",
+  "main": "dist/index.js",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
-    "format": "prettier nodes credentials --write",
-    "lint": "eslint nodes credentials package.json",
-    "lintfix": "eslint nodes credentials package.json --fix",
-    "prepublishOnly": "npm run build"
+    "format": "prettier src --write",
+    "lint": "eslint src package.json",
+    "lintfix": "eslint src package.json --fix",
+    "prepublishOnly": "npm run build",
+    "n8n": "node --experimental-loader=./esm-loader.js ./node_modules/n8n/bin/n8n"
   },
   "files": [
     "dist"
@@ -52,5 +54,8 @@
   },
   "dependencies": {
     "surrealdb": "^1.0.0"
+  },
+  "overrides": {
+    "pkce-challenge": "3.0.0"
   }
 }
