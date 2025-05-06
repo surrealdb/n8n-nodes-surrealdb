@@ -1,2 +1,2 @@
-export * from './index.handler';
-export * from './index.properties';
+export * from "./index.handler";
+export * from "./index.properties";

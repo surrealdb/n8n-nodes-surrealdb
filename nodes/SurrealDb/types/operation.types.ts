@@ -1,5 +1,5 @@
-import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import type { Surreal } from 'surrealdb';
+import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
+import type { Surreal } from "surrealdb";
 
 /**
  * Common interface for all operation handlers

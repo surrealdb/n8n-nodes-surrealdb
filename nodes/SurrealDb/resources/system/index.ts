@@ -1,2 +1,2 @@
-export * from './system.handler';
-export * from './system.properties';
+export * from "./system.handler";
+export * from "./system.properties";

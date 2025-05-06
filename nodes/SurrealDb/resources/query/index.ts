@@ -1,2 +1,2 @@
-export * from './query.handler';
-export * from './query.properties';
+export * from "./query.handler";
+export * from "./query.properties";

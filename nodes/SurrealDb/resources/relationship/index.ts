@@ -1,2 +1,2 @@
-export * from './relationship.handler';
-export * from './relationship.properties';
+export * from "./relationship.handler";
+export * from "./relationship.properties";

@@ -1,8 +1,17 @@
-import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import type { Surreal } from 'surrealdb';
-import { prepareSurrealQuery, validateRequiredField, cleanTableName, buildCredentialsObject } from '../../../GenericFunctions';
-import { debugLog } from '../../../utilities';
-import type { IOperationHandler } from '../../../types/operation.types';
+import type {
+  IDataObject,
+  IExecuteFunctions,
+  INodeExecutionData,
+} from "n8n-workflow";
+import type { Surreal } from "surrealdb";
+import {
+  prepareSurrealQuery,
+  validateRequiredField,
+  cleanTableName,
+  buildCredentialsObject,
+} from "../../../GenericFunctions";
+import { debugLog } from "../../../utilities";
+import type { IOperationHandler } from "../../../types/operation.types";
 
 // Set to false to disable debug logging
 const DEBUG = false;
@@ -12,92 +21,103 @@ const DEBUG = false;
  * This operation creates a new table in the database
  */
 export const createTableOperation: IOperationHandler = {
-	async execute(
-		client: Surreal,
-		items: INodeExecutionData[],
-		executeFunctions: IExecuteFunctions,
-		itemIndex: number,
-	): Promise<INodeExecutionData[]> {
-		const returnData: INodeExecutionData[] = [];
+  async execute(
+    client: Surreal,
+    items: INodeExecutionData[],
+    executeFunctions: IExecuteFunctions,
+    itemIndex: number
+  ): Promise<INodeExecutionData[]> {
+    const returnData: INodeExecutionData[] = [];
 
-		try {
-			// Get parameters
-			let table = executeFunctions.getNodeParameter('table', itemIndex) as string;
-			validateRequiredField(executeFunctions, table, 'Table', itemIndex);
+    try {
+      // Get parameters
+      let table = executeFunctions.getNodeParameter(
+        "table",
+        itemIndex
+      ) as string;
+      validateRequiredField(executeFunctions, table, "Table", itemIndex);
 
-			// Clean and standardize the table name
-			table = cleanTableName(table);
+      // Clean and standardize the table name
+      table = cleanTableName(table);
 
-			// Get options
-			const options = executeFunctions.getNodeParameter('options', itemIndex, {}) as IDataObject;
+      // Get options
+      const options = executeFunctions.getNodeParameter(
+        "options",
+        itemIndex,
+        {}
+      ) as IDataObject;
 
-			// Get schema if provided and convert from string if needed
-			let schema = null;
-			if (options.schema) {
-				if (typeof options.schema === 'string') {
-					try {
-						schema = JSON.parse(options.schema);
-					} catch (error) {
-						throw new Error(`Invalid schema JSON: ${error.message}`);
-					}
-				} else if (typeof options.schema === 'object') {
-					schema = options.schema;
-				}
-			}
+      // Get schema if provided and convert from string if needed
+      let schema = null;
+      if (options.schema) {
+        if (typeof options.schema === "string") {
+          try {
+            schema = JSON.parse(options.schema);
+          } catch (error) {
+            throw new Error(`Invalid schema JSON: ${error.message}`);
+          }
+        } else if (typeof options.schema === "object") {
+          schema = options.schema;
+        }
+      }
 
-			// Get credentials
-			const credentials = await executeFunctions.getCredentials('surrealDbApi');
+      // Get credentials
+      const credentials = await executeFunctions.getCredentials("surrealDbApi");
 
-			// Build the resolved credentials object
-			const resolvedCredentials = buildCredentialsObject(credentials, options);
+      // Build the resolved credentials object
+      const resolvedCredentials = buildCredentialsObject(credentials, options);
 
-			// Get table type and schema mode options
-			const tableType = options.tableType as string || 'NORMAL';
-			const schemaMode = options.schemaMode as string || 'SCHEMALESS';
+      // Get table type and schema mode options
+      const tableType = (options.tableType as string) || "NORMAL";
+      const schemaMode = (options.schemaMode as string) || "SCHEMALESS";
 
-			// Build the query to create a table
-			let query: string;
+      // Build the query to create a table
+      let query: string;
 
-			// Start with the basic DEFINE TABLE statement with the specified type
-			query = `DEFINE TABLE ${table} TYPE ${tableType} ${schemaMode}`;
+      // Start with the basic DEFINE TABLE statement with the specified type
+      query = `DEFINE TABLE ${table} TYPE ${tableType} ${schemaMode}`;
 
-			// Add schema fields if schema is provided and mode is SCHEMAFULL
-			if (schemaMode === 'SCHEMAFULL' && schema) {
-				// Prepare the schema definition query
-				// For each field in the schema, define its type
-				if (schema.fields && Object.keys(schema.fields).length > 0) {
-					for (const [fieldName, fieldType] of Object.entries(schema.fields)) {
-						query += `; DEFINE FIELD ${fieldName} ON TABLE ${table} TYPE ${fieldType}`;
-					}
-				}
-			}
+      // Add schema fields if schema is provided and mode is SCHEMAFULL
+      if (schemaMode === "SCHEMAFULL" && schema) {
+        // Prepare the schema definition query
+        // For each field in the schema, define its type
+        if (schema.fields && Object.keys(schema.fields).length > 0) {
+          for (const [fieldName, fieldType] of Object.entries(schema.fields)) {
+            query += `; DEFINE FIELD ${fieldName} ON TABLE ${table} TYPE ${fieldType}`;
+          }
+        }
+      }
 
-			const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
+      const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
 
-			if (DEBUG) {
-				debugLog('createTable', 'Query', itemIndex, preparedQuery);
-			}
+      if (DEBUG) {
+        debugLog("createTable", "Query", itemIndex, preparedQuery);
+      }
 
-			// Execute the query
-			const result = await client.query(preparedQuery);
+      // Execute the query
+      const result = await client.query(preparedQuery);
 
-			if (DEBUG) {
-				debugLog('createTable', 'Raw query result', itemIndex, JSON.stringify(result));
-			}
+      if (DEBUG) {
+        debugLog(
+          "createTable",
+          "Raw query result",
+          itemIndex,
+          JSON.stringify(result)
+        );
+      }
 
-			// For CREATE TABLE operations, SurrealDB typically returns [null]
-			// We need to ensure we always return a valid json property for n8n
-			returnData.push({
-				json: {}, // Empty object is the minimal valid json property
-				pairedItem: { item: itemIndex },
-			});
+      // For CREATE TABLE operations, SurrealDB typically returns [null]
+      // We need to ensure we always return a valid json property for n8n
+      returnData.push({
+        json: {}, // Empty object is the minimal valid json property
+        pairedItem: { item: itemIndex },
+      });
+    } catch (error) {
+      // Let the handler deal with error handling and continueOnFail logic
+      // That way we avoid double-handling errors
+      throw error;
+    }
 
-		} catch (error) {
-			// Let the handler deal with error handling and continueOnFail logic
-			// That way we avoid double-handling errors
-			throw error;
-		}
-
-		return returnData;
-	},
+    return returnData;
+  },
 };

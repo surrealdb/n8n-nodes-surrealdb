@@ -1,14 +1,14 @@
-import type { IPairedItemData, INodeExecutionData } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
-import { RecordId } from 'surrealdb';
+import type { IPairedItemData, INodeExecutionData } from "n8n-workflow";
+import { NodeOperationError } from "n8n-workflow";
+import { RecordId } from "surrealdb";
 
 /**
  * Generate paired item data for the given number of items
  */
 export function generatePairedItemData(length: number): IPairedItemData[] {
-	return Array.from({ length }, (_, index) => ({
-		item: index,
-	}));
+  return Array.from({ length }, (_, index) => ({
+    item: index,
+  }));
 }
 
 /**
@@ -19,7 +19,7 @@ export function generatePairedItemData(length: number): IPairedItemData[] {
  * @returns A RecordId object that can be used with SurrealDB SDK methods
  */
 export function createRecordId(table: string, id: string): RecordId {
-	return new RecordId(table, id);
+  return new RecordId(table, id);
 }
 
 /**
@@ -32,18 +32,27 @@ export function createRecordId(table: string, id: string): RecordId {
  * @returns The validated and potentially stripped record ID string.
  * @throws {NodeOperationError} If the record ID is invalid or the table prefix does not match.
  */
-export function parseAndValidateRecordId(recordIdString: string | any, expectedTable: string, node: any, itemIndex: number): string {
-	// Ensure recordIdString is a string
-	const idStr = String(recordIdString || '');
+export function parseAndValidateRecordId(
+  recordIdString: string | any,
+  expectedTable: string,
+  node: any,
+  itemIndex: number
+): string {
+  // Ensure recordIdString is a string
+  const idStr = String(recordIdString || "");
 
-	if (idStr.includes(':')) {
-		const [tablePrefix, id] = idStr.split(':');
-		if (tablePrefix !== expectedTable) {
-			throw new NodeOperationError(node, `Record ID table prefix "${tablePrefix}" does not match the specified table "${expectedTable}".`, { itemIndex });
-		}
-		return id;
-	}
-	return idStr;
+  if (idStr.includes(":")) {
+    const [tablePrefix, id] = idStr.split(":");
+    if (tablePrefix !== expectedTable) {
+      throw new NodeOperationError(
+        node,
+        `Record ID table prefix "${tablePrefix}" does not match the specified table "${expectedTable}".`,
+        { itemIndex }
+      );
+    }
+    return id;
+  }
+  return idStr;
 }
 
 /**
@@ -51,7 +60,7 @@ export function parseAndValidateRecordId(recordIdString: string | any, expectedT
  * Standardizes the output format for operations that return a single result
  */
 export function formatSingleResult(result: any): INodeExecutionData {
-	return { json: result };
+  return { json: result };
 }
 
 /**
@@ -60,7 +69,7 @@ export function formatSingleResult(result: any): INodeExecutionData {
  * Each item in the array becomes a separate n8n item
  */
 export function formatArrayResult(results: any[]): INodeExecutionData[] {
-	return results.map(item => ({ json: item }));
+  return results.map((item) => ({ json: item }));
 }
 
 /**
@@ -72,18 +81,23 @@ export function formatArrayResult(results: any[]): INodeExecutionData[] {
  * @param itemIndex The index of the current item (optional)
  * @param data Additional data to log (optional)
  */
-export function debugLog(operation: string, message: string, itemIndex?: number, data?: any): void {
-	// Determine if itemIndex should be included in the log
-	const indexPart = itemIndex !== undefined ? ` [item:${itemIndex}]` : '';
+export function debugLog(
+  operation: string,
+  message: string,
+  itemIndex?: number,
+  data?: any
+): void {
+  // Determine if itemIndex should be included in the log
+  const indexPart = itemIndex !== undefined ? ` [item:${itemIndex}]` : "";
 
-	// Basic log without additional data
-	if (data === undefined) {
-		console.log(`DEBUG (${operation})${indexPart} - ${message}`);
-	}
-	// Log with additional data
-	else {
-		console.log(`DEBUG (${operation})${indexPart} - ${message}`, data);
-	}
+  // Basic log without additional data
+  if (data === undefined) {
+    console.log(`DEBUG (${operation})${indexPart} - ${message}`);
+  }
+  // Log with additional data
+  else {
+    console.log(`DEBUG (${operation})${indexPart} - ${message}`, data);
+  }
 }
 
 /**
@@ -93,11 +107,14 @@ export function debugLog(operation: string, message: string, itemIndex?: number,
  * @param itemIndex The index of the current item for pairedItem
  * @returns An INodeExecutionData object with standardized structure
  */
-export function createSuccessResult(data: Record<string, any>, itemIndex: number): INodeExecutionData {
-	return {
-		json: data,
-		pairedItem: { item: itemIndex }
-	};
+export function createSuccessResult(
+  data: Record<string, any>,
+  itemIndex: number
+): INodeExecutionData {
+  return {
+    json: data,
+    pairedItem: { item: itemIndex },
+  };
 }
 
 /**
@@ -107,8 +124,12 @@ export function createSuccessResult(data: Record<string, any>, itemIndex: number
  * @param data The operation-specific data to include in the result
  * @param itemIndex The index of the current item for pairedItem
  */
-export function addSuccessResult(returnData: INodeExecutionData[], data: Record<string, any>, itemIndex: number): void {
-	returnData.push(createSuccessResult(data, itemIndex));
+export function addSuccessResult(
+  returnData: INodeExecutionData[],
+  data: Record<string, any>,
+  itemIndex: number
+): void {
+  returnData.push(createSuccessResult(data, itemIndex));
 }
 
 /**
@@ -118,15 +139,18 @@ export function addSuccessResult(returnData: INodeExecutionData[], data: Record<
  * @param itemIndex The index of the current item for pairedItem
  * @returns An INodeExecutionData object with standardized error structure
  */
-export function createErrorResult(error: Error | string, itemIndex: number): INodeExecutionData {
-	const errorMessage = typeof error === 'string' ? error : error.message;
+export function createErrorResult(
+  error: Error | string,
+  itemIndex: number
+): INodeExecutionData {
+  const errorMessage = typeof error === "string" ? error : error.message;
 
-	return {
-		json: {
-			error: errorMessage
-		},
-		pairedItem: { item: itemIndex }
-	};
+  return {
+    json: {
+      error: errorMessage,
+    },
+    pairedItem: { item: itemIndex },
+  };
 }
 
 /**
@@ -136,6 +160,10 @@ export function createErrorResult(error: Error | string, itemIndex: number): INo
  * @param error The error object or message
  * @param itemIndex The index of the current item for pairedItem
  */
-export function addErrorResult(returnData: INodeExecutionData[], error: Error | string, itemIndex: number): void {
-	returnData.push(createErrorResult(error, itemIndex));
+export function addErrorResult(
+  returnData: INodeExecutionData[],
+  error: Error | string,
+  itemIndex: number
+): void {
+  returnData.push(createErrorResult(error, itemIndex));
 }
