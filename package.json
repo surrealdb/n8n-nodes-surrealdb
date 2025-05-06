@@ -10,8 +10,7 @@
   "license": "MIT",
   "homepage": "https://n8n.io",
   "author": {
-    "name": "David Whatley",
-    "email": "nsxdavid@gmail.com"
+    "name": "David Whatley"
   },
   "repository": {
     "type": "git",
