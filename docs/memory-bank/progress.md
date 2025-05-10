@@ -1,4 +1,4 @@
-# Progress: n8n-nodes-surrealdb (as of Initial Onboarding)
+# Progress: n8n-nodes-surrealdb
 
 ## 1. What Works (Implemented Features)
 
@@ -14,12 +14,12 @@ Based on the `README.md` and the project's file structure (presence of operation
 
 *   **Record Operations:**
     *   Create Record
-    *   Get Record
+    *   Get Record (Note: If record not found, outputs an item with `json: {}` to ensure item persistence with `alwaysOutputData`.)
     *   Update Record
     *   Upsert Record
     *   Delete Record
 *   **Table Operations:**
-    *   Get All Records
+    *   Get All Records (Note: If table is empty or query yields no records, outputs an item with `json: { records: [] }`.)
     *   Create Many
     *   Get Many
     *   Update All Records
@@ -44,7 +44,7 @@ Based on the `README.md` and the project's file structure (presence of operation
     *   Delete Relationship
     *   Query Relationships
 *   **Query Operations:**
-    *   Execute Query (raw SurrealQL with parameters)
+    *   Execute Query (raw SurrealQL with parameters) (Note: If a query statement yields no rows, outputs an item with `json: {}` for that statement's result.)
 *   **System Operations:**
     *   Health Check
     *   Version
@@ -79,12 +79,13 @@ This list is primarily derived from `docs/FUTURE_TODO.md`:
 *   **Actively Maintained (Implied):** The presence of `CHANGELOG.md` and recent additions like "Relationship Resource" suggest ongoing development.
 *   **Ready for Use:** The node is published on npm (`v0.2.0` as per `package.json`) and usable in self-hosted n8n instances.
 *   **Memory Bank Initialized:** Core memory bank files have been created by Cline for easier future onboarding and development.
+*   **Item Handling Refined:** Addressed issues where items could be "dropped" if an operation found no data for an input item; specific operations now ensure a corresponding output item is generated (e.g., with empty data) when `alwaysOutputData` is relevant.
 
 ## 4. Known Issues & Limitations
 
 *   **HTTP/HTTPS Only:** Cannot use WebSocket (WS/WSS) connections. This limits real-time capabilities and might affect how certain SurrealDB features are accessed or if the `surrealdb.js` library can be fully leveraged.
 *   **Self-Hosted n8n Only:** Not available for n8n Cloud users.
-*   **SurrealDB Result Handling:** Users need to be aware that SurrealDB often returns empty results instead of errors for "not found" scenarios. The node should ideally make this clear or handle it gracefully (e.g., via n8n's "Always Output Data" option).
+*   **SurrealDB Result Handling:** While several key operations (`getRecord`, `getAllRecords`, `executeQuery`) have been updated to better handle "no data" scenarios gracefully (especially with `alwaysOutputData`), users should still be generally aware of SurrealDB's tendency to return empty results rather than errors for some "not found" cases. Other operations might still rely on throwing errors for "not found", which then become error items if `continueOnFail` is true.
 *   **Tool Node Usage Prerequisite:** Requires `N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true` environment variable.
 
 ## 5. Evolution of Project Decisions (Initial Observations)

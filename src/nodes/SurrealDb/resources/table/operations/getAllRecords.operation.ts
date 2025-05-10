@@ -118,17 +118,22 @@ export const getAllRecordsOperation: IOperationHandler = {
 
       const returnData: INodeExecutionData[] = [];
 
-      if (result && result.length > 0) {
-        // Format the results - this converts each record to an object with json property
-        const formattedResults = formatArrayResult(recordsArray ?? []);
-
-        // Add pairedItem to each result and add to returnData
+      if (recordsArray && Array.isArray(recordsArray) && recordsArray.length > 0) {
+        // We have actual records, format and push them
+        const formattedResults = formatArrayResult(recordsArray);
         for (const formattedResult of formattedResults) {
           returnData.push({
-            ...formattedResult,
+            ...formattedResult, // formattedResult is { json: row_data }
             pairedItem: { item: itemIndex },
           });
         }
+      } else {
+        // No records found (e.g., table is empty, or query result structure was unexpected but not an error)
+        // Output a single item indicating an empty list of records.
+        returnData.push({
+          json: { records: [] }, // Ensure json is an object containing the empty list
+          pairedItem: { item: itemIndex },
+        });
       }
 
       if (DEBUG)

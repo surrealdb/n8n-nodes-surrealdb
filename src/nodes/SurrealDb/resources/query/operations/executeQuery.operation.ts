@@ -111,9 +111,18 @@ export const executeQueryOperation: IOperationHandler = {
           if (Array.isArray(resultSet)) {
             // For array results, return each item as a separate n8n item
             const formattedResults = formatArrayResult(resultSet);
-            for (const formattedResult of formattedResults) {
+            if (formattedResults.length > 0) {
+              for (const formattedResult of formattedResults) {
+                returnData.push({
+                  ...formattedResult,
+                  pairedItem: { item: itemIndex },
+                });
+              }
+            } else {
+              // If resultSet was an empty array (e.g., SELECT returned no rows),
+              // push a single item representing this empty array result.
               returnData.push({
-                ...formattedResult,
+                json: {}, // Representing an empty result for this statement
                 pairedItem: { item: itemIndex },
               });
             }

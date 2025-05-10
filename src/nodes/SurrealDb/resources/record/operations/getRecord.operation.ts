@@ -91,8 +91,14 @@ export const getRecordOperation: IOperationHandler = {
         ];
       }
 
-      // If not found, return an empty array (standard n8n pattern for "not found")
-      return [];
+      // If not found, return an empty JSON object for this item,
+      // ensuring an output item corresponding to the input item.
+      return [
+        {
+          json: {},
+          pairedItem: { item: itemIndex },
+        },
+      ];
     } catch (error) {
       // Handle errors based on continueOnFail setting
       if (executeFunctions.continueOnFail()) {
