@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nsxdavid/n8n-nodes-surrealdb.git"
+    "url": "git+https://github.com/nsxdavid/n8n-nodes-surrealdb.git"
   },
   "main": "dist/index.js",
   "type": "commonjs",
