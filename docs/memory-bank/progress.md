@@ -19,7 +19,7 @@ Based on the `README.md` and the project's file structure (presence of operation
     *   Upsert Record
     *   Delete Record
 *   **Table Operations:**
-    *   Get All Records (Note: If table is empty or query yields no records, outputs an item with `json: { records: [] }`.)
+    *   Get All Records (Note: If table is empty or query yields no records, outputs an item with `json: {}`.)
     *   Create Many
     *   Get Many
     *   Update All Records

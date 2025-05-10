@@ -26,7 +26,9 @@
     *   Modified to return `[{ json: {}, pairedItem: { item: itemIndex } }]` for a statement yielding no rows (initially `json: { result: [] }`, then updated to `json: {}` per user feedback).
 *   **Fixed `table/getAllRecords.operation.ts`:**
     *   Identified item dropping if a table was empty.
-    *   Modified to return `[{ json: { records: [] }, pairedItem: { item: itemIndex } }]` if the table is empty.
+    *   Initially modified to return `[{ json: { records: [] }, ... }]`.
+    *   Updated (based on user feedback for consistency) to return `[{ json: {}, pairedItem: { item: itemIndex } }]` if the table is empty.
+*   **Updated `CHANGELOG.md`** to reflect all fixes for version 0.3.0, including the corrected output for `getAllRecords`.
 *   **Updated this `activeContext.md` file.**
 
 ## 3. Next Steps (for Cline)
@@ -42,9 +44,9 @@
 *   **"No Data" Output Consistency:**
     *   For `getRecord` (single item not found): Output `json: {}`.
     *   For `executeQuery` (statement yields no rows): Output `json: {}` per user feedback.
-    *   For `getAllRecords` (table is empty): Output `json: { records: [] }` to clearly indicate an empty set of records.
-    *   This provides a balance between simplicity (`{}`) and informativeness (`{ records: [] }`).
-*   **TypeScript Compliance:** Ensured changes (e.g., `json: { result: [] }` for `executeQuery`) are compatible with `IDataObject` type for the `json` property.
+    *   For `getAllRecords` (table is empty): Output `json: {}` per user feedback for consistency.
+    *   This standardizes "no data found" for read operations to a simple empty object.
+*   **TypeScript Compliance:** Ensured changes are compatible with `IDataObject` type for the `json` property.
 
 ## 5. Important Patterns and Preferences (Observed and Reinforced)
 

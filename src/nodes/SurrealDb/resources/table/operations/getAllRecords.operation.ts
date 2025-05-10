@@ -129,9 +129,9 @@ export const getAllRecordsOperation: IOperationHandler = {
         }
       } else {
         // No records found (e.g., table is empty, or query result structure was unexpected but not an error)
-        // Output a single item indicating an empty list of records.
+        // Output a single item with an empty JSON object.
         returnData.push({
-          json: { records: [] }, // Ensure json is an object containing the empty list
+          json: {}, // Consistent with getRecord (not found) and executeQuery (empty SELECT result)
           pairedItem: { item: itemIndex },
         });
       }
