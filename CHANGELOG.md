@@ -5,6 +5,13 @@ All notable changes to the n8n-nodes-surrealdb package will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-05-31
+
+### Fixed
+- Fixed conflicting ID field handling in record operations. When a Record ID is specified in the Record ID field and the data also contains an `id` field, the `id` field is now automatically removed from the data to prevent SurrealDB errors.
+- Removed duplicate error handling in upsert operation that was causing error messages to appear twice in the console.
+- Applied the ID conflict fix to all record operations: createRecord, updateRecord, mergeRecord, and upsertRecord.
+
 ## [0.3.0] - 2025-05-09
 
 ### Fixed
@@ -50,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - N/A (initial release)
 
+[0.3.1]: https://github.com/nsxdavid/n8n-nodes-surrealdb/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/nsxdavid/n8n-nodes-surrealdb/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/nsxdavid/n8n-nodes-surrealdb/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/nsxdavid/n8n-nodes-surrealdb/releases/tag/v0.1.0
