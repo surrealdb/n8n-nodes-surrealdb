@@ -60,6 +60,12 @@ export const createRecordOperation: IOperationHandler = {
         itemIndex,
         ""
       ) as string;
+
+      // Remove the id field from data if it exists and we have a specific ID provided
+      // This prevents SurrealDB from throwing an error about conflicting id specifications
+      if (providedId && providedId.trim() !== "" && data && typeof data === 'object' && 'id' in data) {
+        delete data.id;
+      }
       let recordId;
 
       if (providedId && providedId.trim() !== "") {

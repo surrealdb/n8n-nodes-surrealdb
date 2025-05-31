@@ -12,7 +12,6 @@ import {
   parseAndValidateRecordId,
   debugLog,
   addSuccessResult,
-  addErrorResult,
 } from "../../../utilities";
 
 // Set to true to enable debug logging, false to disable
@@ -74,30 +73,22 @@ export const upsertRecordOperation: IOperationHandler = {
       itemIndex
     );
 
+    // Remove the id field from data if it exists, since we're specifying the record ID explicitly
+    // This prevents SurrealDB from throwing an error about conflicting id specifications
+    if (data && typeof data === 'object' && 'id' in data) {
+      delete data.id;
+    }
+
     // Create the record ID
     const recordId = createRecordId(table, validatedId);
 
-    try {
-      // For upsert, we use the upsert method which will create the record if it doesn't exist
-      // According to the SurrealDB documentation, this is the correct method for upserting records
-      const result = await client.upsert(recordId, data);
+    // For upsert, we use the upsert method which will create the record if it doesn't exist
+    // According to the SurrealDB documentation, this is the correct method for upserting records
+    const result = await client.upsert(recordId, data);
 
-      // Add success result with standardized format
-      const returnData: INodeExecutionData[] = [];
-      addSuccessResult(returnData, result, itemIndex);
-      return returnData;
-    } catch (error) {
-      // Handle errors based on continueOnFail setting
-      if (executeFunctions.continueOnFail()) {
-        const returnData: INodeExecutionData[] = [];
-        addErrorResult(returnData, error, itemIndex);
-        return returnData;
-      }
-
-      // If continueOnFail is not enabled, throw a properly formatted error
-      throw new NodeOperationError(executeFunctions.getNode(), error.message, {
-        itemIndex,
-      });
-    }
+    // Add success result with standardized format
+    const returnData: INodeExecutionData[] = [];
+    addSuccessResult(returnData, result, itemIndex);
+    return returnData;
   },
 };
