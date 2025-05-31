@@ -606,10 +606,13 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
       await db.connect(formattedConnectionString, {
         namespace: namespace,
         database: database,
+        skipVersionCheck: true
       });
     } else {
       // For other authentication types, just connect without options
-      await db.connect(formattedConnectionString);
+      await db.connect(formattedConnectionString, {
+        skipVersionCheck: true
+      });
     }
 
     // Sign in based on authentication type
