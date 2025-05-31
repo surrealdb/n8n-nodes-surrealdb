@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2025-05-31
 
+### Changed
+- Updated SurrealDB dependency from version 1.0.0 to 1.3.2 for improved stability and features.
+
 ### Fixed
 - Fixed conflicting ID field handling in record operations. When a Record ID is specified in the Record ID field and the data also contains an `id` field, the `id` field is now automatically removed from the data to prevent SurrealDB errors.
 - Removed duplicate error handling in upsert operation that was causing error messages to appear twice in the console.
