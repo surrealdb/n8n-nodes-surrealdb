@@ -136,7 +136,34 @@ export const recordFields: INodeProperties[] = [
       },
     },
   },
-  // Data field for operations that require data input
+  // Update mode field for updateRecord operation
+  {
+    displayName: "Update Mode",
+    name: "updateMode",
+    type: "options",
+    required: true,
+    default: "replace",
+    description: "Choose how to update the record",
+    options: [
+      {
+        name: "Replace Record",
+        value: "replace",
+        description: "Replace the entire record with new data (default behavior)"
+      },
+      {
+        name: "Set Fields",
+        value: "set",
+        description: "Update specific fields using SurrealDB SET syntax"
+      }
+    ],
+    displayOptions: {
+      show: {
+        resource: ["record"],
+        operation: ["updateRecord"],
+      },
+    },
+  },
+  // Data field for operations that require data input (excluding updateRecord with set mode)
   {
     displayName: "Data (JSON)",
     name: "data",
@@ -149,12 +176,104 @@ export const recordFields: INodeProperties[] = [
         resource: ["record"],
         operation: [
           "createRecord",
-          "updateRecord",
           "mergeRecord",
           "upsertRecord",
         ],
       },
     },
+  },
+  // Data field for updateRecord with replace mode
+  {
+    displayName: "Data (JSON)",
+    name: "data",
+    type: "json",
+    required: true,
+    default: "{}",
+    description: "Data to replace the entire record with",
+    displayOptions: {
+      show: {
+        resource: ["record"],
+        operation: ["updateRecord"],
+        updateMode: ["replace"],
+      },
+    },
+  },
+  // SET operations field for updateRecord with set mode
+  {
+    displayName: "SET Operations",
+    name: "setOperations",
+    type: "fixedCollection",
+    required: true,
+    default: { operations: [] },
+    description: "Define the SET operations to perform on the record",
+    placeholder: "Add SET operation",
+    typeOptions: {
+      multipleValues: true,
+    },
+    displayOptions: {
+      show: {
+        resource: ["record"],
+        operation: ["updateRecord"],
+        updateMode: ["set"],
+      },
+    },
+    options: [
+      {
+        displayName: "Operations",
+        name: "operations",
+        values: [
+          {
+            displayName: "Field",
+            name: "field",
+            type: "string",
+            required: true,
+            default: "",
+            description: "The field name to update (e.g., 'name', 'age', 'settings.theme')",
+            placeholder: "field_name"
+          },
+          {
+            displayName: "Operation",
+            name: "operator",
+            type: "options",
+            noDataExpression: true,
+            required: true,
+            default: "=",
+            description: "The operation to perform",
+            options: [
+              {
+                name: "Set (=)",
+                value: "=",
+                description: "Set the field to a specific value"
+              },
+              {
+                name: "Add (+=)",
+                value: "+=",
+                description: "Add to numeric values or append to arrays (use Concat for strings)"
+              },
+              {
+                name: "Concat (+ =)",
+                value: "+ =",
+                description: "Concatenate strings using field + value syntax"
+              },
+              {
+                name: "Subtract (-=)",
+                value: "-=",
+                description: "Subtract from numeric values or remove from arrays"
+              }
+            ]
+          },
+          {
+            displayName: "Value",
+            name: "value",
+            type: "string",
+            required: true,
+            default: "",
+            description: "The value to use in the operation. Use JSON format for objects/arrays (e.g., '\"text\"', '123', 'true', '[1,2,3]', '{\"key\":\"value\"}')",
+            placeholder: "value"
+          }
+        ]
+      }
+    ]
   },
   // Options for Record resource
   {

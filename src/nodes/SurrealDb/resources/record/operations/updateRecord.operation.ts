@@ -69,42 +69,151 @@ export const updateRecordOperation: IOperationHandler = {
         itemIndex
       );
 
-      const dataInput = executeFunctions.getNodeParameter("data", itemIndex); // Get potential object or string
-      const data = validateAndParseData(
-        executeFunctions,
-        dataInput,
-        "Data",
-        itemIndex
-      );
-
-      // Remove the id field from data if it exists, since we're specifying the record ID explicitly
-      // This prevents SurrealDB from throwing an error about conflicting id specifications
-      if (data && typeof data === 'object' && 'id' in data) {
-        delete data.id;
-      }
-
       // Create the record ID
       const recordId = createRecordId(table, validatedId);
 
-      // First check if record exists
-      const existingRecord = await client.select(recordId);
+      // Get the update mode
+      const updateMode = executeFunctions.getNodeParameter("updateMode", itemIndex) as string;
 
-      // If record doesn't exist, throw error
-      if (
-        existingRecord === null ||
-        existingRecord === undefined ||
-        (typeof existingRecord === "object" &&
-          Object.keys(existingRecord).length === 0)
-      ) {
-        throw new NodeOperationError(
-          executeFunctions.getNode(),
-          `Cannot update record: Record not found: ${recordId.toString()}`,
-          { itemIndex }
+      let result: any;
+
+      if (updateMode === "set") {
+        // Handle SET operations mode
+        const setOperationsInput = executeFunctions.getNodeParameter("setOperations", itemIndex) as any;
+        const operations = setOperationsInput?.operations || [];
+
+        if (DEBUG) {
+          debugLog("updateRecord", "setOperationsInput:", itemIndex, setOperationsInput);
+          debugLog("updateRecord", "operations:", itemIndex, operations);
+        }
+
+        if (!operations || operations.length === 0) {
+          throw new NodeOperationError(
+            executeFunctions.getNode(),
+            "At least one SET operation is required when using Set Fields mode",
+            { itemIndex }
+          );
+        }
+
+        // Build the SET clause
+        const setClause = operations.map((op: any) => {
+          const { field, operator, value } = op;
+          
+          // Validate the operation - be more specific about what's missing
+          if (!field || field.trim() === '') {
+            throw new NodeOperationError(
+              executeFunctions.getNode(),
+              "Each SET operation must have a field name",
+              { itemIndex }
+            );
+          }
+          
+          if (value === undefined || value === null) {
+            throw new NodeOperationError(
+              executeFunctions.getNode(),
+              `SET operation for field '${field}' is missing a value`,
+              { itemIndex }
+            );
+          }
+
+          // Parse the value as JSON to handle different data types
+          let parsedValue: any;
+          try {
+            parsedValue = JSON.parse(value);
+          } catch (error) {
+            // If JSON parse fails, treat as string (but don't wrap in quotes yet)
+            parsedValue = value;
+          }
+
+          // For SurrealDB query, we need to format the value properly
+          let formattedValue: string;
+          if (typeof parsedValue === 'string') {
+            // For strings, only add quotes if they're not already present
+            if (parsedValue.startsWith('"') && parsedValue.endsWith('"')) {
+              formattedValue = parsedValue; // Already quoted
+            } else {
+              formattedValue = `"${parsedValue}"`; // Add quotes
+            }
+          } else {
+            formattedValue = JSON.stringify(parsedValue);
+          }
+
+          // Default to "=" if operator is empty (temporary fix for UI issue)
+          let finalOperator = (!operator || operator.trim() === '') ? '=' : operator;
+          
+          // Handle string concatenation special case
+          if (finalOperator === "+ =") {
+            // For string concatenation, we need to generate: field = field + value
+            return `${field} = ${field} + ${formattedValue}`;
+          }
+          
+          return `${field} ${finalOperator} ${formattedValue}`;
+        }).join(", ");
+
+        // Execute UPDATE...SET query
+        const query = `UPDATE ${recordId.toString()} SET ${setClause}`;
+        if (DEBUG) {
+          debugLog("updateRecord", `Executing SET query: ${query}`, itemIndex);
+        }
+        
+        const queryResult = await client.query(query);
+        if (DEBUG) {
+          debugLog("updateRecord", "Raw query result:", itemIndex, queryResult);
+        }
+        
+        // SurrealDB query returns an array of results, we need to extract the actual updated record
+        // The structure is typically: [{ result: [updatedRecord] }] or [[updatedRecord]]
+        if (queryResult && queryResult.length > 0) {
+          const firstResult = queryResult[0];
+          // Handle different possible result structures
+          if (Array.isArray(firstResult)) {
+            result = firstResult.length > 0 ? firstResult[0] : null;
+          } else if (firstResult && typeof firstResult === 'object' && 'result' in firstResult) {
+            result = Array.isArray(firstResult.result) && firstResult.result.length > 0 
+              ? firstResult.result[0] 
+              : firstResult.result;
+          } else {
+            result = firstResult;
+          }
+        } else {
+          result = null;
+        }
+      } else {
+        // Handle traditional replace mode
+        const dataInput = executeFunctions.getNodeParameter("data", itemIndex);
+        const data = validateAndParseData(
+          executeFunctions,
+          dataInput,
+          "Data",
+          itemIndex
         );
-      }
 
-      // Execute the update operation
-      const result = await client.update(recordId, data);
+        // Remove the id field from data if it exists, since we're specifying the record ID explicitly
+        // This prevents SurrealDB from throwing an error about conflicting id specifications
+        if (data && typeof data === 'object' && 'id' in data) {
+          delete data.id;
+        }
+
+        // First check if record exists
+        const existingRecord = await client.select(recordId);
+
+        // If record doesn't exist, throw error
+        if (
+          existingRecord === null ||
+          existingRecord === undefined ||
+          (typeof existingRecord === "object" &&
+            Object.keys(existingRecord).length === 0)
+        ) {
+          throw new NodeOperationError(
+            executeFunctions.getNode(),
+            `Cannot update record: Record not found: ${recordId.toString()}`,
+            { itemIndex }
+          );
+        }
+
+        // Execute the update operation
+        result = await client.update(recordId, data);
+      }
 
       // Check if the operation was successful
       if (result === null || result === undefined) {

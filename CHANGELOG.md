@@ -5,6 +5,22 @@ All notable changes to the n8n-nodes-surrealdb package will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Enhanced Update Record Operation**: Added support for SurrealDB's `UPDATE ... SET ...` syntax in the Update Record operation
+  - New "Update Mode" field with options: "Replace Record" (default) and "Set Fields"
+  - "Set Fields" mode allows granular field updates using SurrealDB SET operations
+  - Support for multiple SET operations: `=` (set), `+=` (add/append), `-=` (subtract/remove), and `+ =` (string concatenation)
+  - Proper handling of different data types: strings, numbers, arrays, objects, and booleans
+  - String concatenation using `field = field + value` syntax for proper SurrealDB compatibility
+  - Maintains backward compatibility with existing "Replace Record" behavior
+
+### Fixed
+- Corrected operator descriptions: `-=` operator works for both numeric subtraction and array element removal
+- Improved value validation and error messages for SET operations
+- Fixed dropdown field configuration for operation selection in SET mode
+
 ## [0.3.1] - 2025-05-31
 
 ### Changed
