@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Execute Query Operation**: Fixed parse error when using LIMIT option with queries ending in semicolons. LIMIT and START clauses are now properly inserted before the semicolon instead of after it.
+- **Record ID Handling**: Fixed issue with SurrealDB angle-bracketed Record IDs (e.g., `table:⟨complex-id⟩`). The angle brackets `⟨⟩` around complex IDs are now properly stripped before creating RecordId objects, preventing double-bracketing and lookup failures.
 
 ## [0.4.0] - 2025-05-31
 

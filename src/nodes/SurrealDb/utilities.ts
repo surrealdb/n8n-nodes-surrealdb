@@ -50,7 +50,14 @@ export function parseAndValidateRecordId(
         { itemIndex }
       );
     }
-    return id;
+    
+    // Strip SurrealDB angle brackets ⟨⟩ if present, as the RecordId constructor expects the raw ID
+    let cleanId = id;
+    if (id.startsWith('⟨') && id.endsWith('⟩')) {
+      cleanId = id.slice(1, -1);
+    }
+    
+    return cleanId;
   }
   return idStr;
 }

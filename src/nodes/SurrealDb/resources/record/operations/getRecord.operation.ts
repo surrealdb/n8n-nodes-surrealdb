@@ -44,10 +44,19 @@ export const getRecordOperation: IOperationHandler = {
       // Ensure idInput is a string
       const idInputStr = String(idInput || "");
 
+      if (DEBUG) {
+        debugLog("getRecord", "Original table:", itemIndex, table);
+        debugLog("getRecord", "Record ID input:", itemIndex, idInputStr);
+        debugLog("getRecord", "Has colon:", itemIndex, idInputStr.includes(":"));
+      }
+
       // If no table is specified but idInput has a table prefix, use the extracted table
       if (!table && idInputStr.includes(":")) {
         table = idInputStr.split(":")[0];
+        if (DEBUG) debugLog("getRecord", "Extracted table:", itemIndex, table);
       }
+
+      if (DEBUG) debugLog("getRecord", "Final table:", itemIndex, table);
 
       // Only validate table as required if it couldn't be extracted from the Record ID
       if (!table) {
@@ -72,6 +81,7 @@ export const getRecordOperation: IOperationHandler = {
 
       // Execute the select operation
       const result = await client.select(recordId);
+      if (DEBUG) debugLog("getRecord", "Raw result from SurrealDB:", itemIndex, result);
 
       // Check if the record was found (result is not null/undefined/empty object)
       // SurrealDB's client.select returns the record object if found, or null/undefined if not found.
