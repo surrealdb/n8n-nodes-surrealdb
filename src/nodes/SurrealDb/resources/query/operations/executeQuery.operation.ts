@@ -76,12 +76,25 @@ export const executeQueryOperation: IOperationHandler = {
       const hasStart = query.toUpperCase().includes("START");
 
       // Modify the query to add pagination if needed
-      let finalQuery = query;
+      // Note: SurrealDB requires START before LIMIT
+      let finalQuery = query.trim();
+      
+      // Remove trailing semicolon if present to add pagination clauses before it
+      const hasSemicolon = finalQuery.endsWith(';');
+      if (hasSemicolon) {
+        finalQuery = finalQuery.slice(0, -1);
+      }
+      
+      if (start !== undefined && !hasStart) {
+        finalQuery += ` START ${start}`;
+      }
       if (limit !== undefined && !hasLimit) {
         finalQuery += ` LIMIT ${limit}`;
       }
-      if (start !== undefined && !hasStart) {
-        finalQuery += ` START ${start}`;
+      
+      // Re-add semicolon if it was present
+      if (hasSemicolon) {
+        finalQuery += ';';
       }
 
       // Prepare the query based on authentication type
