@@ -12,8 +12,7 @@ import {
 } from "../../../GenericFunctions";
 import { debugLog, addSuccessResult } from "../../../utilities";
 
-// Set to true to enable debug logging, false to disable
-const DEBUG = false;
+import { DEBUG } from '../../../debug';
 
 /**
  * Version operation handler for System resource
@@ -95,9 +94,8 @@ export const versionOperation: IOperationHandler = {
         }
       } catch (httpError) {
         // If both methods fail, set details to the error message
-        details = `Failed to retrieve version: ${
-          (queryError as Error).message
-        }, ${(httpError as Error).message}`;
+        details = `Failed to retrieve version: ${(queryError as Error).message
+          }, ${(httpError as Error).message}`;
       }
     }
 

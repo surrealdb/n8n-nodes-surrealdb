@@ -12,8 +12,7 @@ import {
 import { debugLog } from "../../../utilities";
 import type { IOperationHandler } from "../../../types/operation.types";
 
-// Set to true to enable debug logging, false to disable
-const DEBUG = false;
+import { DEBUG } from '../../../debug';
 
 /**
  * Implementation of the "Query Relationships" operation
@@ -215,9 +214,8 @@ export const queryRelationshipsOperation: IOperationHandler = {
         if (returnData.length === 0) {
           returnData.push({
             json: {
-              message: `No relationships found${
-                recordId ? ` for ${recordId}` : ""
-              }`,
+              message: `No relationships found${recordId ? ` for ${recordId}` : ""
+                }`,
             },
             pairedItem: { item: itemIndex },
           });

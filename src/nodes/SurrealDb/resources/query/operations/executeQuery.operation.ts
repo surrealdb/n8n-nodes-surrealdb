@@ -18,8 +18,7 @@ import {
   createErrorResult,
 } from "../../../utilities";
 
-// Set to true to enable debug logging, false to disable
-const DEBUG = false;
+import { DEBUG } from '../../../debug';
 
 /**
  * Execute Query operation handler for Query resource

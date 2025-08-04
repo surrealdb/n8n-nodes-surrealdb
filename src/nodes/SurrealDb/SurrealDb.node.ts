@@ -7,8 +7,7 @@ import type {
   ILoadOptionsFunctions,
 } from "n8n-workflow";
 
-// Set to true to enable debug logging, false to disable
-const DEBUG = false;
+import { DEBUG } from './debug';
 
 import {
   connectSurrealClient,

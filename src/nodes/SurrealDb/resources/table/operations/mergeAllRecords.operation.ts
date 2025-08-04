@@ -20,8 +20,7 @@ import {
 } from "../../../GenericFunctions";
 import type { IOperationHandler } from "../../../types/operation.types";
 
-// Set to true to enable debug logging, false to disable
-const DEBUG = false;
+import { DEBUG } from '../../../debug';
 
 /**
  * Merge All Records operation handler for Table resource

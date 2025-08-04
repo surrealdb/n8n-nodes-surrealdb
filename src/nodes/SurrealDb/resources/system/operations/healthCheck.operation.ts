@@ -9,8 +9,7 @@ import type { Surreal } from "surrealdb";
 import { buildCredentialsObject } from "../../../GenericFunctions";
 import { debugLog, addSuccessResult } from "../../../utilities";
 
-// Set to true to enable debug logging, false to disable
-const DEBUG = false;
+import { DEBUG } from '../../../debug';
 
 /**
  * Health Check operation handler for System resource

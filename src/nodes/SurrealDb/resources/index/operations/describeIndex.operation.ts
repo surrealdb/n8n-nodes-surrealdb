@@ -13,8 +13,7 @@ import {
 import { debugLog } from "../../../utilities";
 import type { IOperationHandler } from "../../../types/operation.types";
 
-// Set to true to enable debug logging, false to disable
-const DEBUG = false;
+import { DEBUG } from '../../../debug';
 
 /**
  * Implementation of the "Describe Index" operation

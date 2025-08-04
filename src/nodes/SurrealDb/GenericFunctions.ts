@@ -1,5 +1,4 @@
-// Set to true to enable debug logging, false to disable
-const DEBUG = false;
+import { DEBUG } from './debug';
 
 import get from "lodash/get";
 import set from "lodash/set";

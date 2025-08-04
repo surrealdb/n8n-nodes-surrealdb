@@ -114,35 +114,8 @@ export function formatArrayResult(results: unknown[]): INodeExecutionData[] {
   }));
 }
 
-/**
- * Standard debug logging function
- * Use this for consistent debug log formatting across operations
- *
- * @param operation The name of the operation (e.g., "createRecord", "getAllRecords")
- * @param message The log message
- * @param itemIndex The index of the current item (optional)
- * @param data Additional data to log (optional)
- */
-export function debugLog(
-  operation: string,
-  message: string,
-  itemIndex?: number,
-  data?: unknown,
-): void {
-  // Determine if itemIndex should be included in the log
-  const indexPart = itemIndex !== undefined ? ` [item:${itemIndex}]` : "";
-
-  // Basic log without additional data
-  if (data === undefined) {
-    // eslint-disable-next-line no-console
-    console.log(`DEBUG (${operation})${indexPart} - ${message}`);
-  }
-  // Log with additional data
-  else {
-    // eslint-disable-next-line no-console
-    console.log(`DEBUG (${operation})${indexPart} - ${message}`, data);
-  }
-}
+// Re-export debugLog from the centralized debug module
+export { debugLog } from './debug';
 
 /**
  * Create a standardized success result item with consistent structure

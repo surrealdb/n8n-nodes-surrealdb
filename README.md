@@ -218,6 +218,35 @@ If you want to contribute to this node:
 4. Link to your n8n installation for testing: `npm link`
 5. In your n8n installation directory: `npm link n8n-nodes-surrealdb`
 
+### Debug Mode
+
+The node includes a centralized debug system that can be enabled via environment variable:
+
+```bash
+# Enable debug logging
+export SURREAL_DEBUG=true
+
+# Or set to '1' to enable
+export SURREAL_DEBUG=1
+
+# Disable debug logging (default)
+export SURREAL_DEBUG=false
+```
+
+When debug mode is enabled, the node will output detailed logging information including:
+- Operation execution details
+- Query preparation and execution
+- Parameter validation
+- Error handling details
+
+This is particularly useful for:
+- Troubleshooting connection issues
+- Understanding query execution
+- Debugging parameter handling
+- Development and testing
+
+The debug system is centralized in `src/nodes/SurrealDb/debug.ts` and automatically respects the environment variable setting.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

@@ -13,8 +13,7 @@ import {
 import { debugLog } from "../../../utilities";
 import type { IOperationHandler } from "../../../types/operation.types";
 
-// Set to false to disable debug logging
-const DEBUG = false;
+import { DEBUG } from '../../../debug';
 
 /**
  * Implementation of the "Delete Table" operation
