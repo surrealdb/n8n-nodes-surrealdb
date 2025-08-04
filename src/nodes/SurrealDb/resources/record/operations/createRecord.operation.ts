@@ -10,7 +10,6 @@ import {
   validateRequiredField,
   validateAndParseData,
   cleanTableName,
-  buildCredentialsObject,
 } from "../../../GenericFunctions";
 import {
   createRecordId,
@@ -84,18 +83,8 @@ export const createRecordOperation: IOperationHandler = {
         recordId = table;
       }
 
-      // Get options
-      const options = executeFunctions.getNodeParameter(
-        "options",
-        itemIndex,
-        {}
-      ) as IDataObject;
-
-      // Get credentials
-      const credentials = await executeFunctions.getCredentials("surrealDbApi");
-
-      // Build credentials object
-      buildCredentialsObject(credentials, options);
+      // Get credentials to ensure they are configured
+      await executeFunctions.getCredentials("surrealDbApi");
 
       if (DEBUG) {
         debugLog("createRecord", "Record ID", itemIndex, recordId);
