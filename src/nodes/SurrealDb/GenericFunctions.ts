@@ -561,16 +561,14 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
   const db = new Surreal();
 
   try {
-    let formattedConnectionString = connectionString;
-
-    // Ensure the connection string ends with /rpc for WebSocket connections
+    // Validate that the connection string is not a WebSocket connection
     if (
-      formattedConnectionString.startsWith("ws://") ||
-      formattedConnectionString.startsWith("wss://")
+      connectionString.startsWith("ws://") ||
+      connectionString.startsWith("wss://")
     ) {
-      if (!formattedConnectionString.endsWith("/rpc")) {
-        formattedConnectionString += "/rpc";
-      }
+      throw new Error(
+        "WebSocket connections (ws:// or wss://) are not supported. Please use HTTP/HTTPS connections only."
+      );
     }
 
     // For Database authentication, pass namespace and database directly in connect options
@@ -592,13 +590,13 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
       }
 
       // Connect with namespace and database in options
-      await db.connect(formattedConnectionString, {
+      await db.connect(connectionString, {
         namespace: namespace,
         database: database,
       });
     } else {
       // For other authentication types, just connect without options
-      await db.connect(formattedConnectionString);
+      await db.connect(connectionString);
     }
 
     // Sign in based on authentication type

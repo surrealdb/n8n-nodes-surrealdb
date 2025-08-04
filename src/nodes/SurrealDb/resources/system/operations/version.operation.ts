@@ -71,13 +71,8 @@ export const versionOperation: IOperationHandler = {
       // If the query fails, use the /version endpoint as a fallback
       try {
         // Get the base URL from the connection string
-        // Remove /rpc if it exists
-        let baseUrl = resolvedCredentials.connectionString;
-        if (baseUrl.endsWith("/rpc")) {
-          baseUrl = baseUrl.slice(0, -4);
-        }
-
         // Ensure the URL ends with a slash
+        let baseUrl = resolvedCredentials.connectionString;
         if (!baseUrl.endsWith("/")) {
           baseUrl += "/";
         }
