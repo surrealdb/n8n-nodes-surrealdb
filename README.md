@@ -47,9 +47,11 @@ This is an n8n community node for SurrealDB. It provides both action and tool no
 - **Table Operations**: List fields and explore table structure
 - **Relationship Support**: Query and manage record relationships
 - **Native Data Format**: Works with SurrealDB's native data formats
+- **Connection Pooling**: Configurable connection pooling for improved performance and resource management
 - **Enhanced Error Handling**: Comprehensive error classification, automatic retry logic, and connection recovery
 - **Intelligent Recovery**: Different error handling strategies for different operation types
 - **Detailed Error Reporting**: Rich error context with categorization and severity levels
+- **Pool Monitoring**: Built-in pool statistics and performance monitoring
 
 ## Installation
 
@@ -161,10 +163,11 @@ The SurrealDB node provides a fairly comprehensive set of operations organized b
 
 * **Health Check** - Check if the database instance is responsive
 * **Version** - Get the version of the SurrealDB instance
+* **Get Pool Statistics** - Monitor connection pool performance and statistics
 
 ## Understanding SurrealDB and n8n Integration
 
-### Connection Protocol Limitation
+### Connection Protocol
 
 **Important**: Due to n8n's architecture, this node only supports HTTP/HTTPS connections to SurrealDB. WebSocket connections (WS/WSS) are not supported.
 
@@ -172,6 +175,67 @@ The SurrealDB node provides a fairly comprehensive set of operations organized b
 - When configuring your SurrealDB instance, ensure it's accessible via HTTP/HTTPS
 - If you're using SurrealDB Cloud or another instance that only offers WebSocket connections, you'll need to set up a self-hosted SurrealDB instance with HTTP enabled
 - This limitation is due to how n8n handles connections and executes node operations
+
+### Connection Pooling
+
+The SurrealDB node includes comprehensive connection pooling to improve performance and resource management. Connection pooling allows the node to reuse database connections across multiple operations, reducing connection overhead and improving response times.
+
+#### Pool Configuration Options
+
+You can configure the connection pool through the "Connection Pooling" options in any node operation:
+
+- **Max Connections** (default: 10): Maximum number of connections in the pool
+- **Min Connections** (default: 2): Minimum number of connections to keep in the pool
+- **Acquire Timeout** (default: 30000ms): Maximum time to wait for a connection from the pool
+- **Health Check Interval** (default: 60000ms): Interval between health checks for pool connections
+- **Max Idle Time** (default: 300000ms): Maximum time a connection can remain idle before being closed
+- **Retry Attempts** (default: 3): Number of retry attempts for failed connection acquisitions
+- **Retry Delay** (default: 1000ms): Delay between retry attempts
+
+#### Pool Monitoring
+
+Use the **System > Get Pool Statistics** operation to monitor pool performance:
+
+```json
+{
+  "poolStatistics": {
+    "totalConnections": 5,
+    "activeConnections": 2,
+    "idleConnections": 3,
+    "waitingRequests": 0,
+    "totalRequests": 150,
+    "failedRequests": 2,
+    "averageResponseTime": 45,
+    "successRate": 99
+  },
+  "performance": {
+    "averageResponseTimeMs": 45,
+    "requestsPerSecond": 2,
+    "errorRate": 1
+  },
+  "poolHealth": {
+    "utilizationRate": 40,
+    "availableConnections": 3,
+    "waitingRequests": 0
+  }
+}
+```
+
+#### Benefits of Connection Pooling
+
+- **Improved Performance**: Reuses connections instead of creating new ones for each operation
+- **Resource Management**: Limits the number of concurrent connections to prevent database overload
+- **Automatic Health Checks**: Monitors connection health and removes unhealthy connections
+- **Connection Recovery**: Automatically retries failed connection acquisitions
+- **Idle Connection Cleanup**: Removes unused connections to free up resources
+
+#### Pool Lifecycle
+
+- **Initialization**: Pool is created when the first operation is executed
+- **Connection Acquisition**: Operations get connections from the pool or create new ones if needed
+- **Connection Release**: Connections are returned to the pool after each operation
+- **Health Monitoring**: Regular health checks ensure connections remain valid
+- **Cleanup**: Pool is automatically closed when the node is deactivated
 
 #### SurrealDB HTTP vs WebSocket
 

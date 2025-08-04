@@ -27,6 +27,12 @@ export const systemOperations: INodeProperties[] = [
         description: "Get the version of the SurrealDB instance",
         action: "Get SurrealDB version",
       },
+      {
+        name: "Get Pool Statistics",
+        value: "poolStats",
+        description: "Get connection pool statistics and performance metrics",
+        action: "Get pool statistics",
+      },
     ],
     default: "healthCheck",
   },

@@ -2,6 +2,7 @@ import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
 import { healthCheckOperation } from "./operations/healthCheck.operation";
 import { versionOperation } from "./operations/version.operation";
+import { poolStatsOperation } from "./operations/poolStats.operation";
 import { createErrorResult } from "../../utilities";
 
 /**
@@ -34,6 +35,17 @@ export async function handleSystemOperations(
           returnData = [
             ...returnData,
             ...(await versionOperation.execute(
+              client,
+              items,
+              executeFunctions,
+              i,
+            )),
+          ];
+          break;
+        case "poolStats":
+          returnData = [
+            ...returnData,
+            ...(await poolStatsOperation.execute(
               client,
               items,
               executeFunctions,

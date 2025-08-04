@@ -9,6 +9,7 @@ import { RecordId } from "surrealdb";
 import {
   createEnhancedErrorResult,
 } from "./errorHandling";
+import { DEBUG } from "./debug";
 
 /**
  * Generate paired item data for the given number of items
@@ -99,50 +100,38 @@ function normalizeForJson(obj: unknown): unknown {
 }
 
 /**
- * Format single result output
- * Standardizes the output format for operations that return a single result
+ * Format a single result as INodeExecutionData
  */
 export function formatSingleResult(result: unknown): INodeExecutionData {
-  return { json: normalizeForJson(result) as IDataObject };
+  return {
+    json: normalizeForJson(result) as IDataObject,
+  };
 }
 
 /**
- * Format array result output
- * Standardizes the output format for operations that return an array of results
- * Each item in the array becomes a separate n8n item
+ * Format an array of results as INodeExecutionData[]
  */
 export function formatArrayResult(results: unknown[]): INodeExecutionData[] {
-  return results.map((item) => ({
-    json: normalizeForJson(item) as IDataObject,
-  }));
+  return results.map((result) => formatSingleResult(result));
 }
 
-// Re-export debugLog from the centralized debug module
-export { debugLog } from './debug';
-
 /**
- * Create a standardized success result item with consistent structure
- *
- * @param data The operation-specific data to include in the result
- * @param itemIndex The index of the current item for pairedItem
- * @returns An INodeExecutionData object with standardized structure
+ * Create a success result with proper formatting
  */
 export function createSuccessResult(
   data: Record<string, unknown>,
   itemIndex: number,
 ): INodeExecutionData {
   return {
-    json: data as IDataObject,
-    pairedItem: { item: itemIndex },
+    json: normalizeForJson(data) as IDataObject,
+    pairedItem: {
+      item: itemIndex,
+    },
   };
 }
 
 /**
- * Add a standardized success result to the returnData array
- *
- * @param returnData The array to add the result to
- * @param data The operation-specific data to include in the result
- * @param itemIndex The index of the current item for pairedItem
+ * Add a success result to the return data
  */
 export function addSuccessResult(
   returnData: INodeExecutionData[],
@@ -153,13 +142,7 @@ export function addSuccessResult(
 }
 
 /**
- * Create a standardized error result item for continueOnFail=true scenarios
- *
- * @param error The error object or message
- * @param itemIndex The index of the current item for pairedItem
- * @param operationName Optional operation name for context
- * @param context Optional additional context
- * @returns An INodeExecutionData object with standardized error structure
+ * Create an error result for failed operations
  */
 export function createErrorResult(
   error: Error | string,
@@ -167,19 +150,16 @@ export function createErrorResult(
   operationName?: string,
   context?: Record<string, unknown>,
 ): INodeExecutionData {
-  // Use the enhanced error result function
-  const errorObj = typeof error === "string" ? new Error(error) : error;
-  return createEnhancedErrorResult(errorObj, itemIndex, operationName, context);
+  return createEnhancedErrorResult(
+    typeof error === "string" ? new Error(error) : error,
+    itemIndex,
+    operationName,
+    context,
+  );
 }
 
 /**
- * Add a standardized error result to the returnData array
- *
- * @param returnData The array to add the error to
- * @param error The error object or message
- * @param itemIndex The index of the current item for pairedItem
- * @param operationName Optional operation name for context
- * @param context Optional additional context
+ * Add an error result to the return data
  */
 export function addErrorResult(
   returnData: INodeExecutionData[],
@@ -189,4 +169,100 @@ export function addErrorResult(
   context?: Record<string, unknown>,
 ): void {
   returnData.push(createErrorResult(error, itemIndex, operationName, context));
+}
+
+/**
+ * Debug logging utility
+ */
+export function debugLog(
+  operation: string,
+  message: string,
+  itemIndex?: number,
+  data?: unknown,
+): void {
+  if (DEBUG) {
+    const prefix = itemIndex !== undefined ? `[${operation}:${itemIndex}]` : `[${operation}]`;
+    const dataStr = data !== undefined ? ` - ${JSON.stringify(data)}` : "";
+    // eslint-disable-next-line no-console
+    console.log(`${prefix} ${message}${dataStr}`);
+  }
+}
+
+/**
+ * Validate connection pool configuration
+ */
+export function validatePoolConfig(config: Record<string, unknown>): {
+  isValid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  // Validate numeric fields
+  const numericFields = [
+    'maxConnections',
+    'minConnections',
+    'acquireTimeout',
+    'healthCheckInterval',
+    'maxIdleTime',
+    'retryAttempts',
+    'retryDelay',
+    'connectionValidationTimeout',
+  ];
+
+  for (const field of numericFields) {
+    if (config[field] !== undefined) {
+      const value = Number(config[field]);
+      if (isNaN(value) || value < 0) {
+        errors.push(`${field} must be a positive number`);
+      }
+    }
+  }
+
+  // Validate relationships between fields
+  if (config.maxConnections !== undefined && config.minConnections !== undefined) {
+    const maxConn = Number(config.maxConnections);
+    const minConn = Number(config.minConnections);
+    if (minConn > maxConn) {
+      errors.push('minConnections cannot be greater than maxConnections');
+    }
+  }
+
+  // Validate boolean fields
+  if (config.enableConnectionValidation !== undefined) {
+    if (typeof config.enableConnectionValidation !== 'boolean') {
+      errors.push('enableConnectionValidation must be a boolean');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * Format connection pool statistics for display
+ */
+export function formatPoolStats(stats: {
+  totalConnections: number;
+  activeConnections: number;
+  idleConnections: number;
+  waitingRequests: number;
+  totalRequests: number;
+  failedRequests: number;
+  averageResponseTime: number;
+  poolUtilization: number;
+  connectionErrors: number;
+  healthCheckFailures: number;
+}): string {
+  const successRate = stats.totalRequests > 0
+    ? Math.round(((stats.totalRequests - stats.failedRequests) / stats.totalRequests) * 100)
+    : 100;
+
+  return [
+    `Pool Status: ${stats.totalConnections} total, ${stats.activeConnections} active, ${stats.idleConnections} idle`,
+    `Performance: ${stats.totalRequests} requests, ${successRate}% success rate, ${Math.round(stats.averageResponseTime)}ms avg response`,
+    `Health: ${stats.poolUtilization}% utilization, ${stats.connectionErrors} connection errors, ${stats.healthCheckFailures} health check failures`,
+    `Queue: ${stats.waitingRequests} waiting requests`,
+  ].join(' | ');
 }

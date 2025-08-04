@@ -1,13 +1,39 @@
 # Future TODOs for n8n-nodes-surrealdb
 
-This file contains a list of potential resources and operations that could be added to the n8n-nodes-surrealdb package to provide more comprehensive coverage of SurrealDB's features.
+## **Current status**
 
-## Recently Implemented
+### **Recently Implemented**
 
-1. **Relationship Resource** ✅
+1. **Relationship resources** ✅
    - createRelationship (using RELATE statement)
    - deleteRelationship (with flexible parameter options)
    - queryRelationships (with option to split results)
+
+2. **Connection pooling** ✅
+   - Connection pool with health monitoring and automatic reconnection
+   - Connection reuse across operations within the same execution context
+   - Graceful connection cleanup and resource management
+   - Performance statistics tracking and monitoring
+   - Enhanced error handling with retry logic and exponential backoff
+   - Connection validation with configurable timeouts
+   - Comprehensive pool statistics and health monitoring
+   - Global connection pool management with proper cleanup
+   - Configuration validation and error handling
+   - Enhanced debugging and logging capabilities
+
+3. **Enhanced error handling** ✅
+   - Comprehensive error classification
+   - Retry logic with exponential backoff
+   - Enhanced error reporting with context
+
+## **Next Steps**
+
+1. **Implement Enhanced Authentication** - Add JWT token and OAuth2 support
+2. **Add Batch Operations** - Implement native batch create/update/delete operations
+3. **Begin Schema Discovery** - Implement automatic field discovery and validation
+4. **Plan Live Query Implementation** - Research WebSocket integration for real-time features
+
+This file contains a list of potential resources and operations that could be added to the n8n-nodes-surrealdb package to provide more comprehensive coverage of SurrealDB's features.
 
 ## Missing Resources/Operations
 

@@ -10,10 +10,17 @@ import type {
 import { DEBUG } from './debug';
 
 import {
-  connectSurrealClient,
   validateAndResolveSurrealCredentials,
 } from "./GenericFunctions";
 import { nodeProperties } from "./SurrealDbProperties";
+import { validatePoolConfig } from "./utilities";
+
+// Import connection pooling
+import {
+  getGlobalConnectionPool,
+  closeGlobalConnectionPool,
+  type IConnectionPoolConfig
+} from "./ConnectionPool";
 
 // Import the new resource handlers
 import { handleSystemOperations } from "./resources/system";
@@ -65,6 +72,7 @@ const operationDisplayNames = {
   executeQuery: "Execute Query",
   healthCheck: "Health Check",
   version: "Get Version",
+  poolStats: "Get Pool Statistics",
 };
 
 export class SurrealDb implements INodeType {
@@ -197,6 +205,22 @@ export class SurrealDb implements INodeType {
     return operation;
   }
 
+  // Cleanup method to close connection pool when node is deactivated
+  async onNodeDeactivate(): Promise<void> {
+    try {
+      await closeGlobalConnectionPool();
+      if (DEBUG) {
+        // eslint-disable-next-line no-console
+        console.log("[SurrealDB Node] Connection pool closed during node deactivation");
+      }
+    } catch (error) {
+      if (DEBUG) {
+        // eslint-disable-next-line no-console
+        console.error("[SurrealDB Node] Error closing connection pool:", error);
+      }
+    }
+  }
+
   // eslint-disable-next-line no-unused-vars
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const credentials = await this.getCredentials("surrealDbApi");
@@ -205,6 +229,44 @@ export class SurrealDb implements INodeType {
     const options = this.getNodeParameter("options", 0, {}) as IDataObject;
     const nodeNamespace = (options.namespace as string)?.trim() || "";
     const nodeDatabase = (options.database as string)?.trim() || "";
+
+    // Get connection pooling options
+    const poolConfig: Partial<IConnectionPoolConfig> = {};
+    const connectionPoolingOptions = options.connectionPooling as IDataObject || {};
+
+    if (connectionPoolingOptions.maxConnections !== undefined) {
+      poolConfig.maxConnections = Number(connectionPoolingOptions.maxConnections);
+    }
+    if (connectionPoolingOptions.minConnections !== undefined) {
+      poolConfig.minConnections = Number(connectionPoolingOptions.minConnections);
+    }
+    if (connectionPoolingOptions.acquireTimeout !== undefined) {
+      poolConfig.acquireTimeout = Number(connectionPoolingOptions.acquireTimeout);
+    }
+    if (connectionPoolingOptions.healthCheckInterval !== undefined) {
+      poolConfig.healthCheckInterval = Number(connectionPoolingOptions.healthCheckInterval);
+    }
+    if (connectionPoolingOptions.maxIdleTime !== undefined) {
+      poolConfig.maxIdleTime = Number(connectionPoolingOptions.maxIdleTime);
+    }
+    if (connectionPoolingOptions.retryAttempts !== undefined) {
+      poolConfig.retryAttempts = Number(connectionPoolingOptions.retryAttempts);
+    }
+    if (connectionPoolingOptions.retryDelay !== undefined) {
+      poolConfig.retryDelay = Number(connectionPoolingOptions.retryDelay);
+    }
+    if (connectionPoolingOptions.enableConnectionValidation !== undefined) {
+      poolConfig.enableConnectionValidation = Boolean(connectionPoolingOptions.enableConnectionValidation);
+    }
+    if (connectionPoolingOptions.connectionValidationTimeout !== undefined) {
+      poolConfig.connectionValidationTimeout = Number(connectionPoolingOptions.connectionValidationTimeout);
+    }
+
+    // Validate connection pool configuration
+    const validationResult = validatePoolConfig(poolConfig);
+    if (!validationResult.isValid) {
+      throw new Error(`Invalid connection pool configuration: ${validationResult.errors.join(', ')}`);
+    }
 
     // Resolve credentials, passing in overrides
     const resolvedCredentials = validateAndResolveSurrealCredentials(
@@ -222,7 +284,9 @@ export class SurrealDb implements INodeType {
       );
     }
 
-    const client = await connectSurrealClient(resolvedCredentials);
+    // Get connection from pool instead of creating new connection
+    const connectionPool = getGlobalConnectionPool(poolConfig);
+    const client = await connectionPool.getConnection(resolvedCredentials);
 
     let returnData: INodeExecutionData[] = [];
 
@@ -295,8 +359,8 @@ export class SurrealDb implements INodeType {
         );
       }
     } finally {
-      // Always close the connection
-      await client.close();
+      // Release connection back to pool instead of closing it
+      connectionPool.releaseConnection(resolvedCredentials, client);
     }
 
     return [returnData];

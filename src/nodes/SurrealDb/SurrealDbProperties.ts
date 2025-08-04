@@ -13,6 +13,122 @@ import {
 } from "./resources/relationship";
 
 /**
+ * Connection pooling options for all operations
+ */
+const connectionPoolingOptions: INodeProperties[] = [
+  {
+    displayName: "Connection Pooling",
+    name: "connectionPooling",
+    type: "collection",
+    placeholder: "Add Connection Pool Option",
+    default: {},
+    description: "Configure connection pooling settings for better performance",
+    options: [
+      {
+        displayName: "Max Connections",
+        name: "maxConnections",
+        type: "number",
+        typeOptions: {
+          minValue: 1,
+          maxValue: 50,
+        },
+        default: 10,
+        description: "Maximum number of connections in the pool",
+      },
+      {
+        displayName: "Min Connections",
+        name: "minConnections",
+        type: "number",
+        typeOptions: {
+          minValue: 0,
+          maxValue: 20,
+        },
+        default: 2,
+        description: "Minimum number of connections to keep in the pool",
+      },
+      {
+        displayName: "Acquire Timeout (ms)",
+        name: "acquireTimeout",
+        type: "number",
+        typeOptions: {
+          minValue: 1000,
+          maxValue: 120000,
+        },
+        default: 30000,
+        description: "Maximum time to wait for a connection from the pool (milliseconds)",
+      },
+      {
+        displayName: "Health Check Interval (ms)",
+        name: "healthCheckInterval",
+        type: "number",
+        typeOptions: {
+          minValue: 10000,
+          maxValue: 300000,
+        },
+        default: 60000,
+        description: "Interval between health checks for pool connections (milliseconds)",
+      },
+      {
+        displayName: "Max Idle Time (ms)",
+        name: "maxIdleTime",
+        type: "number",
+        typeOptions: {
+          minValue: 30000,
+          maxValue: 1800000,
+        },
+        default: 300000,
+        description: "Maximum time a connection can remain idle before being closed (milliseconds)",
+      },
+      {
+        displayName: "Retry Attempts",
+        name: "retryAttempts",
+        type: "number",
+        typeOptions: {
+          minValue: 0,
+          maxValue: 10,
+        },
+        default: 3,
+        description: "Number of retry attempts for failed connection acquisitions",
+      },
+      {
+        displayName: "Retry Delay (ms)",
+        name: "retryDelay",
+        type: "number",
+        typeOptions: {
+          minValue: 100,
+          maxValue: 10000,
+        },
+        default: 1000,
+        description: "Delay between retry attempts (milliseconds)",
+      },
+      {
+        displayName: "Enable Connection Validation",
+        name: "enableConnectionValidation",
+        type: "boolean",
+        default: true,
+        description: "Validate connections before use to ensure they are healthy",
+      },
+      {
+        displayName: "Connection Validation Timeout (ms)",
+        name: "connectionValidationTimeout",
+        type: "number",
+        typeOptions: {
+          minValue: 1000,
+          maxValue: 30000,
+        },
+        default: 5000,
+        description: "Timeout for connection validation queries (milliseconds)",
+        displayOptions: {
+          show: {
+            enableConnectionValidation: [true],
+          },
+        },
+      },
+    ],
+  },
+];
+
+/**
  * Node properties array for SurrealDB node
  *
  * Following a modular architecture:
@@ -100,4 +216,7 @@ export const nodeProperties: INodeProperties[] = [
 
   // Include system fields from modular file
   ...systemFields,
+
+  // Include connection pooling options for all operations
+  ...connectionPoolingOptions,
 ];
