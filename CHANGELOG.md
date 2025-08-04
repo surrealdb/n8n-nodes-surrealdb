@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Connection Pooling Support**: Added comprehensive connection pooling for improved performance and resource management. Features include:
+  - Configurable pool settings (max/min connections, timeouts, health checks)
+  - Automatic connection health monitoring and cleanup
+  - Connection reuse across node executions
+  - Pool statistics and monitoring via "Get Pool Statistics" system operation
+  - Automatic pool cleanup on node deactivation
+- **Namespace and Database Configuration**: Enabled support for client-configured namespace and database in SurrealDB credentials and node operations. Users can now specify the namespace and database directly in the node parameters, allowing for dynamic selection at runtime.
+- **Enhanced Error Handling & Recovery**: Implements intelligent error classification, retry logic, and connection recovery. Adds operation-specific configurations and enhanced error reporting with contextual information.
+
+### Fixed
+- **WebSocket Connection Prevention**: Prevented connecting to SurrealDB instances using WebSocket protocols (`ws://` or `wss://`). The node now enforces HTTP/HTTPS-only connections and provides clear error messages if a WebSocket URL is supplied.
+- **Centralized Debug Logging**: Added a centralized debug logging system, controlled by the `SURREAL_DEBUG` environment variable, to provide detailed logs for troubleshooting and development without polluting production output.
+
+### Changed
+- **Error Handling for `executeQuery`**: Improved error handling for the `executeQuery` operation, ensuring that errors are classified and reported more accurately, and that retry logic is applied consistently.
+- **Development Workflow**: Fixed `tsc` command in development scripts and updated ESLint configuration to resolve errors and warnings.
+- **Dependencies**: Updated third-party dependencies for improved stability and compatibility.
+
+
 ## [0.4.1] - 2025-05-31
 
 ### Fixed
