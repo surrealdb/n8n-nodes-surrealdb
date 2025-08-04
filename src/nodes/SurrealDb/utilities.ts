@@ -63,11 +63,37 @@ export function parseAndValidateRecordId(
 }
 
 /**
+ * Normalize data to ensure proper JSON serialization
+ * Converts undefined values to null so they don't get dropped during JSON serialization
+ */
+function normalizeForJson(obj: any): any {
+  if (obj === undefined) {
+    return null;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(normalizeForJson);
+  }
+
+  if (obj !== null && typeof obj === "object") {
+    const normalized: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        normalized[key] = normalizeForJson(obj[key]);
+      }
+    }
+    return normalized;
+  }
+
+  return obj;
+}
+
+/**
  * Format single result output
  * Standardizes the output format for operations that return a single result
  */
 export function formatSingleResult(result: any): INodeExecutionData {
-  return { json: result };
+  return { json: normalizeForJson(result) };
 }
 
 /**
@@ -76,7 +102,7 @@ export function formatSingleResult(result: any): INodeExecutionData {
  * Each item in the array becomes a separate n8n item
  */
 export function formatArrayResult(results: any[]): INodeExecutionData[] {
-  return results.map((item) => ({ json: item }));
+  return results.map((item) => ({ json: normalizeForJson(item) }));
 }
 
 /**
