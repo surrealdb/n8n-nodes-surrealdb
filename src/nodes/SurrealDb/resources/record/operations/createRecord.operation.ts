@@ -3,9 +3,9 @@ import type {
   IExecuteFunctions,
   INodeExecutionData,
 } from "n8n-workflow";
-import { NodeOperationError } from "n8n-workflow";
 import type { IOperationHandler } from "../../../types/operation.types";
 import type { Surreal } from "surrealdb";
+import { RecordId } from "surrealdb";
 import {
   validateRequiredField,
   validateAndParseData,
@@ -14,9 +14,14 @@ import {
 import {
   createRecordId,
   debugLog,
-  addErrorResult,
   addSuccessResult,
 } from "../../../utilities";
+import {
+  handleOperationError,
+  retryWithBackoff,
+  DEFAULT_RETRY_CONFIG,
+  ErrorCategory,
+} from "../../../errorHandling";
 
 import { DEBUG } from '../../../debug';
 
@@ -32,6 +37,11 @@ export const createRecordOperation: IOperationHandler = {
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
+    // Declare variables outside try block for access in catch block
+    let table = "";
+    let data: unknown = {};
+    let recordId: string | RecordId = "";
+
     try {
       if (DEBUG) debugLog("createRecord", "Starting operation", itemIndex);
 
@@ -41,11 +51,11 @@ export const createRecordOperation: IOperationHandler = {
         itemIndex,
       ) as string;
       validateRequiredField(executeFunctions, tableInput, "Table", itemIndex);
-      const table = cleanTableName(tableInput);
+      table = cleanTableName(tableInput);
 
       // Get and validate record data
       const dataInput = executeFunctions.getNodeParameter("data", itemIndex);
-      const data = validateAndParseData(
+      data = validateAndParseData(
         executeFunctions,
         dataInput,
         "Data",
@@ -70,7 +80,6 @@ export const createRecordOperation: IOperationHandler = {
       ) {
         delete data.id;
       }
-      let recordId;
 
       if (providedId && providedId.trim() !== "") {
         if (DEBUG)
@@ -96,10 +105,28 @@ export const createRecordOperation: IOperationHandler = {
         debugLog("createRecord", "Data", itemIndex, JSON.stringify(data));
       }
 
-      // Create the record
-      const result = await client.create(
-        recordId as string,
-        data as Record<string, unknown>,
+      // Create the record with enhanced error handling and retry logic
+      const result = await retryWithBackoff(
+        async () => {
+          return await client.create(
+            recordId as string,
+            data as Record<string, unknown>,
+          );
+        },
+        {
+          ...DEFAULT_RETRY_CONFIG,
+          retryableErrors: [
+            ErrorCategory.CONNECTION_ERROR,
+            ErrorCategory.TIMEOUT_ERROR,
+            ErrorCategory.SYSTEM_ERROR,
+          ],
+        },
+        {
+          operation: "createRecord",
+          table,
+          recordId: typeof recordId === "string" ? recordId : "auto-generated",
+          dataKeys: Object.keys(data as Record<string, unknown> || {}),
+        },
       );
 
       if (DEBUG) {
@@ -132,29 +159,20 @@ export const createRecordOperation: IOperationHandler = {
         );
       }
     } catch (error) {
-      if (executeFunctions.continueOnFail()) {
-        if (DEBUG)
-          debugLog(
-            "createRecord",
-            "Error with continueOnFail enabled",
-            itemIndex,
-            error.message,
-          );
-        addErrorResult(returnData, error, itemIndex);
-      } else {
-        if (DEBUG)
-          debugLog(
-            "createRecord",
-            "Error, stopping execution",
-            itemIndex,
-            error.message,
-          );
-        throw new NodeOperationError(
-          executeFunctions.getNode(),
-          `Error creating record: ${error.message}`,
-          { itemIndex },
-        );
-      }
+      // Use enhanced error handling
+      returnData.push(
+        handleOperationError(
+          error as Error,
+          executeFunctions,
+          itemIndex,
+          "createRecord",
+          {
+            table,
+            recordId: typeof recordId === "string" ? recordId : "auto-generated",
+            dataKeys: Object.keys(data as Record<string, unknown> || {}),
+          },
+        ),
+      );
     }
 
     if (DEBUG)

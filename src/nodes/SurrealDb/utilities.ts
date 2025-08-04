@@ -6,6 +6,9 @@ import type {
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 import { RecordId } from "surrealdb";
+import {
+  createEnhancedErrorResult,
+} from "./errorHandling";
 
 /**
  * Generate paired item data for the given number of items
@@ -154,20 +157,19 @@ export function addSuccessResult(
  *
  * @param error The error object or message
  * @param itemIndex The index of the current item for pairedItem
+ * @param operationName Optional operation name for context
+ * @param context Optional additional context
  * @returns An INodeExecutionData object with standardized error structure
  */
 export function createErrorResult(
   error: Error | string,
   itemIndex: number,
+  operationName?: string,
+  context?: Record<string, unknown>,
 ): INodeExecutionData {
-  const errorMessage = typeof error === "string" ? error : error.message;
-
-  return {
-    json: {
-      error: errorMessage,
-    },
-    pairedItem: { item: itemIndex },
-  };
+  // Use the enhanced error result function
+  const errorObj = typeof error === "string" ? new Error(error) : error;
+  return createEnhancedErrorResult(errorObj, itemIndex, operationName, context);
 }
 
 /**
@@ -176,11 +178,15 @@ export function createErrorResult(
  * @param returnData The array to add the error to
  * @param error The error object or message
  * @param itemIndex The index of the current item for pairedItem
+ * @param operationName Optional operation name for context
+ * @param context Optional additional context
  */
 export function addErrorResult(
   returnData: INodeExecutionData[],
   error: Error | string,
   itemIndex: number,
+  operationName?: string,
+  context?: Record<string, unknown>,
 ): void {
-  returnData.push(createErrorResult(error, itemIndex));
+  returnData.push(createErrorResult(error, itemIndex, operationName, context));
 }

@@ -26,6 +26,7 @@ This is an n8n community node for SurrealDB. It provides both action and tool no
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Operations](#operations)
+- [Error Handling](#error-handling)
 - [Understanding SurrealDB and n8n Integration](#understanding-surrealdb-and-n8n-integration)
 - [Resources](#resources)
 - [Development](#development)
@@ -46,6 +47,9 @@ This is an n8n community node for SurrealDB. It provides both action and tool no
 - **Table Operations**: List fields and explore table structure
 - **Relationship Support**: Query and manage record relationships
 - **Native Data Format**: Works with SurrealDB's native data formats
+- **Enhanced Error Handling**: Comprehensive error classification, automatic retry logic, and connection recovery
+- **Intelligent Recovery**: Different error handling strategies for different operation types
+- **Detailed Error Reporting**: Rich error context with categorization and severity levels
 
 ## Installation
 
@@ -197,6 +201,62 @@ SurrealDB supports rich data types that map well to n8n's JSON handling:
 - **Relationships**: Relationships are first-class citizens in SurrealDB
 - **Arrays and Objects**: Nested data structures are fully supported
 
+## Error Handling
+
+The SurrealDB node includes a comprehensive error handling and recovery system that automatically manages common database issues:
+
+### Automatic Error Classification
+
+The system automatically categorizes errors into different types:
+- **Connection Errors**: Network issues, timeouts, connection refused
+- **Authentication Errors**: Invalid credentials, unauthorized access
+- **Query Errors**: Syntax errors, malformed queries
+- **Validation Errors**: Invalid data, missing required fields
+- **System Errors**: Database server issues, internal errors
+
+### Intelligent Retry Logic
+
+- **Exponential Backoff**: Automatic retry with increasing delays
+- **Operation-Specific Retries**: Different retry strategies for read vs write operations
+- **Configurable Limits**: Adjustable retry counts and delays
+- **Smart Error Filtering**: Only retry on recoverable errors
+
+### Connection Recovery
+
+- **Automatic Reconnection**: Reconnects to SurrealDB on connection failures
+- **Re-authentication**: Automatically re-authenticates after reconnection
+- **Connection Validation**: Verifies connection health before retrying operations
+
+### Enhanced Error Reporting
+
+When `Continue on Fail` is enabled, errors include detailed information:
+```json
+{
+  "error": {
+    "message": "Connection timeout",
+    "category": "TIMEOUT_ERROR",
+    "severity": "MEDIUM",
+    "retryable": true,
+    "context": {
+      "operation": "executeQuery",
+      "itemIndex": 0,
+      "timestamp": "2024-01-15T10:30:00Z",
+      "recoveryStrategy": "CONNECTION_RECOVERY"
+    }
+  }
+}
+```
+
+### Error Handling Strategies
+
+Different operation types use different error handling strategies:
+
+- **Read Operations**: Faster retries, continue on low/medium errors
+- **Write Operations**: More retries, stop on medium+ errors
+- **Critical Operations**: Minimal retries, stop on any error
+- **Bulk Operations**: Moderate retries, handle rate limiting
+
+For detailed information about the error handling system, see [Error Handling Documentation](docs/ERROR_HANDLING.md).
 
 ## Compatibility
 

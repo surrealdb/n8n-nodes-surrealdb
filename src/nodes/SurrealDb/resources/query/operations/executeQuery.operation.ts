@@ -13,12 +13,19 @@ import {
   buildCredentialsObject,
   checkQueryResult,
 } from "../../../GenericFunctions";
+import { executeQueryWithRecovery } from "../../../errorHandling";
 import {
   formatSingleResult,
   formatArrayResult,
   debugLog,
   createErrorResult,
 } from "../../../utilities";
+import {
+  handleOperationError,
+  retryWithBackoff,
+  DEFAULT_RETRY_CONFIG,
+  ErrorCategory,
+} from "../../../errorHandling";
 
 import { DEBUG } from '../../../debug';
 
@@ -106,18 +113,53 @@ export const executeQueryOperation: IOperationHandler = {
         debugLog("executeQuery", "Query parameters", itemIndex, parameters);
       }
 
-      // Execute the query
-      const result = await client.query<[unknown[]]>(finalQuery);
+      // Execute the query with enhanced error handling and recovery
+      const result = await retryWithBackoff(
+        async () => {
+          return await executeQueryWithRecovery<[unknown[]]>(
+            client,
+            finalQuery,
+            resolvedCredentials,
+            parameters as Record<string, unknown>,
+          );
+        },
+        {
+          ...DEFAULT_RETRY_CONFIG,
+          retryableErrors: [
+            ErrorCategory.CONNECTION_ERROR,
+            ErrorCategory.TIMEOUT_ERROR,
+            ErrorCategory.RATE_LIMIT_ERROR,
+            ErrorCategory.SYSTEM_ERROR,
+          ],
+        },
+        {
+          operation: "executeQuery",
+          query: finalQuery.substring(0, 100) + "...", // Log partial query for security
+          parameters: Object.keys(parameters as Record<string, unknown> || {}),
+        },
+      );
 
-      // Check for query errors
+      // Check for query errors with enhanced error information
       const queryCheck = checkQueryResult(result, "Query failed");
       if (!queryCheck.success) {
+        const error = new Error(queryCheck.errorMessage || "Unknown query error");
+
         if (executeFunctions.continueOnFail()) {
-          returnData.push(createErrorResult(new Error(queryCheck.errorMessage), itemIndex));
+          returnData.push(createErrorResult(error, itemIndex, "executeQuery", {
+            query: finalQuery.substring(0, 100) + "...",
+            errorCategory: queryCheck.errorCategory,
+            errorSeverity: queryCheck.errorSeverity,
+            errorDetails: queryCheck.errorDetails,
+          }));
         } else {
-          throw new NodeOperationError(executeFunctions.getNode(), queryCheck.errorMessage || "Unknown error", {
-            itemIndex,
-          });
+          throw new NodeOperationError(
+            executeFunctions.getNode(),
+            queryCheck.errorMessage || "Unknown error",
+            {
+              itemIndex,
+              description: `Error Category: ${queryCheck.errorCategory}, Severity: ${queryCheck.errorSeverity}`,
+            },
+          );
         }
       }
 
@@ -170,27 +212,19 @@ export const executeQueryOperation: IOperationHandler = {
         });
       }
     } catch (error) {
-      // Handle errors based on continueOnFail setting
-      if (executeFunctions.continueOnFail()) {
-        if (DEBUG)
-          debugLog(
-            "executeQuery",
-            "Error with continueOnFail enabled",
-            itemIndex,
-            error.message,
-          );
-        returnData.push(createErrorResult(error, itemIndex));
-      } else {
-        // If continueOnFail is not enabled, re-throw the error
-        if (DEBUG)
-          debugLog(
-            "executeQuery",
-            "Error, stopping execution",
-            itemIndex,
-            error.message,
-          );
-        throw error;
-      }
+      // Use enhanced error handling
+      returnData.push(
+        handleOperationError(
+          error as Error,
+          executeFunctions,
+          itemIndex,
+          "executeQuery",
+          {
+            query: "Unknown", // query variable not available in catch scope
+            parameters: [], // parametersInput variable not available in catch scope
+          },
+        ),
+      );
     }
 
     if (DEBUG)

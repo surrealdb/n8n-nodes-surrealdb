@@ -16,6 +16,15 @@ import type {
   ISurrealApiCredentials,
 } from "./types/surrealDb.types";
 
+import {
+  classifyError,
+  retryWithBackoff,
+  validateConnection,
+  ErrorCategory,
+  ErrorSeverity,
+  DEFAULT_RETRY_CONFIG,
+} from "./errorHandling";
+
 /**
  * Validate JSON input
  * @param self The execute functions instance
@@ -488,20 +497,14 @@ export function buildCredentialsObject(
 }
 
 /**
- * Check if a SurrealDB query result contains an error.
- * SurrealDB typically returns errors in the results array with an 'error' property.
- *
- * @param result The query result from SurrealDB
- * @param errorPrefix A prefix for the error message
- * @param itemIndex The index of the current item
- * @returns An object with success status and optional error message
- */
-/**
  * Result of checking a SurrealDB query result for errors
  */
 export interface IQueryResultCheck {
   success: boolean;
   errorMessage?: string;
+  errorCategory?: ErrorCategory;
+  errorSeverity?: ErrorSeverity;
+  errorDetails?: Record<string, unknown>;
 }
 
 /**
@@ -510,8 +513,7 @@ export interface IQueryResultCheck {
  *
  * @param result The query result from SurrealDB
  * @param errorPrefix A prefix for the error message
- * @param itemIndex The index of the current item
- * @returns An object with success status and optional error message
+ * @returns An object with success status and enhanced error information
  */
 export function checkQueryResult(
   result: unknown,
@@ -531,9 +533,20 @@ export function checkQueryResult(
     const errorText = String(errorObj.error || "Unknown error");
     const errorMessage = `${errorPrefix}: ${errorText}`;
 
+    // Create a synthetic error for classification
+    const syntheticError = new Error(errorText);
+    const enhancedError = classifyError(syntheticError);
+
     return {
       success: false,
       errorMessage,
+      errorCategory: enhancedError.category,
+      errorSeverity: enhancedError.severity,
+      errorDetails: {
+        originalError: errorText,
+        resultStructure: Array.isArray(result) ? `Array with ${result.length} elements` : typeof result,
+        timestamp: new Date().toISOString(),
+      },
     };
   }
 
@@ -555,68 +568,101 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
 
   const db = new Surreal();
 
-  try {
-    // Validate that the connection string is not a WebSocket connection
-    if (
-      connectionString.startsWith("ws://") ||
-      connectionString.startsWith("wss://")
-    ) {
-      throw new Error(
-        "WebSocket connections (ws:// or wss://) are not supported. Please use HTTP/HTTPS connections only."
-      );
-    }
+  // Enhanced connection with retry logic
+  return await retryWithBackoff(
+    async () => {
+      try {
+        // Validate that the connection string is not a WebSocket connection
+        if (
+          connectionString.startsWith("ws://") ||
+          connectionString.startsWith("wss://")
+        ) {
+          throw new Error(
+            "WebSocket connections (ws:// or wss://) are not supported. Please use HTTP/HTTPS connections only."
+          );
+        }
 
-    // Connect to SurrealDB (without namespace/database in connect options)
-    await db.connect(connectionString);
+        // Validate required fields based on authentication type
+        if (authType === "Namespace" && !namespace) {
+          throw new Error("Namespace is required for Namespace authentication");
+        }
+        if (authType === "Database" && (!namespace || !database)) {
+          throw new Error(
+            "Namespace and Database are required for Database authentication",
+          );
+        }
 
-    // Sign in based on authentication type
-    if (authType === "Root") {
-      // For root authentication, we just need username and password
-      await db.signin({ username, password });
-    } else if (authType === "Namespace") {
-      if (!namespace) {
-        throw new Error("Namespace is required for Namespace authentication");
-      }
-      // For namespace authentication, we need username, password, and namespace
-      await db.signin({ username, password, namespace });
-    } else if (authType === "Database") {
-      if (!namespace || !database) {
-        throw new Error(
-          "Namespace and Database are required for Database authentication",
-        );
-      }
-      await db.signin({ username, password, namespace, database });
-    }
+        // Connect to SurrealDB
+        await db.connect(connectionString);
 
-    // Apply namespace and database context after authentication
-    // This ensures all subsequent operations run in the expected context
-    if (namespace && database) {
-      if (DEBUG) {
-        // eslint-disable-next-line no-console
-        console.log(
-          "DEBUG - connectSurrealClient - Setting namespace and database context:",
-          namespace,
-          database,
-        );
-      }
-      await db.use({ namespace, database });
-    } else if (namespace) {
-      if (DEBUG) {
-        // eslint-disable-next-line no-console
-        console.log(
-          "DEBUG - connectSurrealClient - Setting namespace context:",
-          namespace,
-        );
-      }
-      await db.use({ namespace });
-    }
+        // Sign in based on authentication type
+        if (authType === "Root") {
+          await db.signin({ username, password });
+        } else if (authType === "Namespace") {
+          await db.signin({ username, password, namespace });
+        } else if (authType === "Database") {
+          await db.signin({ username, password, namespace, database });
+        }
 
-    return db;
-  } catch (error) {
-    if (DEBUG) {
-      // eslint-disable-next-line no-console
-      console.error("DEBUG - Error connecting to SurrealDB:", error);
-    }
-    throw error;
-  }
+        // Apply namespace and database context after authentication
+        if (namespace && database) {
+          if (DEBUG) {
+            // eslint-disable-next-line no-console
+            console.log(
+              "DEBUG - connectSurrealClient - Setting namespace and database context:",
+              namespace,
+              database,
+            );
+          }
+          await db.use({ namespace, database });
+        } else if (namespace) {
+          if (DEBUG) {
+            // eslint-disable-next-line no-console
+            console.log(
+              "DEBUG - connectSurrealClient - Setting namespace context:",
+              namespace,
+            );
+          }
+          await db.use({ namespace });
+        }
+
+        // Validate the connection with a simple query
+        const isValid = await validateConnection(db);
+        if (!isValid) {
+          throw new Error("Connection validation failed after setup");
+        }
+
+        return db;
+      } catch (error) {
+        const enhancedError = classifyError(error as Error);
+
+        if (DEBUG) {
+          // eslint-disable-next-line no-console
+          console.error("DEBUG - Error connecting to SurrealDB:", {
+            category: enhancedError.category,
+            severity: enhancedError.severity,
+            message: enhancedError.message,
+            retryable: enhancedError.retryable,
+          });
+        }
+
+        throw error;
+      }
+    },
+    {
+      ...DEFAULT_RETRY_CONFIG,
+      retryableErrors: [
+        ErrorCategory.CONNECTION_ERROR,
+        ErrorCategory.TIMEOUT_ERROR,
+        ErrorCategory.SYSTEM_ERROR,
+      ],
+    },
+    {
+      operation: "connectSurrealClient",
+      connectionString: connectionString.substring(0, 50) + "...", // Log partial connection string for security
+      authentication: authType,
+      namespace,
+      database,
+    },
+  );
 }
