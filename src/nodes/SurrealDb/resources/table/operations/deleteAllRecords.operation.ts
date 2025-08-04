@@ -29,7 +29,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     try {
       if (DEBUG) debugLog("deleteAllRecords", "Starting operation", itemIndex);
@@ -40,7 +40,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
       // Get parameters for the specific item
       const tableInput = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       validateRequiredField(executeFunctions, tableInput, "Table", itemIndex);
       const table = cleanTableName(tableInput);
@@ -49,7 +49,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
 
       // Get where clause if provided
@@ -68,19 +68,19 @@ export const deleteAllRecordsOperation: IOperationHandler = {
           "deleteAllRecords",
           "Authentication type",
           itemIndex,
-          resolvedCredentials.authentication
+          resolvedCredentials.authentication,
         );
         debugLog(
           "deleteAllRecords",
           "Namespace",
           itemIndex,
-          resolvedCredentials.namespace
+          resolvedCredentials.namespace,
         );
         debugLog(
           "deleteAllRecords",
           "Database",
           itemIndex,
-          resolvedCredentials.database
+          resolvedCredentials.database,
         );
       }
 
@@ -100,7 +100,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
           "deleteAllRecords",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -129,7 +129,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
         debugLog(
           "deleteAllRecords",
           `Completed, returning ${returnData.length} items`,
-          itemIndex
+          itemIndex,
         );
       return returnData;
     } catch (error) {
@@ -139,7 +139,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
             "deleteAllRecords",
             "Error with continueOnFail enabled",
             itemIndex,
-            error.message
+            error.message,
           );
         return [createErrorResult(error, itemIndex)];
       }
@@ -148,7 +148,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
           "deleteAllRecords",
           "Error, stopping execution",
           itemIndex,
-          error.message
+          error.message,
         );
       throw error;
     }

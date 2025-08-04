@@ -24,7 +24,7 @@ export const deleteFieldOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -35,11 +35,11 @@ export const deleteFieldOperation: IOperationHandler = {
     // Get parameters
     const table = executeFunctions.getNodeParameter(
       "table",
-      itemIndex
+      itemIndex,
     ) as string;
     const fieldName = executeFunctions.getNodeParameter(
       "fieldName",
-      itemIndex
+      itemIndex,
     ) as string;
 
     // Validate required fields
@@ -50,7 +50,7 @@ export const deleteFieldOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the resolved credentials object using the utility function
@@ -75,7 +75,7 @@ export const deleteFieldOperation: IOperationHandler = {
         "deleteField",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
@@ -87,7 +87,7 @@ export const deleteFieldOperation: IOperationHandler = {
         table,
         message: `Field ${fieldName} has been deleted from table ${table}`,
       },
-      itemIndex
+      itemIndex,
     );
 
     return returnData;

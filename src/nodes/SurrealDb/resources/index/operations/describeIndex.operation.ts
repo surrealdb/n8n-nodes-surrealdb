@@ -25,7 +25,7 @@ export const describeIndexOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -36,11 +36,11 @@ export const describeIndexOperation: IOperationHandler = {
       // Get parameters
       const table = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       const indexName = executeFunctions.getNodeParameter(
         "indexName",
-        itemIndex
+        itemIndex,
       ) as string;
 
       // Validate required fields
@@ -49,14 +49,14 @@ export const describeIndexOperation: IOperationHandler = {
         executeFunctions,
         indexName,
         "Index Name",
-        itemIndex
+        itemIndex,
       );
 
       // Get options
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
 
       // Build the resolved credentials object using utility function
@@ -81,7 +81,7 @@ export const describeIndexOperation: IOperationHandler = {
           "describeIndex",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -91,12 +91,12 @@ export const describeIndexOperation: IOperationHandler = {
 
         // Return the index information directly
         returnData.push({
-          json: indexInfo,
+          json: indexInfo as IDataObject,
           pairedItem: { item: itemIndex },
         });
       } else {
         throw new Error(
-          `Unable to retrieve information for index ${indexName} on table ${table}`
+          `Unable to retrieve information for index ${indexName} on table ${table}`,
         );
       }
     } catch (error) {
@@ -114,7 +114,7 @@ export const describeIndexOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Error getting index details: ${error.message}`,
-          { itemIndex }
+          { itemIndex },
         );
       }
     }

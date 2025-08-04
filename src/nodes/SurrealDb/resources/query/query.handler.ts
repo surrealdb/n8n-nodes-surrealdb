@@ -10,7 +10,7 @@ export async function handleQueryOperations(
   operation: string,
   client: Surreal,
   items: INodeExecutionData[],
-  executeFunctions: IExecuteFunctions
+  executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
   let returnData: INodeExecutionData[] = [];
 
@@ -26,13 +26,13 @@ export async function handleQueryOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
         default:
           throw new Error(
-            `The operation "${operation}" is not supported for the Query resource!`
+            `The operation "${operation}" is not supported for the Query resource!`,
           );
       }
     } catch (error) {

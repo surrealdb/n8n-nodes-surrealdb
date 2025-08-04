@@ -5,7 +5,6 @@ import type {
   INodeType,
   INodeTypeDescription,
   ILoadOptionsFunctions,
-  INode,
 } from "n8n-workflow";
 
 // Set to true to enable debug logging, false to disable
@@ -88,8 +87,8 @@ export class SurrealDb implements INodeType {
     defaults: {
       name: "SurrealDB",
     },
-    inputs: ["main"] as string[],
-    outputs: ["main"] as string[],
+    inputs: ["main"],
+    outputs: ["main"],
     usableAsTool: true,
     // Use the operation parameter to look up the display name in the flat map
     subtitle:
@@ -111,44 +110,59 @@ export class SurrealDb implements INodeType {
 
     // Add record operations
     operationMap.record = {};
-    recordOperations[0].options?.forEach((option: { value: string; name: string }) => {
-      operationMap.record[option.value] = option.name;
+    recordOperations[0].options?.forEach((option) => {
+      if ("value" in option && "name" in option) {
+        operationMap.record[option.value as string] = option.name as string;
+      }
     });
 
     // Add table operations
     operationMap.table = {};
-    tableOperations[0].options?.forEach((option: { value: string; name: string }) => {
-      operationMap.table[option.value] = option.name;
+    tableOperations[0].options?.forEach((option) => {
+      if ("value" in option && "name" in option) {
+        operationMap.table[option.value as string] = option.name as string;
+      }
     });
 
     // Add field operations
     operationMap.field = {};
-    fieldOperations[0].options?.forEach((option: { value: string; name: string }) => {
-      operationMap.field[option.value] = option.name;
+    fieldOperations[0].options?.forEach((option) => {
+      if ("value" in option && "name" in option) {
+        operationMap.field[option.value as string] = option.name as string;
+      }
     });
 
     // Add index operations
     operationMap.index = {};
-    indexOperations[0].options?.forEach((option: { value: string; name: string }) => {
-      operationMap.index[option.value] = option.name;
+    indexOperations[0].options?.forEach((option) => {
+      if ("value" in option && "name" in option) {
+        operationMap.index[option.value as string] = option.name as string;
+      }
     });
 
     // Add relationship operations
     operationMap.relationship = {};
-    relationshipOperations[0].options?.forEach((option: { value: string; name: string }) => {
-      operationMap.relationship[option.value] = option.name;
+    relationshipOperations[0].options?.forEach((option) => {
+      if ("value" in option && "name" in option) {
+        operationMap.relationship[option.value as string] =
+          option.name as string;
+      }
     });
 
     // Add query operations
     operationMap.query = {};
-    queryOperations[0].options?.forEach((option: { value: string; name: string }) => {
-      operationMap.query[option.value] = option.name;
+    queryOperations[0].options?.forEach((option) => {
+      if ("value" in option && "name" in option) {
+        operationMap.query[option.value as string] = option.name as string;
+      }
     });
 
     // Add system operations
     operationMap.system = {};
-    systemOperations[0].options?.forEach((option: { value: string; name: string }) => {
-      operationMap.system[option.value] = option.name;
+    systemOperations[0].options?.forEach((option) => {
+      if ("value" in option && "name" in option) {
+        operationMap.system[option.value as string] = option.name as string;
+      }
     });
 
     return operationMap;
@@ -159,28 +173,14 @@ export class SurrealDb implements INodeType {
     loadOptions: {
       // Method to get the operation name for the subtitle
       // eslint-disable-next-line no-unused-vars
-      getOperationName(this: ILoadOptionsFunctions) {
+      async getOperationName(this: ILoadOptionsFunctions) {
         try {
-          const resource = this.getNodeParameter("resource", "") as string;
           const operation = this.getNodeParameter("operation", "") as string;
 
-          // Get the node instance
-          const node = this.getNode() as INode;
-
-          // Return the operation name from the map
-          if (
-            node &&
-            node.operationNameMap &&
-            node.operationNameMap[resource] &&
-            node.operationNameMap[resource][operation]
-          ) {
-            return node.operationNameMap[resource][operation];
-          }
-
           // Fallback to the operation value if not found in the map
-          return operation;
+          return [{ name: operation, value: operation }];
         } catch {
-          return "Error getting operation name";
+          return [{ name: "Error getting operation name", value: "error" }];
         }
       },
     },
@@ -212,14 +212,14 @@ export class SurrealDb implements INodeType {
       this,
       credentials,
       nodeNamespace, // Pass the renamed variable
-      nodeDatabase // Pass the renamed variable
+      nodeDatabase, // Pass the renamed variable
     );
 
     if (DEBUG) {
       // eslint-disable-next-line no-console
       console.log(
         "DEBUG - Resolved Credentials:",
-        JSON.stringify(resolvedCredentials)
+        JSON.stringify(resolvedCredentials),
       );
     }
 
@@ -238,7 +238,7 @@ export class SurrealDb implements INodeType {
           operation,
           client,
           items,
-          this
+          this,
         );
       }
       // Resource: Record
@@ -247,7 +247,7 @@ export class SurrealDb implements INodeType {
           operation,
           client,
           items,
-          this
+          this,
         );
       }
       // Resource: Table
@@ -256,7 +256,7 @@ export class SurrealDb implements INodeType {
           operation,
           client,
           items,
-          this
+          this,
         );
       }
       // Resource: Query
@@ -265,7 +265,7 @@ export class SurrealDb implements INodeType {
           operation,
           client,
           items,
-          this
+          this,
         );
       }
       // Resource: Field
@@ -274,7 +274,7 @@ export class SurrealDb implements INodeType {
           operation,
           client,
           items,
-          this
+          this,
         );
       }
       // Resource: Index
@@ -283,7 +283,7 @@ export class SurrealDb implements INodeType {
           operation,
           client,
           items,
-          this
+          this,
         );
       }
       // Resource: Relationship
@@ -292,7 +292,7 @@ export class SurrealDb implements INodeType {
           operation,
           client,
           items,
-          this
+          this,
         );
       }
     } finally {

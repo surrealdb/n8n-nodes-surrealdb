@@ -30,7 +30,7 @@ export const getManyOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -41,11 +41,11 @@ export const getManyOperation: IOperationHandler = {
       // Get parameters
       let table = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       const idsString = executeFunctions.getNodeParameter(
         "ids",
-        itemIndex
+        itemIndex,
       ) as string;
 
       // Clean and standardize the table name
@@ -67,14 +67,14 @@ export const getManyOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           'Either Table field must be provided or Record IDs must include a table prefix (e.g., "table:id")',
-          { itemIndex }
+          { itemIndex },
         );
       }
       validateRequiredField(
         executeFunctions,
         idsString,
         "Record IDs",
-        itemIndex
+        itemIndex,
       );
 
       // Parse the comma-separated IDs
@@ -99,7 +99,7 @@ export const getManyOperation: IOperationHandler = {
             idStr,
             table,
             executeFunctions.getNode(),
-            itemIndex
+            itemIndex,
           );
           return `${table}:${validatedId}`;
         })
@@ -112,7 +112,7 @@ export const getManyOperation: IOperationHandler = {
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
 
       // Build the resolved credentials object using utility function
@@ -124,19 +124,19 @@ export const getManyOperation: IOperationHandler = {
           "getMany",
           "Authentication type",
           itemIndex,
-          resolvedCredentials.authentication
+          resolvedCredentials.authentication,
         );
         debugLog(
           "getMany",
           "Namespace",
           itemIndex,
-          resolvedCredentials.namespace
+          resolvedCredentials.namespace,
         );
         debugLog(
           "getMany",
           "Database",
           itemIndex,
-          resolvedCredentials.database
+          resolvedCredentials.database,
         );
         debugLog("getMany", "Record IDs", itemIndex, recordIdList);
       }
@@ -156,7 +156,7 @@ export const getManyOperation: IOperationHandler = {
           "getMany",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -165,7 +165,7 @@ export const getManyOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           "Query execution failed: No result returned",
-          { itemIndex }
+          { itemIndex },
         );
       }
 
@@ -180,7 +180,7 @@ export const getManyOperation: IOperationHandler = {
               throw new NodeOperationError(
                 executeFunctions.getNode(),
                 `Query execution error: ${errorDetail}`,
-                { itemIndex }
+                { itemIndex },
               );
             }
 
@@ -189,7 +189,7 @@ export const getManyOperation: IOperationHandler = {
               throw new NodeOperationError(
                 executeFunctions.getNode(),
                 `Query execution error: ${resultItem.error}`,
-                { itemIndex }
+                { itemIndex },
               );
             }
           }

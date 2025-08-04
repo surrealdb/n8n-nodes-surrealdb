@@ -23,7 +23,7 @@ export const listTablesOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -35,7 +35,7 @@ export const listTablesOperation: IOperationHandler = {
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
 
       // Build the resolved credentials object using utility function
@@ -57,24 +57,28 @@ export const listTablesOperation: IOperationHandler = {
           "listTables",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
       // Process the result based on the observed structure in debug output
       if (Array.isArray(result) && result.length > 0 && result[0]) {
-        const dbInfo = result[0];
+        const dbInfo = result[0] as Record<string, unknown>;
 
         // Check for tables property as observed in the debug output
         if (dbInfo.tables && typeof dbInfo.tables === "object") {
           // Get table names (the keys of the tables object)
-          const tableNames = Object.keys(dbInfo.tables);
+          const tableNames = Object.keys(
+            dbInfo.tables as Record<string, unknown>,
+          );
 
           if (tableNames.length > 0) {
             // Add each table as a separate item
             for (const tableName of tableNames) {
               // Get the table definition string from the value
-              const tableDefinition = dbInfo.tables[tableName];
+              const tableDefinition = (
+                dbInfo.tables as Record<string, unknown>
+              )[tableName];
 
               // Parse the table type from the definition string
               // Format is typically "DEFINE TABLE [name] TYPE [type] ..."

@@ -148,13 +148,14 @@ export const recordFields: INodeProperties[] = [
       {
         name: "Replace Record",
         value: "replace",
-        description: "Replace the entire record with new data (default behavior)"
+        description:
+          "Replace the entire record with new data (default behavior)",
       },
       {
         name: "Set Fields",
         value: "set",
-        description: "Update specific fields using SurrealDB SET syntax"
-      }
+        description: "Update specific fields using SurrealDB SET syntax",
+      },
     ],
     displayOptions: {
       show: {
@@ -174,11 +175,7 @@ export const recordFields: INodeProperties[] = [
     displayOptions: {
       show: {
         resource: ["record"],
-        operation: [
-          "createRecord",
-          "mergeRecord",
-          "upsertRecord",
-        ],
+        operation: ["createRecord", "mergeRecord", "upsertRecord"],
       },
     },
   },
@@ -228,8 +225,9 @@ export const recordFields: INodeProperties[] = [
             type: "string",
             required: true,
             default: "",
-            description: "The field name to update (e.g., 'name', 'age', 'settings.theme')",
-            placeholder: "field_name"
+            description:
+              "The field name to update (e.g., 'name', 'age', 'settings.theme')",
+            placeholder: "field_name",
           },
           {
             displayName: "Operation",
@@ -243,24 +241,26 @@ export const recordFields: INodeProperties[] = [
               {
                 name: "Set (=)",
                 value: "=",
-                description: "Set the field to a specific value"
+                description: "Set the field to a specific value",
               },
               {
                 name: "Add (+=)",
                 value: "+=",
-                description: "Add to numeric values or append to arrays (use Concat for strings)"
+                description:
+                  "Add to numeric values or append to arrays (use Concat for strings)",
               },
               {
                 name: "Concat (+ =)",
                 value: "+ =",
-                description: "Concatenate strings using field + value syntax"
+                description: "Concatenate strings using field + value syntax",
               },
               {
                 name: "Subtract (-=)",
                 value: "-=",
-                description: "Subtract from numeric values or remove from arrays"
-              }
-            ]
+                description:
+                  "Subtract from numeric values or remove from arrays",
+              },
+            ],
           },
           {
             displayName: "Value",
@@ -268,12 +268,13 @@ export const recordFields: INodeProperties[] = [
             type: "string",
             required: true,
             default: "",
-            description: "The value to use in the operation. Use JSON format for objects/arrays (e.g., '\"text\"', '123', 'true', '[1,2,3]', '{\"key\":\"value\"}')",
-            placeholder: "value"
-          }
-        ]
-      }
-    ]
+            description:
+              "The value to use in the operation. Use JSON format for objects/arrays (e.g., '\"text\"', '123', 'true', '[1,2,3]', '{\"key\":\"value\"}')",
+            placeholder: "value",
+          },
+        ],
+      },
+    ],
   },
   // Options for Record resource
   {

@@ -24,7 +24,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -37,16 +37,16 @@ export const queryRelationshipsOperation: IOperationHandler = {
     const recordId = executeFunctions.getNodeParameter(
       "recordId",
       itemIndex,
-      ""
+      "",
     ) as string;
     const direction = executeFunctions.getNodeParameter(
       "direction",
-      itemIndex
+      itemIndex,
     ) as string;
     const relationshipType = executeFunctions.getNodeParameter(
       "relationshipType",
       itemIndex,
-      ""
+      "",
     ) as string;
 
     // Validate relationship type if record ID is not provided
@@ -54,7 +54,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `When Record ID is not provided, Relationship Type is required`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -63,7 +63,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `Record ID must be in the format "table:id" (e.g., person:john)`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -71,7 +71,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the resolved credentials object using the utility function
@@ -93,7 +93,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Invalid direction: ${direction}`,
-          { itemIndex }
+          { itemIndex },
         );
     }
 
@@ -140,7 +140,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
         "queryRelationships",
         "Prepared query",
         itemIndex,
-        preparedQuery
+        preparedQuery,
       );
     }
 
@@ -153,7 +153,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
         "queryRelationships",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
@@ -165,7 +165,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Failed to query relationships${recordId ? ` for ${recordId}` : ""}`,
-          { itemIndex }
+          { itemIndex },
         );
       }
 
@@ -215,8 +215,9 @@ export const queryRelationshipsOperation: IOperationHandler = {
         if (returnData.length === 0) {
           returnData.push({
             json: {
-              message: `No relationships found${recordId ? ` for ${recordId}` : ""
-                }`,
+              message: `No relationships found${
+                recordId ? ` for ${recordId}` : ""
+              }`,
             },
             pairedItem: { item: itemIndex },
           });
@@ -232,7 +233,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `Failed to query relationships${recordId ? ` for ${recordId}` : ""}`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 

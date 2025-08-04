@@ -29,18 +29,18 @@ export const mergeRecordOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     try {
       if (DEBUG) debugLog("mergeRecord", "Starting operation", itemIndex);
       // Get parameters
       let table = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       const idInput = executeFunctions.getNodeParameter(
         "id",
-        itemIndex
+        itemIndex,
       ) as string;
 
       // Clean and standardize the table name
@@ -59,7 +59,7 @@ export const mergeRecordOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           'Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")',
-          { itemIndex }
+          { itemIndex },
         );
       }
       validateRequiredField(executeFunctions, idInput, "Record ID", itemIndex);
@@ -69,7 +69,7 @@ export const mergeRecordOperation: IOperationHandler = {
         idInput,
         table,
         executeFunctions.getNode(),
-        itemIndex
+        itemIndex,
       );
 
       // Get and validate record data
@@ -78,12 +78,12 @@ export const mergeRecordOperation: IOperationHandler = {
         executeFunctions,
         dataInput,
         "Data",
-        itemIndex
+        itemIndex,
       );
 
       // Remove the id field from data if it exists, since we're specifying the record ID explicitly
       // This prevents SurrealDB from throwing an error about conflicting id specifications
-      if (data && typeof data === 'object' && 'id' in data) {
+      if (data && typeof data === "object" && "id" in data) {
         delete data.id;
       }
 
@@ -91,14 +91,17 @@ export const mergeRecordOperation: IOperationHandler = {
       const recordId = createRecordId(table, validatedId);
 
       // Execute the merge operation
-      const result = await client.merge(recordId, data);
+      const result = await client.merge(
+        recordId,
+        data as Record<string, unknown>,
+      );
 
       // Check if the operation was successful
       if (result === null || result === undefined) {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Failed to merge record: ${recordId.toString()}`,
-          { itemIndex }
+          { itemIndex },
         );
       }
 
@@ -112,7 +115,7 @@ export const mergeRecordOperation: IOperationHandler = {
           "mergeRecord",
           "Raw result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
 
       returnData.push({

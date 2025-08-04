@@ -24,7 +24,7 @@ export const rebuildIndexOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -34,27 +34,22 @@ export const rebuildIndexOperation: IOperationHandler = {
     // Get parameters
     const table = executeFunctions.getNodeParameter(
       "table",
-      itemIndex
+      itemIndex,
     ) as string;
     const indexName = executeFunctions.getNodeParameter(
       "indexName",
-      itemIndex
+      itemIndex,
     ) as string;
 
     // Validate required fields
     validateRequiredField(executeFunctions, table, "Table", itemIndex);
-    validateRequiredField(
-      executeFunctions,
-      indexName,
-      "Index Name",
-      itemIndex
-    );
+    validateRequiredField(executeFunctions, indexName, "Index Name", itemIndex);
 
     // Get options
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the resolved credentials object using utility function
@@ -87,13 +82,15 @@ export const rebuildIndexOperation: IOperationHandler = {
         "rebuildIndex",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
     // Simply return the raw SurrealDB response without any transformation
     returnData.push({
-      json: Array.isArray(result) && result.length > 0 ? result[0] : result,
+      json: (Array.isArray(result) && result.length > 0
+        ? result[0]
+        : result) as IDataObject,
       pairedItem: { item: itemIndex },
     });
 

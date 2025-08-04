@@ -12,7 +12,7 @@ export async function handleFieldOperations(
   operation: string,
   client: Surreal,
   items: INodeExecutionData[],
-  executeFunctions: IExecuteFunctions
+  executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
   let returnData: INodeExecutionData[] = [];
 
@@ -28,7 +28,7 @@ export async function handleFieldOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -39,7 +39,7 @@ export async function handleFieldOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -50,7 +50,7 @@ export async function handleFieldOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;

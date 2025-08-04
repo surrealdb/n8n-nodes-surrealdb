@@ -25,7 +25,7 @@ export const getTableOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -36,7 +36,7 @@ export const getTableOperation: IOperationHandler = {
       // Get parameters
       const table = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
 
       // Validate required fields
@@ -46,7 +46,7 @@ export const getTableOperation: IOperationHandler = {
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
 
       // Build the resolved credentials object
@@ -71,7 +71,7 @@ export const getTableOperation: IOperationHandler = {
           "getTable",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -81,7 +81,7 @@ export const getTableOperation: IOperationHandler = {
 
         // Return the table information directly
         returnData.push({
-          json: tableInfo,
+          json: tableInfo as IDataObject,
           pairedItem: { item: itemIndex },
         });
       } else {
@@ -99,7 +99,7 @@ export const getTableOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Error getting table definition: ${error.message}`,
-          { itemIndex }
+          { itemIndex },
         );
       }
     }

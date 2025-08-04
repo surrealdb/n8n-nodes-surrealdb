@@ -15,7 +15,7 @@ export async function handleRecordOperations(
   operation: string,
   client: Surreal,
   items: INodeExecutionData[],
-  executeFunctions: IExecuteFunctions
+  executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
   let returnData: INodeExecutionData[] = [];
 
@@ -31,7 +31,7 @@ export async function handleRecordOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -42,7 +42,7 @@ export async function handleRecordOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -53,7 +53,7 @@ export async function handleRecordOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -64,7 +64,7 @@ export async function handleRecordOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -75,7 +75,7 @@ export async function handleRecordOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -86,13 +86,13 @@ export async function handleRecordOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
         default:
           throw new Error(
-            `The operation "${operation}" is not supported for the Record resource!`
+            `The operation "${operation}" is not supported for the Record resource!`,
           );
       }
     } catch (error) {

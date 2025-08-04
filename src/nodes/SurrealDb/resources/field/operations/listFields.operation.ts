@@ -25,7 +25,7 @@ export const listFieldsOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -36,7 +36,7 @@ export const listFieldsOperation: IOperationHandler = {
       // Get parameters
       const table = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
 
       // Validate required fields
@@ -46,7 +46,7 @@ export const listFieldsOperation: IOperationHandler = {
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
 
       // Build the resolved credentials object
@@ -71,18 +71,18 @@ export const listFieldsOperation: IOperationHandler = {
           "listFields",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
       // Process the result
       if (Array.isArray(result) && result.length > 0) {
-        const tableInfo = result[0];
+        const tableInfo = result[0] as Record<string, unknown>;
 
         if (tableInfo.fields && typeof tableInfo.fields === "object") {
           // Simply return the fields information directly from the SurrealDB response
           returnData.push({
-            json: tableInfo.fields,
+            json: tableInfo.fields as IDataObject,
             pairedItem: { item: itemIndex },
           });
         } else {
@@ -106,7 +106,7 @@ export const listFieldsOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Error listing fields: ${error.message}`,
-          { itemIndex }
+          { itemIndex },
         );
       }
     }

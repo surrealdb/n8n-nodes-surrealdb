@@ -32,7 +32,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     try {
       if (DEBUG) debugLog("mergeAllRecords", "Starting operation", itemIndex);
@@ -43,7 +43,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
       // Get parameters for the specific item
       const tableInput = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       validateRequiredField(executeFunctions, tableInput, "Table", itemIndex);
       const table = cleanTableName(tableInput);
@@ -54,7 +54,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
         executeFunctions,
         dataInput,
         "Data",
-        itemIndex
+        itemIndex,
       );
 
       // Validate data is an object
@@ -62,7 +62,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           "Data must be a JSON object with fields to merge",
-          { itemIndex }
+          { itemIndex },
         );
       }
 
@@ -70,7 +70,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
 
       // Get where clause if provided
@@ -88,25 +88,25 @@ export const mergeAllRecordsOperation: IOperationHandler = {
           "mergeAllRecords",
           "Data to merge",
           itemIndex,
-          JSON.stringify(data)
+          JSON.stringify(data),
         );
         debugLog(
           "mergeAllRecords",
           "Authentication",
           itemIndex,
-          resolvedCredentials.authentication
+          resolvedCredentials.authentication,
         );
         debugLog(
           "mergeAllRecords",
           "Namespace",
           itemIndex,
-          resolvedCredentials.namespace
+          resolvedCredentials.namespace,
         );
         debugLog(
           "mergeAllRecords",
           "Database",
           itemIndex,
-          resolvedCredentials.database
+          resolvedCredentials.database,
         );
       }
 
@@ -125,7 +125,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
           "mergeAllRecords",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -154,7 +154,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
         debugLog(
           "mergeAllRecords",
           `Completed, returning ${returnData.length} items`,
-          itemIndex
+          itemIndex,
         );
       return returnData;
     } catch (error) {
@@ -164,7 +164,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
             "mergeAllRecords",
             "Error with continueOnFail enabled",
             itemIndex,
-            error.message
+            error.message,
           );
         return [createErrorResult(error, itemIndex)];
       }
@@ -173,7 +173,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
           "mergeAllRecords",
           "Error, stopping execution",
           itemIndex,
-          error.message
+          error.message,
         );
       throw error;
     }

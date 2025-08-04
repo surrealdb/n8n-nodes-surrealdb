@@ -24,7 +24,7 @@ export const deleteRelationshipOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -37,17 +37,17 @@ export const deleteRelationshipOperation: IOperationHandler = {
     const fromRecordId = executeFunctions.getNodeParameter(
       "fromRecordId",
       itemIndex,
-      ""
+      "",
     ) as string;
     const relationshipType = executeFunctions.getNodeParameter(
       "relationshipType",
       itemIndex,
-      ""
+      "",
     ) as string;
     const toRecordId = executeFunctions.getNodeParameter(
       "toRecordId",
       itemIndex,
-      ""
+      "",
     ) as string;
 
     // Ensure at least one parameter is provided
@@ -55,7 +55,7 @@ export const deleteRelationshipOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `At least one of From Record ID, Relationship Type, or To Record ID must be provided`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -64,7 +64,7 @@ export const deleteRelationshipOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `From Record ID must be in the format "table:id" (e.g., person:john)`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -72,7 +72,7 @@ export const deleteRelationshipOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `To Record ID must be in the format "table:id" (e.g., person:jane)`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -80,7 +80,7 @@ export const deleteRelationshipOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the resolved credentials object using the utility function
@@ -124,7 +124,7 @@ export const deleteRelationshipOperation: IOperationHandler = {
         "deleteRelationship",
         "Prepared query",
         itemIndex,
-        preparedQuery
+        preparedQuery,
       );
     }
 
@@ -137,7 +137,7 @@ export const deleteRelationshipOperation: IOperationHandler = {
         "deleteRelationship",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
@@ -157,7 +157,7 @@ export const deleteRelationshipOperation: IOperationHandler = {
       } else if (deleteResult !== null) {
         // Single relationship was deleted
         returnData.push({
-          json: deleteResult,
+          json: deleteResult as IDataObject,
           pairedItem: { item: itemIndex },
         });
       } else {

@@ -18,7 +18,7 @@ export async function handleTableOperations(
   operation: string,
   client: Surreal,
   items: INodeExecutionData[],
-  executeFunctions: IExecuteFunctions
+  executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
   let returnData: INodeExecutionData[] = [];
 
@@ -36,7 +36,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "getTable":
@@ -44,7 +44,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "createTable":
@@ -52,7 +52,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "deleteTable":
@@ -60,7 +60,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "getAllRecords":
@@ -68,7 +68,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "createMany":
@@ -76,7 +76,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "getMany":
@@ -84,7 +84,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "updateAllRecords":
@@ -92,7 +92,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "deleteAllRecords":
@@ -100,7 +100,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         case "mergeAllRecords":
@@ -108,7 +108,7 @@ export async function handleTableOperations(
             client,
             items,
             executeFunctions,
-            i
+            i,
           );
           break;
         default:

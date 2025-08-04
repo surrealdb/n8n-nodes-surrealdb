@@ -28,7 +28,7 @@ import type {
 export function validateJSON(
   self: IExecuteFunctions,
   input: string,
-  itemIndex: number
+  itemIndex: number,
 ): unknown {
   try {
     return JSON.parse(input);
@@ -51,7 +51,7 @@ export function validateRequiredField(
   self: IExecuteFunctions,
   field: unknown,
   fieldName: string,
-  itemIndex: number
+  itemIndex: number,
 ): void {
   if (field === undefined || field === "") {
     throw new NodeOperationError(self.getNode(), `${fieldName} is required`, {
@@ -73,7 +73,7 @@ export function validateNumericField(
   self: IExecuteFunctions,
   field: unknown,
   fieldName: string,
-  itemIndex: number
+  itemIndex: number,
 ): number {
   const num = Number(field);
   if (isNaN(num) || num < 0) {
@@ -82,7 +82,7 @@ export function validateNumericField(
       `${fieldName} must be a positive number`,
       {
         itemIndex,
-      }
+      },
     );
   }
   return num;
@@ -118,13 +118,13 @@ export function validateArrayField(
   self: IExecuteFunctions,
   field: unknown,
   fieldName: string,
-  itemIndex: number
+  itemIndex: number,
 ): void {
   if (!Array.isArray(field)) {
     throw new NodeOperationError(
       self.getNode(),
       `${fieldName} must be an array`,
-      { itemIndex }
+      { itemIndex },
     );
   }
 }
@@ -143,7 +143,7 @@ export function validateAndParseData(
   self: IExecuteFunctions,
   dataInput: unknown,
   fieldName: string,
-  itemIndex: number
+  itemIndex: number,
 ): unknown {
   // Check if data is provided
   if (dataInput === undefined || dataInput === "") {
@@ -161,7 +161,7 @@ export function validateAndParseData(
       throw new NodeOperationError(
         self.getNode(),
         `${fieldName} must be valid JSON`,
-        { itemIndex }
+        { itemIndex },
       );
     }
   } else if (typeof dataInput === "object" && dataInput !== null) {
@@ -172,7 +172,7 @@ export function validateAndParseData(
     throw new NodeOperationError(
       self.getNode(),
       `${fieldName} must be a JSON string or a JSON object, received type: ${typeof dataInput}`,
-      { itemIndex }
+      { itemIndex },
     );
   }
 }
@@ -191,12 +191,12 @@ export function validateAndResolveSurrealCredentials(
   self: IExecuteFunctions,
   credentials?: ICredentialDataDecryptedObject,
   nodeParamNamespace?: string,
-  nodeParamDatabase?: string
+  nodeParamDatabase?: string,
 ): ISurrealCredentials {
   if (credentials === undefined) {
     throw new NodeOperationError(
       self.getNode(),
-      "No credentials got returned!"
+      "No credentials got returned!",
     );
   }
 
@@ -230,7 +230,7 @@ export function prepareItems(
   fields: string[],
   updateKey = "",
   useDotNotation = false,
-  dateFields: string[] = []
+  dateFields: string[] = [],
 ) {
   let data = items;
 
@@ -290,7 +290,7 @@ export function prepareFields(fields: string) {
  */
 export function prepareSurrealQuery(
   query: string,
-  credentials: ISurrealCredentials
+  credentials: ISurrealCredentials,
 ): string {
   const { authentication, namespace, database } = credentials;
 
@@ -303,7 +303,7 @@ export function prepareSurrealQuery(
   if (authentication === "Root") {
     if (!namespace || !database) {
       throw new Error(
-        "Namespace and Database are required for queries with Root authentication"
+        "Namespace and Database are required for queries with Root authentication",
       );
     }
     return `USE NS ${namespace} DB ${database}; ${query}`;
@@ -313,7 +313,7 @@ export function prepareSurrealQuery(
   if (authentication === "Namespace") {
     if (!database) {
       throw new Error(
-        "Database is required for queries with Namespace authentication"
+        "Database is required for queries with Namespace authentication",
       );
     }
     return `USE DB ${database}; ${query}`;
@@ -338,7 +338,7 @@ export function buildSelectQuery(
   options: { limit?: number; start?: number } = {},
   where?: string,
   orderBy?: string,
-  fields = "*"
+  fields = "*",
 ): { query: string; params: Record<string, unknown> } {
   // Initialize the query and parameters
   let query = `SELECT ${fields} FROM ${table}`;
@@ -380,7 +380,7 @@ export function buildSelectQuery(
 export function buildInfoQuery(
   objectType: "TABLE" | "INDEX",
   name: string,
-  table?: string
+  table?: string,
 ): string {
   if (objectType === "INDEX" && !table) {
     throw new Error("Table name is required for INDEX info queries");
@@ -420,7 +420,7 @@ export function buildDeleteQuery(table: string, where?: string): string {
 export function buildUpdateQuery(
   table: string,
   where?: string,
-  paramName = "data"
+  paramName = "data",
 ): string {
   let query = `UPDATE ${table} CONTENT $${paramName}`;
 
@@ -443,7 +443,7 @@ export function buildUpdateQuery(
 export function buildMergeQuery(
   table: string,
   where?: string,
-  paramName = "data"
+  paramName = "data",
 ): string {
   let query = `UPDATE ${table} MERGE $${paramName}`;
 
@@ -462,10 +462,7 @@ export function buildMergeQuery(
  * @param paramName The parameter name to use for the data content
  * @returns The create query string
  */
-export function buildCreateQuery(
-  table: string,
-  paramName = "data"
-): string {
+export function buildCreateQuery(table: string, paramName = "data"): string {
   return `CREATE ${table} CONTENT $${paramName}`;
 }
 
@@ -478,7 +475,7 @@ export function buildCreateQuery(
  */
 export function buildCredentialsObject(
   credentials: ICredentialDataDecryptedObject,
-  options: IDataObject
+  options: IDataObject,
 ): ISurrealCredentials {
   const nodeNamespace = (options.namespace as string)?.trim() || "";
   const nodeDatabase = (options.database as string)?.trim() || "";
@@ -524,7 +521,7 @@ export interface IQueryResultCheck {
  */
 export function checkQueryResult(
   result: unknown,
-  errorPrefix: string
+  errorPrefix: string,
 ): IQueryResultCheck {
   // Check if the result is an array and if the first element has an error property
   const hasError =
@@ -568,7 +565,10 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
     let formattedConnectionString = connectionString;
 
     // Ensure the connection string ends with /rpc for WebSocket connections
-    if (formattedConnectionString.startsWith("ws://") || formattedConnectionString.startsWith("wss://")) {
+    if (
+      formattedConnectionString.startsWith("ws://") ||
+      formattedConnectionString.startsWith("wss://")
+    ) {
       if (!formattedConnectionString.endsWith("/rpc")) {
         formattedConnectionString += "/rpc";
       }
@@ -578,7 +578,7 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
     if (authType === "Database") {
       if (!namespace || !database) {
         throw new Error(
-          "Namespace and Database are required for Database authentication"
+          "Namespace and Database are required for Database authentication",
         );
       }
 
@@ -588,7 +588,7 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
           "DEBUG - connectSurrealClient - Connecting with options - Namespace:",
           namespace,
           "Database:",
-          database
+          database,
         );
       }
 
@@ -622,7 +622,7 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
     } else if (authType === "Database") {
       if (!namespace || !database) {
         throw new Error(
-          "Namespace and Database are required for Database authentication"
+          "Namespace and Database are required for Database authentication",
         );
       }
       // For database authentication, we need username, password, namespace, and database
@@ -630,29 +630,29 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
         // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Before signin - Authentication:",
-          authType
+          authType,
         );
         // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Before signin - Username:",
-          username
+          username,
         );
         // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Before signin - Namespace:",
-          namespace
+          namespace,
         );
         // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Before signin - Database:",
-          database
+          database,
         );
       }
       await db.signin({ username, password, namespace, database });
       if (DEBUG) {
         // eslint-disable-next-line no-console
         console.log(
-          "DEBUG - connectSurrealClient - After signin - Successfully signed in"
+          "DEBUG - connectSurrealClient - After signin - Successfully signed in",
         );
       }
 
@@ -660,7 +660,7 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
       if (DEBUG) {
         // eslint-disable-next-line no-console
         console.log(
-          "DEBUG - connectSurrealClient - Using namespace and database from connect options"
+          "DEBUG - connectSurrealClient - Using namespace and database from connect options",
         );
       }
     }

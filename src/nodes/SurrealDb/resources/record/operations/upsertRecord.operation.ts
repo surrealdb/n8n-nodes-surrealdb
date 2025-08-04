@@ -25,14 +25,14 @@ export const upsertRecordOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     if (DEBUG) debugLog("upsertRecord", "Starting operation", itemIndex);
     // Get parameters
     let table = executeFunctions.getNodeParameter("table", itemIndex) as string;
     const idInput = executeFunctions.getNodeParameter(
       "id",
-      itemIndex
+      itemIndex,
     ) as string;
 
     // Clean and standardize the table name
@@ -51,7 +51,7 @@ export const upsertRecordOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         'Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")',
-        { itemIndex }
+        { itemIndex },
       );
     }
     validateRequiredField(executeFunctions, idInput, "Record ID", itemIndex);
@@ -61,7 +61,7 @@ export const upsertRecordOperation: IOperationHandler = {
       idInput,
       table,
       executeFunctions.getNode(),
-      itemIndex
+      itemIndex,
     );
 
     // Get and validate record data
@@ -70,12 +70,12 @@ export const upsertRecordOperation: IOperationHandler = {
       executeFunctions,
       dataInput,
       "Data",
-      itemIndex
+      itemIndex,
     );
 
     // Remove the id field from data if it exists, since we're specifying the record ID explicitly
     // This prevents SurrealDB from throwing an error about conflicting id specifications
-    if (data && typeof data === 'object' && 'id' in data) {
+    if (data && typeof data === "object" && "id" in data) {
       delete data.id;
     }
 
@@ -84,11 +84,14 @@ export const upsertRecordOperation: IOperationHandler = {
 
     // For upsert, we use the upsert method which will create the record if it doesn't exist
     // According to the SurrealDB documentation, this is the correct method for upserting records
-    const result = await client.upsert(recordId, data);
+    const result = await client.upsert(
+      recordId,
+      data as Record<string, unknown>,
+    );
 
     // Add success result with standardized format
     const returnData: INodeExecutionData[] = [];
-    addSuccessResult(returnData, result, itemIndex);
+    addSuccessResult(returnData, result as Record<string, unknown>, itemIndex);
     return returnData;
   },
 };

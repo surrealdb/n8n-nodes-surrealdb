@@ -12,7 +12,7 @@ export async function handleRelationshipOperations(
   operation: string,
   client: Surreal,
   items: INodeExecutionData[],
-  executeFunctions: IExecuteFunctions
+  executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
   let returnData: INodeExecutionData[] = [];
 
@@ -28,7 +28,7 @@ export async function handleRelationshipOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -39,7 +39,7 @@ export async function handleRelationshipOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -50,13 +50,13 @@ export async function handleRelationshipOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
         default:
           throw new Error(
-            `The operation "${operation}" is not supported for the Relationship resource!`
+            `The operation "${operation}" is not supported for the Relationship resource!`,
           );
       }
     } catch (error) {

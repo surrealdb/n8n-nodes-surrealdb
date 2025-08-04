@@ -11,7 +11,7 @@ export async function handleSystemOperations(
   operation: string,
   client: Surreal,
   items: INodeExecutionData[],
-  executeFunctions: IExecuteFunctions
+  executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
   let returnData: INodeExecutionData[] = [];
   const itemsLength = items.length;
@@ -26,7 +26,7 @@ export async function handleSystemOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -37,13 +37,13 @@ export async function handleSystemOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
         default:
           throw new Error(
-            `The operation "${operation}" is not supported for the System resource!`
+            `The operation "${operation}" is not supported for the System resource!`,
           );
       }
     } catch (error) {

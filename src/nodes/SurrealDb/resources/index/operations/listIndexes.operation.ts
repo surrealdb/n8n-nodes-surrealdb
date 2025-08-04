@@ -25,7 +25,7 @@ export const listIndexesOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -35,7 +35,7 @@ export const listIndexesOperation: IOperationHandler = {
     // Get parameters
     const table = executeFunctions.getNodeParameter(
       "table",
-      itemIndex
+      itemIndex,
     ) as string;
 
     // Validate required fields
@@ -45,7 +45,7 @@ export const listIndexesOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the resolved credentials object using the utility function
@@ -71,7 +71,7 @@ export const listIndexesOperation: IOperationHandler = {
         "listIndexes",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
@@ -87,14 +87,14 @@ export const listIndexesOperation: IOperationHandler = {
       // Use NodeOperationError for SurrealDB query errors
       throw new NodeOperationError(
         executeFunctions.getNode(),
-        `Error listing indexes: ${String(result[0].error)}`,
-        { itemIndex }
+        `Error listing indexes: ${String((result[0] as Record<string, unknown>).error)}`,
+        { itemIndex },
       );
     }
 
     // Process the result
     if (Array.isArray(result) && result.length > 0) {
-      const tableInfo = result[0];
+      const tableInfo = result[0] as Record<string, unknown>;
 
       if (
         tableInfo &&
@@ -102,69 +102,67 @@ export const listIndexesOperation: IOperationHandler = {
         typeof tableInfo.indexes === "object"
       ) {
         // Convert the indexes object to a more user-friendly format
-        const indexesArray = Object.entries(tableInfo.indexes).map(
-          ([indexName, definition]) => {
-            // Process the index definition to extract type, fields, etc.
-            const definitionStr = definition as string;
+        const indexesArray = Object.entries(
+          tableInfo.indexes as Record<string, unknown>,
+        ).map(([indexName, definition]) => {
+          // Process the index definition to extract type, fields, etc.
+          const definitionStr = definition as string;
 
-            // Determine if index is unique
-            const isUnique = definitionStr.includes(" UNIQUE");
+          // Determine if index is unique
+          const isUnique = definitionStr.includes(" UNIQUE");
 
-            // Determine index type (SEARCH, MTREE, or standard)
-            let indexType = "standard";
-            if (definitionStr.includes(" SEARCH ")) {
-              indexType = "search";
-            } else if (definitionStr.includes(" MTREE ")) {
-              indexType = "mtree";
-            }
-
-            // Extract fields from the definition
-            const fieldsMatch = definitionStr.match(
-              /FIELDS\s+([^(UNIQUE|SEARCH|MTREE|;)]+)/i
-            );
-            const fieldsStr = fieldsMatch ? fieldsMatch[1].trim() : "";
-            const fields = fieldsStr.split(/,\s*/).map((field) => field.trim());
-
-            // Extract vector dimension if it's an MTREE index
-            let dimension = null;
-            if (indexType === "mtree") {
-              const dimensionMatch = definitionStr.match(/DIMENSION\s+(\d+)/i);
-              dimension = dimensionMatch
-                ? parseInt(dimensionMatch[1], 10)
-                : null;
-            }
-
-            // Extract distance function if it's an MTREE index
-            let distanceFunction = null;
-            if (indexType === "mtree") {
-              const distMatch = definitionStr.match(/DIST\s+(\w+)/i);
-              distanceFunction = distMatch ? distMatch[1].toLowerCase() : null;
-            }
-
-            // Extract whether it has highlights if it's a SEARCH index
-            const hasHighlights =
-              indexType === "search" && definitionStr.includes(" HIGHLIGHTS");
-
-            // Extract the analyzer if it's a SEARCH index
-            let analyzer = null;
-            if (indexType === "search") {
-              const analyzerMatch = definitionStr.match(/ANALYZER\s+(\w+)/i);
-              analyzer = analyzerMatch ? analyzerMatch[1] : null;
-            }
-
-            return {
-              name: indexName,
-              type: indexType,
-              definition: definitionStr,
-              isUnique,
-              fields,
-              dimension,
-              distanceFunction,
-              hasHighlights,
-              analyzer,
-            };
+          // Determine index type (SEARCH, MTREE, or standard)
+          let indexType = "standard";
+          if (definitionStr.includes(" SEARCH ")) {
+            indexType = "search";
+          } else if (definitionStr.includes(" MTREE ")) {
+            indexType = "mtree";
           }
-        );
+
+          // Extract fields from the definition
+          const fieldsMatch = definitionStr.match(
+            /FIELDS\s+([^(UNIQUE|SEARCH|MTREE|;)]+)/i,
+          );
+          const fieldsStr = fieldsMatch ? fieldsMatch[1].trim() : "";
+          const fields = fieldsStr.split(/,\s*/).map((field) => field.trim());
+
+          // Extract vector dimension if it's an MTREE index
+          let dimension = null;
+          if (indexType === "mtree") {
+            const dimensionMatch = definitionStr.match(/DIMENSION\s+(\d+)/i);
+            dimension = dimensionMatch ? parseInt(dimensionMatch[1], 10) : null;
+          }
+
+          // Extract distance function if it's an MTREE index
+          let distanceFunction = null;
+          if (indexType === "mtree") {
+            const distMatch = definitionStr.match(/DIST\s+(\w+)/i);
+            distanceFunction = distMatch ? distMatch[1].toLowerCase() : null;
+          }
+
+          // Extract whether it has highlights if it's a SEARCH index
+          const hasHighlights =
+            indexType === "search" && definitionStr.includes(" HIGHLIGHTS");
+
+          // Extract the analyzer if it's a SEARCH index
+          let analyzer = null;
+          if (indexType === "search") {
+            const analyzerMatch = definitionStr.match(/ANALYZER\s+(\w+)/i);
+            analyzer = analyzerMatch ? analyzerMatch[1] : null;
+          }
+
+          return {
+            name: indexName,
+            type: indexType,
+            definition: definitionStr,
+            isUnique,
+            fields,
+            dimension,
+            distanceFunction,
+            hasHighlights,
+            analyzer,
+          };
+        });
 
         // Add each index as a separate item in the returnData for better n8n integration
         for (const index of indexesArray) {
@@ -223,7 +221,7 @@ export const listIndexesOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `Unable to retrieve information for table ${table}`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 

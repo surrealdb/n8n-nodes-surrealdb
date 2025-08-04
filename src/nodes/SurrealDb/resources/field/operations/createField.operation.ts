@@ -25,7 +25,7 @@ export const createFieldOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -37,19 +37,19 @@ export const createFieldOperation: IOperationHandler = {
     // Get parameters
     const tableInput = executeFunctions.getNodeParameter(
       "table",
-      itemIndex
+      itemIndex,
     ) as string;
     const fieldName = executeFunctions.getNodeParameter(
       "fieldName",
-      itemIndex
+      itemIndex,
     ) as string;
     const fieldMode = executeFunctions.getNodeParameter(
       "fieldMode",
-      itemIndex
+      itemIndex,
     ) as string;
     let fieldType = executeFunctions.getNodeParameter(
       "fieldType",
-      itemIndex
+      itemIndex,
     ) as string;
 
     // Validate required fields
@@ -63,7 +63,7 @@ export const createFieldOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Handle record table type if field type is record
@@ -71,7 +71,7 @@ export const createFieldOperation: IOperationHandler = {
       const recordTableType = executeFunctions.getNodeParameter(
         "recordTableType",
         itemIndex,
-        ""
+        "",
       ) as string;
       if (recordTableType) {
         fieldType = `record<${recordTableType}>`;
@@ -99,13 +99,13 @@ export const createFieldOperation: IOperationHandler = {
       const computeExpression = executeFunctions.getNodeParameter(
         "computeExpression",
         itemIndex,
-        ""
+        "",
       ) as string;
       validateRequiredField(
         executeFunctions,
         computeExpression,
         "Computation Expression",
-        itemIndex
+        itemIndex,
       );
       query += ` VALUE ${computeExpression}`;
     }
@@ -162,7 +162,7 @@ export const createFieldOperation: IOperationHandler = {
         "createField",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
@@ -178,14 +178,14 @@ export const createFieldOperation: IOperationHandler = {
         readonly: options.isReadOnly === true,
         message: `Field ${fieldName} of type ${fieldType} created on table ${table}`,
       },
-      itemIndex
+      itemIndex,
     );
 
     if (DEBUG)
       debugLog(
         "createField",
         `Completed, returning ${returnData.length} items`,
-        itemIndex
+        itemIndex,
       );
     return returnData;
   },

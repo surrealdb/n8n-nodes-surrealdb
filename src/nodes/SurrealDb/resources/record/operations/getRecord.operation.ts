@@ -24,18 +24,18 @@ export const getRecordOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     try {
       if (DEBUG) debugLog("getRecord", "Starting operation", itemIndex);
       // Get parameters for the specific item
       let table = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       const idInput = executeFunctions.getNodeParameter(
         "id",
-        itemIndex
+        itemIndex,
       ) as string;
 
       // Clean and standardize the table name
@@ -47,7 +47,12 @@ export const getRecordOperation: IOperationHandler = {
       if (DEBUG) {
         debugLog("getRecord", "Original table:", itemIndex, table);
         debugLog("getRecord", "Record ID input:", itemIndex, idInputStr);
-        debugLog("getRecord", "Has colon:", itemIndex, idInputStr.includes(":"));
+        debugLog(
+          "getRecord",
+          "Has colon:",
+          itemIndex,
+          idInputStr.includes(":"),
+        );
       }
 
       // If no table is specified but idInput has a table prefix, use the extracted table
@@ -63,7 +68,7 @@ export const getRecordOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           'Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")',
-          { itemIndex }
+          { itemIndex },
         );
       }
       validateRequiredField(executeFunctions, idInput, "Record ID", itemIndex);
@@ -73,7 +78,7 @@ export const getRecordOperation: IOperationHandler = {
         idInput,
         table,
         executeFunctions.getNode(),
-        itemIndex
+        itemIndex,
       );
 
       // Create the record ID
@@ -81,7 +86,8 @@ export const getRecordOperation: IOperationHandler = {
 
       // Execute the select operation
       const result = await client.select(recordId);
-      if (DEBUG) debugLog("getRecord", "Raw result from SurrealDB:", itemIndex, result);
+      if (DEBUG)
+        debugLog("getRecord", "Raw result from SurrealDB:", itemIndex, result);
 
       // Check if the record was found (result is not null/undefined/empty object)
       // SurrealDB's client.select returns the record object if found, or null/undefined if not found.

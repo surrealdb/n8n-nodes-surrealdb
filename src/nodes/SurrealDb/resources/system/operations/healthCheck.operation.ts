@@ -20,7 +20,7 @@ export const healthCheckOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -31,7 +31,7 @@ export const healthCheckOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the resolved credentials object using utility function
@@ -65,9 +65,8 @@ export const healthCheckOperation: IOperationHandler = {
 
     try {
       // Perform the health check request
-      const response = await executeFunctions.helpers.httpRequest(
-        requestOptions
-      );
+      const response =
+        await executeFunctions.helpers.httpRequest(requestOptions);
 
       if (DEBUG) debugLog("healthCheck", "Health check successful", itemIndex);
 
@@ -78,7 +77,7 @@ export const healthCheckOperation: IOperationHandler = {
           status: "healthy",
           details: response,
         },
-        itemIndex
+        itemIndex,
       );
     } catch (error) {
       // Special error handling for health check - always return a result with status
@@ -90,7 +89,7 @@ export const healthCheckOperation: IOperationHandler = {
           "healthCheck",
           "Health check failed",
           itemIndex,
-          (error as Error).message
+          (error as Error).message,
         );
 
       // Add unhealthy status result using the utility function
@@ -101,7 +100,7 @@ export const healthCheckOperation: IOperationHandler = {
           error: (error as Error).message,
           details: (error as Error).message,
         },
-        itemIndex
+        itemIndex,
       );
     }
 
@@ -109,7 +108,7 @@ export const healthCheckOperation: IOperationHandler = {
       debugLog(
         "healthCheck",
         `Completed, returning ${returnData.length} items`,
-        itemIndex
+        itemIndex,
       );
     return returnData;
   },

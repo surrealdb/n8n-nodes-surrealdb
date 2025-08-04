@@ -7,7 +7,7 @@ import type { ISurrealCredentials } from "../../types/surrealDb.types";
 export function createResolvedCredentials(
   credentials: ICredentialDataDecryptedObject,
   nodeNamespace: string,
-  nodeDatabase: string
+  nodeDatabase: string,
 ): ISurrealCredentials {
   return {
     connectionString: credentials.connectionString as string,

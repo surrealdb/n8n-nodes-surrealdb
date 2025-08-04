@@ -19,7 +19,7 @@ export const createManyOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -27,7 +27,7 @@ export const createManyOperation: IOperationHandler = {
       // Get parameters
       let table = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       if (DEBUG)
         debugLog("createMany", "Retrieved table parameter", itemIndex, table);
@@ -43,13 +43,13 @@ export const createManyOperation: IOperationHandler = {
           "createMany",
           "Retrieved data parameter raw value",
           itemIndex,
-          dataInput
+          dataInput,
         );
         debugLog(
           "createMany",
           "Retrieved data parameter type",
           itemIndex,
-          typeof dataInput
+          typeof dataInput,
         );
       }
 
@@ -66,7 +66,7 @@ export const createManyOperation: IOperationHandler = {
           debugLog(
             "createMany",
             "Processing data parameter as string",
-            itemIndex
+            itemIndex,
           );
         data = validateJSON(executeFunctions, dataInput, itemIndex);
       } else if (Array.isArray(dataInput)) {
@@ -75,14 +75,14 @@ export const createManyOperation: IOperationHandler = {
           debugLog(
             "createMany",
             "Processing data parameter as array",
-            itemIndex
+            itemIndex,
           );
         data = dataInput;
         // Optional: Add validation here to ensure it's an array of objects if needed
       } else {
         // Handle unexpected types
         throw new Error(
-          `Records Data must be a JSON string or a JSON array, received type: ${typeof dataInput}`
+          `Records Data must be a JSON string or a JSON array, received type: ${typeof dataInput}`,
         );
       }
 
@@ -95,7 +95,7 @@ export const createManyOperation: IOperationHandler = {
           "createMany",
           "Processed data",
           itemIndex,
-          JSON.stringify(data)
+          JSON.stringify(data),
         );
 
       // Execute the insert operation to create multiple records

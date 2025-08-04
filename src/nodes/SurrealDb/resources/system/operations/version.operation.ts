@@ -23,7 +23,7 @@ export const versionOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     if (DEBUG) debugLog("version", "Starting operation", itemIndex);
     // Get the credentials from the client (they're already validated and resolved)
@@ -31,7 +31,7 @@ export const versionOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the resolved credentials object using utility function
@@ -45,7 +45,7 @@ export const versionOperation: IOperationHandler = {
       // Prepare the query based on authentication type
       const infoQuery = prepareSurrealQuery(
         "INFO FOR SERVER",
-        resolvedCredentials
+        resolvedCredentials,
       );
       const result = await client.query(infoQuery);
 
@@ -55,7 +55,8 @@ export const versionOperation: IOperationHandler = {
         if (typeof serverInfo === "object" && serverInfo !== null) {
           // Extract version from the server info
           // The exact structure depends on SurrealDB's response format
-          version = (serverInfo as IDataObject).version as string || "unknown";
+          version =
+            ((serverInfo as IDataObject).version as string) || "unknown";
         }
       }
     } catch (queryError) {
@@ -83,20 +84,20 @@ export const versionOperation: IOperationHandler = {
         };
 
         // Perform the version request
-        const response = await executeFunctions.helpers.httpRequest(
-          requestOptions
-        );
+        const response =
+          await executeFunctions.helpers.httpRequest(requestOptions);
 
         // Extract version from response
         if (response && typeof response === "string") {
           version = response.trim();
         } else if (response && typeof response === "object") {
-          version = (response as IDataObject).version as string || "unknown";
+          version = ((response as IDataObject).version as string) || "unknown";
         }
       } catch (httpError) {
         // If both methods fail, set details to the error message
-        details = `Failed to retrieve version: ${(queryError as Error).message
-          }, ${(httpError as Error).message}`;
+        details = `Failed to retrieve version: ${
+          (queryError as Error).message
+        }, ${(httpError as Error).message}`;
       }
     }
 
@@ -108,7 +109,7 @@ export const versionOperation: IOperationHandler = {
         version,
         details,
       },
-      itemIndex
+      itemIndex,
     );
     return returnData;
   },

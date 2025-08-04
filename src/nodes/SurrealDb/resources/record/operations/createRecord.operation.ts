@@ -29,7 +29,7 @@ export const createRecordOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -39,7 +39,7 @@ export const createRecordOperation: IOperationHandler = {
       // Get parameters
       const tableInput = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       validateRequiredField(executeFunctions, tableInput, "Table", itemIndex);
       const table = cleanTableName(tableInput);
@@ -50,19 +50,25 @@ export const createRecordOperation: IOperationHandler = {
         executeFunctions,
         dataInput,
         "Data",
-        itemIndex
+        itemIndex,
       );
 
       // Check if specific ID is provided
       const providedId = executeFunctions.getNodeParameter(
         "id",
         itemIndex,
-        ""
+        "",
       ) as string;
 
       // Remove the id field from data if it exists and we have a specific ID provided
       // This prevents SurrealDB from throwing an error about conflicting id specifications
-      if (providedId && providedId.trim() !== "" && data && typeof data === 'object' && 'id' in data) {
+      if (
+        providedId &&
+        providedId.trim() !== "" &&
+        data &&
+        typeof data === "object" &&
+        "id" in data
+      ) {
         delete data.id;
       }
       let recordId;
@@ -78,7 +84,7 @@ export const createRecordOperation: IOperationHandler = {
           debugLog(
             "createRecord",
             "No ID provided, using table name only for auto-ID generation",
-            itemIndex
+            itemIndex,
           );
         recordId = table;
       }
@@ -92,14 +98,17 @@ export const createRecordOperation: IOperationHandler = {
       }
 
       // Create the record
-      const result = await client.create(recordId, data);
+      const result = await client.create(
+        recordId as string,
+        data as Record<string, unknown>,
+      );
 
       if (DEBUG) {
         debugLog(
           "createRecord",
           "Raw creation result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -110,7 +119,7 @@ export const createRecordOperation: IOperationHandler = {
           "createRecord",
           "Returning raw result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
 
       // Handle null/undefined result
@@ -120,7 +129,7 @@ export const createRecordOperation: IOperationHandler = {
         addSuccessResult(
           returnData,
           result as unknown as IDataObject,
-          itemIndex
+          itemIndex,
         );
       }
     } catch (error) {
@@ -130,7 +139,7 @@ export const createRecordOperation: IOperationHandler = {
             "createRecord",
             "Error with continueOnFail enabled",
             itemIndex,
-            error.message
+            error.message,
           );
         addErrorResult(returnData, error, itemIndex);
       } else {
@@ -139,12 +148,12 @@ export const createRecordOperation: IOperationHandler = {
             "createRecord",
             "Error, stopping execution",
             itemIndex,
-            error.message
+            error.message,
           );
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Error creating record: ${error.message}`,
-          { itemIndex }
+          { itemIndex },
         );
       }
     }
@@ -153,7 +162,7 @@ export const createRecordOperation: IOperationHandler = {
       debugLog(
         "createRecord",
         `Completed, returning ${returnData.length} items`,
-        itemIndex
+        itemIndex,
       );
     return returnData;
   },

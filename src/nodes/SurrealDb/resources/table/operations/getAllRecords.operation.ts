@@ -29,7 +29,7 @@ export const getAllRecordsOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     try {
       if (DEBUG) debugLog("getAllRecords", "Starting operation", itemIndex);
@@ -40,7 +40,7 @@ export const getAllRecordsOperation: IOperationHandler = {
       // Get parameters for the specific item
       const tableInput = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       validateRequiredField(executeFunctions, tableInput, "Table", itemIndex);
       const table = cleanTableName(tableInput);
@@ -49,7 +49,7 @@ export const getAllRecordsOperation: IOperationHandler = {
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
       const pagination = {
         limit: options.limit as number,
@@ -59,7 +59,7 @@ export const getAllRecordsOperation: IOperationHandler = {
       // Use helper function to build the query
       const { query: baseQuery, params: queryParams } = buildSelectQuery(
         table,
-        pagination
+        pagination,
       );
 
       // Build credentials object
@@ -72,19 +72,19 @@ export const getAllRecordsOperation: IOperationHandler = {
           "getAllRecords",
           "Authentication type",
           itemIndex,
-          resolvedCredentials.authentication
+          resolvedCredentials.authentication,
         );
         debugLog(
           "getAllRecords",
           "Namespace",
           itemIndex,
-          resolvedCredentials.namespace
+          resolvedCredentials.namespace,
         );
         debugLog(
           "getAllRecords",
           "Database",
           itemIndex,
-          resolvedCredentials.database
+          resolvedCredentials.database,
         );
         debugLog("getAllRecords", "Query parameters", itemIndex, queryParams);
       }
@@ -107,7 +107,7 @@ export const getAllRecordsOperation: IOperationHandler = {
           "getAllRecords",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -118,7 +118,11 @@ export const getAllRecordsOperation: IOperationHandler = {
 
       const returnData: INodeExecutionData[] = [];
 
-      if (recordsArray && Array.isArray(recordsArray) && recordsArray.length > 0) {
+      if (
+        recordsArray &&
+        Array.isArray(recordsArray) &&
+        recordsArray.length > 0
+      ) {
         // We have actual records, format and push them
         const formattedResults = formatArrayResult(recordsArray);
         for (const formattedResult of formattedResults) {
@@ -140,7 +144,7 @@ export const getAllRecordsOperation: IOperationHandler = {
         debugLog(
           "getAllRecords",
           `Completed, returning ${returnData.length} items`,
-          itemIndex
+          itemIndex,
         );
       return returnData;
     } catch (error) {
@@ -150,7 +154,7 @@ export const getAllRecordsOperation: IOperationHandler = {
             "getAllRecords",
             "Error with continueOnFail enabled",
             itemIndex,
-            error.message
+            error.message,
           );
         return [createErrorResult(error, itemIndex)];
       }
@@ -159,7 +163,7 @@ export const getAllRecordsOperation: IOperationHandler = {
           "getAllRecords",
           "Error, stopping execution",
           itemIndex,
-          error.message
+          error.message,
         );
       throw error;
     }

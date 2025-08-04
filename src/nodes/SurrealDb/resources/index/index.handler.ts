@@ -14,7 +14,7 @@ export async function handleIndexOperations(
   operation: string,
   client: Surreal,
   items: INodeExecutionData[],
-  executeFunctions: IExecuteFunctions
+  executeFunctions: IExecuteFunctions,
 ): Promise<INodeExecutionData[]> {
   let returnData: INodeExecutionData[] = [];
 
@@ -30,7 +30,7 @@ export async function handleIndexOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -41,7 +41,7 @@ export async function handleIndexOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -52,7 +52,7 @@ export async function handleIndexOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -63,7 +63,7 @@ export async function handleIndexOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;
@@ -74,7 +74,7 @@ export async function handleIndexOperations(
               client,
               items,
               executeFunctions,
-              i
+              i,
             )),
           ];
           break;

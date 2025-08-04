@@ -26,7 +26,7 @@ export const createIndexOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -38,19 +38,19 @@ export const createIndexOperation: IOperationHandler = {
     // Get parameters
     const table = executeFunctions.getNodeParameter(
       "table",
-      itemIndex
+      itemIndex,
     ) as string;
     const indexName = executeFunctions.getNodeParameter(
       "indexName",
-      itemIndex
+      itemIndex,
     ) as string;
     const indexType = executeFunctions.getNodeParameter(
       "indexType",
-      itemIndex
+      itemIndex,
     ) as string;
     const indexFields = executeFunctions.getNodeParameter(
       "indexFields",
-      itemIndex
+      itemIndex,
     ) as string;
 
     // Validate required fields
@@ -60,7 +60,7 @@ export const createIndexOperation: IOperationHandler = {
       executeFunctions,
       indexFields,
       "Index Fields",
-      itemIndex
+      itemIndex,
     );
 
     // Process fields
@@ -73,7 +73,7 @@ export const createIndexOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Get credentials using utility function
@@ -87,27 +87,23 @@ export const createIndexOperation: IOperationHandler = {
 
     // Build the base query according to index type
     if (indexType === "standard") {
-      query = `DEFINE INDEX ${
-        ifNotExists ? "IF NOT EXISTS " : ""
-      }${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(", ")}`;
+      query = `DEFINE INDEX ${ifNotExists ? "IF NOT EXISTS " : ""
+        }${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(", ")}`;
 
       // Add UNIQUE if specified
       if (options.isUnique === true) {
         query += " UNIQUE";
       }
     } else if (indexType === "search") {
-      query = `DEFINE ANALYZER ${
-        ifNotExists ? "IF NOT EXISTS " : ""
-      }${indexName} TOKENIZERS blank,class,punct FILTERS lowercase,snowball(english) TOKENIZER blank;`;
-      query += `\nDEFINE INDEX ${
-        ifNotExists ? "IF NOT EXISTS " : ""
-      }${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(
-        ", "
-      )} SEARCH ANALYZER ${indexName}`;
+      query = `DEFINE ANALYZER ${ifNotExists ? "IF NOT EXISTS " : ""
+        }${indexName} TOKENIZERS blank,class,punct FILTERS lowercase,snowball(english) TOKENIZER blank;`;
+      query += `\nDEFINE INDEX ${ifNotExists ? "IF NOT EXISTS " : ""
+        }${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(
+          ", ",
+        )} SEARCH ANALYZER ${indexName}`;
     } else if (indexType === "mtree") {
-      query = `DEFINE INDEX ${
-        ifNotExists ? "IF NOT EXISTS " : ""
-      }${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(", ")} VECTOR`;
+      query = `DEFINE INDEX ${ifNotExists ? "IF NOT EXISTS " : ""
+        }${indexName} ON TABLE ${table} COLUMNS ${fieldsList.join(", ")} VECTOR`;
 
       // Add vector data type if specified
       const vectorType = options.vectorType as string;
@@ -119,7 +115,7 @@ export const createIndexOperation: IOperationHandler = {
       const distanceFunction = executeFunctions.getNodeParameter(
         "distanceFunction",
         itemIndex,
-        "euclidean"
+        "euclidean",
       ) as string;
       query += ` DIST ${distanceFunction.toUpperCase()}`;
     }
@@ -149,29 +145,25 @@ export const createIndexOperation: IOperationHandler = {
         "createIndex",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
     // Check if the result contains an error
-    const resultCheck = checkQueryResult(
-      result,
-      `Error creating index`,
-      itemIndex
-    );
+    const resultCheck = checkQueryResult(result, `Error creating index`);
 
     if (resultCheck.success) {
       // No error, operation succeeded - return minimal valid response for n8n
       if (DEBUG) debugLog("createIndex", "Success for item", itemIndex);
       // For CREATE INDEX operations, SurrealDB typically returns [null]
       // We need to ensure we always return a valid json property for n8n
-      addSuccessResult(returnData, {}, itemIndex); // Empty object is the minimal valid json property
+      addSuccessResult(returnData, { success: true }, itemIndex); // Empty object is the minimal valid json property
     } else {
       // If there's an error in the result, throw it to be handled at the handler level
       throw new NodeOperationError(
         executeFunctions.getNode(),
         resultCheck.errorMessage || "Unknown error",
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -179,7 +171,7 @@ export const createIndexOperation: IOperationHandler = {
       debugLog(
         "createIndex",
         `Completed, returning ${returnData.length} items`,
-        itemIndex
+        itemIndex,
       );
     return returnData;
   },

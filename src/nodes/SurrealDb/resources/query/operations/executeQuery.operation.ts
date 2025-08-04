@@ -29,7 +29,7 @@ export const executeQueryOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -39,7 +39,7 @@ export const executeQueryOperation: IOperationHandler = {
       // Get parameters for the specific item
       const query = executeFunctions.getNodeParameter(
         "query",
-        itemIndex
+        itemIndex,
       ) as string;
       validateRequiredField(executeFunctions, query, "Query", itemIndex);
 
@@ -47,20 +47,20 @@ export const executeQueryOperation: IOperationHandler = {
       const parametersInput = executeFunctions.getNodeParameter(
         "parameters",
         itemIndex,
-        {}
+        {},
       );
       const parameters = validateAndParseData(
         executeFunctions,
         parametersInput,
         "Parameters",
-        itemIndex
+        itemIndex,
       );
 
       // Get options
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
       const limit = options.limit as number;
       const start = options.start as number;
@@ -78,23 +78,23 @@ export const executeQueryOperation: IOperationHandler = {
       // Modify the query to add pagination if needed
       // Note: SurrealDB requires START before LIMIT
       let finalQuery = query.trim();
-      
+
       // Remove trailing semicolon if present to add pagination clauses before it
-      const hasSemicolon = finalQuery.endsWith(';');
+      const hasSemicolon = finalQuery.endsWith(";");
       if (hasSemicolon) {
         finalQuery = finalQuery.slice(0, -1);
       }
-      
+
       if (start !== undefined && !hasStart) {
         finalQuery += ` START ${start}`;
       }
       if (limit !== undefined && !hasLimit) {
         finalQuery += ` LIMIT ${limit}`;
       }
-      
+
       // Re-add semicolon if it was present
       if (hasSemicolon) {
-        finalQuery += ';';
+        finalQuery += ";";
       }
 
       // Prepare the query based on authentication type
@@ -106,14 +106,14 @@ export const executeQueryOperation: IOperationHandler = {
       }
 
       // Execute the query
-      const result = await client.query(finalQuery, parameters);
+      const result = await client.query<[unknown[]]>(finalQuery);
 
       if (DEBUG) {
         debugLog(
           "executeQuery",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -164,7 +164,7 @@ export const executeQueryOperation: IOperationHandler = {
             "executeQuery",
             "Error with continueOnFail enabled",
             itemIndex,
-            error.message
+            error.message,
           );
         returnData.push(createErrorResult(error, itemIndex));
       } else {
@@ -174,7 +174,7 @@ export const executeQueryOperation: IOperationHandler = {
             "executeQuery",
             "Error, stopping execution",
             itemIndex,
-            error.message
+            error.message,
           );
         throw error;
       }
@@ -184,7 +184,7 @@ export const executeQueryOperation: IOperationHandler = {
       debugLog(
         "executeQuery",
         `Completed, returning ${returnData.length} items`,
-        itemIndex
+        itemIndex,
       );
     return returnData;
   },

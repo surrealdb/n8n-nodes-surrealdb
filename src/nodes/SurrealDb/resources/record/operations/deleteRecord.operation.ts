@@ -25,7 +25,7 @@ export const deleteRecordOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -34,11 +34,11 @@ export const deleteRecordOperation: IOperationHandler = {
       // Get parameters
       let table = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       const idInput = executeFunctions.getNodeParameter(
         "id",
-        itemIndex
+        itemIndex,
       ) as string;
 
       // Clean and standardize the table name
@@ -57,7 +57,7 @@ export const deleteRecordOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           'Either Table field must be provided or Record ID must include a table prefix (e.g., "table:id")',
-          { itemIndex }
+          { itemIndex },
         );
       }
       validateRequiredField(executeFunctions, idInput, "Record ID", itemIndex);
@@ -67,7 +67,7 @@ export const deleteRecordOperation: IOperationHandler = {
         idInput,
         table,
         executeFunctions.getNode(),
-        itemIndex
+        itemIndex,
       );
 
       // Create the record ID
@@ -81,7 +81,7 @@ export const deleteRecordOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Failed to delete record: ${recordId.toString()}`,
-          { itemIndex }
+          { itemIndex },
         );
       }
 
@@ -95,7 +95,7 @@ export const deleteRecordOperation: IOperationHandler = {
             "deleteRecord",
             "Error with continueOnFail enabled",
             itemIndex,
-            error.message
+            error.message,
           );
         addErrorResult(returnData, error, itemIndex);
       } else {
@@ -105,7 +105,7 @@ export const deleteRecordOperation: IOperationHandler = {
             "deleteRecord",
             "Error, stopping execution",
             itemIndex,
-            error.message
+            error.message,
           );
         throw error;
       }
@@ -115,7 +115,7 @@ export const deleteRecordOperation: IOperationHandler = {
       debugLog(
         "deleteRecord",
         `Completed, returning ${returnData.length} items`,
-        itemIndex
+        itemIndex,
       );
     return returnData;
   },

@@ -25,15 +25,12 @@ export const createTableOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
     // Get parameters
-    let table = executeFunctions.getNodeParameter(
-      "table",
-      itemIndex
-    ) as string;
+    let table = executeFunctions.getNodeParameter("table", itemIndex) as string;
     validateRequiredField(executeFunctions, table, "Table", itemIndex);
 
     // Clean and standardize the table name
@@ -43,7 +40,7 @@ export const createTableOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Get schema if provided and convert from string if needed
@@ -101,7 +98,7 @@ export const createTableOperation: IOperationHandler = {
         "createTable",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 

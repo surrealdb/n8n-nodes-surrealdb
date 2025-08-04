@@ -25,7 +25,7 @@ export const createRelationshipOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -37,15 +37,15 @@ export const createRelationshipOperation: IOperationHandler = {
     // Get parameters
     const fromRecordId = executeFunctions.getNodeParameter(
       "fromRecordId",
-      itemIndex
+      itemIndex,
     ) as string;
     const relationshipType = executeFunctions.getNodeParameter(
       "relationshipType",
-      itemIndex
+      itemIndex,
     ) as string;
     const toRecordId = executeFunctions.getNodeParameter(
       "toRecordId",
-      itemIndex
+      itemIndex,
     ) as string;
 
     // Validate required fields
@@ -53,19 +53,19 @@ export const createRelationshipOperation: IOperationHandler = {
       executeFunctions,
       fromRecordId,
       "From Record ID",
-      itemIndex
+      itemIndex,
     );
     validateRequiredField(
       executeFunctions,
       relationshipType,
       "Relationship Type",
-      itemIndex
+      itemIndex,
     );
     validateRequiredField(
       executeFunctions,
       toRecordId,
       "To Record ID",
-      itemIndex
+      itemIndex,
     );
 
     // Validate record IDs format
@@ -73,7 +73,7 @@ export const createRelationshipOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `From Record ID must be in the format "table:id" (e.g., person:john)`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -81,7 +81,7 @@ export const createRelationshipOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `To Record ID must be in the format "table:id" (e.g., person:jane)`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -89,7 +89,7 @@ export const createRelationshipOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the resolved credentials object using the utility function
@@ -99,7 +99,7 @@ export const createRelationshipOperation: IOperationHandler = {
     const properties = executeFunctions.getNodeParameter(
       "properties.propertyValues",
       itemIndex,
-      []
+      [],
     ) as IDataObject[];
 
     // Build the RELATE statement
@@ -165,7 +165,7 @@ export const createRelationshipOperation: IOperationHandler = {
         "createRelationship",
         "Prepared query",
         itemIndex,
-        preparedQuery
+        preparedQuery,
       );
     }
 
@@ -178,7 +178,7 @@ export const createRelationshipOperation: IOperationHandler = {
         "createRelationship",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
@@ -190,7 +190,7 @@ export const createRelationshipOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           `Failed to create relationship from ${fromRecordId} to ${toRecordId}`,
-          { itemIndex }
+          { itemIndex },
         );
       }
 
@@ -206,7 +206,7 @@ export const createRelationshipOperation: IOperationHandler = {
       } else {
         // Single relationship was created
         returnData.push({
-          json: relationshipResult,
+          json: relationshipResult as IDataObject,
           pairedItem: { item: itemIndex },
         });
       }
@@ -214,7 +214,7 @@ export const createRelationshipOperation: IOperationHandler = {
       throw new NodeOperationError(
         executeFunctions.getNode(),
         `Failed to create relationship from ${fromRecordId} to ${toRecordId}`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 

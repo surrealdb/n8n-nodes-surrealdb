@@ -1,4 +1,9 @@
-import type { IPairedItemData, INodeExecutionData, INode } from "n8n-workflow";
+import type {
+  IPairedItemData,
+  INodeExecutionData,
+  INode,
+  IDataObject,
+} from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 import { RecordId } from "surrealdb";
 
@@ -36,7 +41,7 @@ export function parseAndValidateRecordId(
   recordIdString: string | unknown,
   expectedTable: string,
   node: INode,
-  itemIndex: number
+  itemIndex: number,
 ): string {
   // Ensure recordIdString is a string
   const idStr = String(recordIdString || "");
@@ -47,13 +52,13 @@ export function parseAndValidateRecordId(
       throw new NodeOperationError(
         node,
         `Record ID table prefix "${tablePrefix}" does not match the specified table "${expectedTable}".`,
-        { itemIndex }
+        { itemIndex },
       );
     }
 
     // Strip SurrealDB angle brackets ⟨⟩ if present, as the RecordId constructor expects the raw ID
     let cleanId = id;
-    if (id.startsWith('⟨') && id.endsWith('⟩')) {
+    if (id.startsWith("⟨") && id.endsWith("⟩")) {
       cleanId = id.slice(1, -1);
     }
 
@@ -79,7 +84,9 @@ function normalizeForJson(obj: unknown): unknown {
     const normalized: Record<string, unknown> = {};
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        normalized[key] = normalizeForJson(obj[key]);
+        normalized[key] = normalizeForJson(
+          (obj as Record<string, unknown>)[key],
+        );
       }
     }
     return normalized;
@@ -93,7 +100,7 @@ function normalizeForJson(obj: unknown): unknown {
  * Standardizes the output format for operations that return a single result
  */
 export function formatSingleResult(result: unknown): INodeExecutionData {
-  return { json: normalizeForJson(result) };
+  return { json: normalizeForJson(result) as IDataObject };
 }
 
 /**
@@ -102,7 +109,9 @@ export function formatSingleResult(result: unknown): INodeExecutionData {
  * Each item in the array becomes a separate n8n item
  */
 export function formatArrayResult(results: unknown[]): INodeExecutionData[] {
-  return results.map((item) => ({ json: normalizeForJson(item) }));
+  return results.map((item) => ({
+    json: normalizeForJson(item) as IDataObject,
+  }));
 }
 
 /**
@@ -118,7 +127,7 @@ export function debugLog(
   operation: string,
   message: string,
   itemIndex?: number,
-  data?: unknown
+  data?: unknown,
 ): void {
   // Determine if itemIndex should be included in the log
   const indexPart = itemIndex !== undefined ? ` [item:${itemIndex}]` : "";
@@ -144,10 +153,10 @@ export function debugLog(
  */
 export function createSuccessResult(
   data: Record<string, unknown>,
-  itemIndex: number
+  itemIndex: number,
 ): INodeExecutionData {
   return {
-    json: data,
+    json: data as IDataObject,
     pairedItem: { item: itemIndex },
   };
 }
@@ -162,7 +171,7 @@ export function createSuccessResult(
 export function addSuccessResult(
   returnData: INodeExecutionData[],
   data: Record<string, unknown>,
-  itemIndex: number
+  itemIndex: number,
 ): void {
   returnData.push(createSuccessResult(data, itemIndex));
 }
@@ -176,7 +185,7 @@ export function addSuccessResult(
  */
 export function createErrorResult(
   error: Error | string,
-  itemIndex: number
+  itemIndex: number,
 ): INodeExecutionData {
   const errorMessage = typeof error === "string" ? error : error.message;
 
@@ -198,7 +207,7 @@ export function createErrorResult(
 export function addErrorResult(
   returnData: INodeExecutionData[],
   error: Error | string,
-  itemIndex: number
+  itemIndex: number,
 ): void {
   returnData.push(createErrorResult(error, itemIndex));
 }

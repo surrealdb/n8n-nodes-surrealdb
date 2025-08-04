@@ -26,7 +26,7 @@ export const dropIndexOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
@@ -40,11 +40,11 @@ export const dropIndexOperation: IOperationHandler = {
     // Get parameters
     const table = executeFunctions.getNodeParameter(
       "table",
-      itemIndex
+      itemIndex,
     ) as string;
     const indexName = executeFunctions.getNodeParameter(
       "indexName",
-      itemIndex
+      itemIndex,
     ) as string;
 
     // Validate required fields
@@ -55,7 +55,7 @@ export const dropIndexOperation: IOperationHandler = {
     const options = executeFunctions.getNodeParameter(
       "options",
       itemIndex,
-      {}
+      {},
     ) as IDataObject;
 
     // Build the query to drop the index
@@ -64,13 +64,11 @@ export const dropIndexOperation: IOperationHandler = {
 
     // Try different syntax based on options
     if (options.useAlternativeSyntax === true) {
-      query = `REMOVE INDEX ${
-        ifExists ? "IF EXISTS " : ""
-      }${indexName} ON ${table}`;
+      query = `REMOVE INDEX ${ifExists ? "IF EXISTS " : ""
+        }${indexName} ON ${table}`;
     } else {
-      query = `REMOVE INDEX ${
-        ifExists ? "IF EXISTS " : ""
-      }${indexName} ON TABLE ${table}`;
+      query = `REMOVE INDEX ${ifExists ? "IF EXISTS " : ""
+        }${indexName} ON TABLE ${table}`;
     }
 
     // Add semicolon at the end
@@ -95,16 +93,12 @@ export const dropIndexOperation: IOperationHandler = {
         "dropIndex",
         "Raw query result",
         itemIndex,
-        JSON.stringify(result)
+        JSON.stringify(result),
       );
     }
 
     // Check if the result contains an error
-    const resultCheck = checkQueryResult(
-      result,
-      `Error dropping index`,
-      itemIndex
-    );
+    const resultCheck = checkQueryResult(result, `Error dropping index`);
 
     if (resultCheck.success) {
       // No error, operation succeeded - return result using the standard utility function
@@ -116,14 +110,14 @@ export const dropIndexOperation: IOperationHandler = {
           table,
           message: `Index ${indexName} has been dropped from table ${table}`,
         },
-        itemIndex
+        itemIndex,
       );
     } else {
       // If there's an error in the result, throw it to be handled at the handler level
       throw new NodeOperationError(
         executeFunctions.getNode(),
         resultCheck.errorMessage || "Unknown error",
-        { itemIndex }
+        { itemIndex },
       );
     }
 
@@ -131,7 +125,7 @@ export const dropIndexOperation: IOperationHandler = {
       debugLog(
         "dropIndex",
         `Completed, returning ${returnData.length} items`,
-        itemIndex
+        itemIndex,
       );
     return returnData;
   },

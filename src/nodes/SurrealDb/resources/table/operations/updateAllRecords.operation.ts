@@ -32,7 +32,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
     client: Surreal,
     items: INodeExecutionData[],
     executeFunctions: IExecuteFunctions,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<INodeExecutionData[]> {
     try {
       if (DEBUG) debugLog("updateAllRecords", "Starting operation", itemIndex);
@@ -43,7 +43,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
       // Get parameters for the specific item
       const tableInput = executeFunctions.getNodeParameter(
         "table",
-        itemIndex
+        itemIndex,
       ) as string;
       validateRequiredField(executeFunctions, tableInput, "Table", itemIndex);
       const table = cleanTableName(tableInput);
@@ -54,7 +54,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
         executeFunctions,
         dataInput,
         "Data",
-        itemIndex
+        itemIndex,
       );
 
       // Validate data is an object
@@ -62,7 +62,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
         throw new NodeOperationError(
           executeFunctions.getNode(),
           "Data must be a JSON object with fields to update",
-          { itemIndex }
+          { itemIndex },
         );
       }
 
@@ -70,7 +70,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
       const options = executeFunctions.getNodeParameter(
         "options",
         itemIndex,
-        {}
+        {},
       ) as IDataObject;
 
       // Get where clause if provided
@@ -89,19 +89,19 @@ export const updateAllRecordsOperation: IOperationHandler = {
           "updateAllRecords",
           "Authentication",
           itemIndex,
-          resolvedCredentials.authentication
+          resolvedCredentials.authentication,
         );
         debugLog(
           "updateAllRecords",
           "Namespace",
           itemIndex,
-          resolvedCredentials.namespace
+          resolvedCredentials.namespace,
         );
         debugLog(
           "updateAllRecords",
           "Database",
           itemIndex,
-          resolvedCredentials.database
+          resolvedCredentials.database,
         );
       }
 
@@ -120,7 +120,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
           "updateAllRecords",
           "Raw query result",
           itemIndex,
-          JSON.stringify(result)
+          JSON.stringify(result),
         );
       }
 
@@ -148,7 +148,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
         debugLog(
           "updateAllRecords",
           `Completed, returning ${returnData.length} items`,
-          itemIndex
+          itemIndex,
         );
       return returnData;
     } catch (error) {
@@ -158,7 +158,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
             "updateAllRecords",
             "Error with continueOnFail enabled",
             itemIndex,
-            error.message
+            error.message,
           );
         return [createErrorResult(error, itemIndex)];
       }
@@ -167,7 +167,7 @@ export const updateAllRecordsOperation: IOperationHandler = {
           "updateAllRecords",
           "Error, stopping execution",
           itemIndex,
-          error.message
+          error.message,
         );
       throw error;
     }
