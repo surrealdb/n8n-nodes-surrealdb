@@ -1,7 +1,8 @@
 import type {
   IDataObject,
   IExecuteFunctions,
-  INodeExecutionData,
+  INodeExecutionData
+
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
@@ -16,7 +17,7 @@ import {
   cleanTableName,
   buildMergeQuery,
   prepareSurrealQuery,
-  buildCredentialsObject,
+  buildCredentialsObject, checkQueryResult,
 } from "../../../GenericFunctions";
 import type { IOperationHandler } from "../../../types/operation.types";
 
@@ -33,6 +34,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
     executeFunctions: IExecuteFunctions,
     itemIndex: number,
   ): Promise<INodeExecutionData[]> {
+    const returnData: INodeExecutionData[] = [];
     try {
       if (DEBUG) debugLog("mergeAllRecords", "Starting operation", itemIndex);
 
@@ -117,7 +119,28 @@ export const mergeAllRecordsOperation: IOperationHandler = {
       }
 
       // Execute the query
-      const result = await client.query<[unknown[]]>(finalQuery, { data });
+
+
+      const result = await client.query<[unknown[]]>(finalQuery);
+
+
+
+      // Check for query errors
+      const queryCheck = checkQueryResult(result, "Query failed");
+      if (!queryCheck.success) {
+        if (executeFunctions.continueOnFail()) {
+          returnData.push({
+            json: {
+              error: queryCheck.errorMessage,
+            },
+            pairedItem: { item: itemIndex },
+          });
+        } else {
+          throw new NodeOperationError(executeFunctions.getNode(), queryCheck.errorMessage || "Unknown error", {
+            itemIndex,
+          });
+        }
+      }
 
       if (DEBUG) {
         debugLog(
@@ -134,7 +157,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
         ? result.find((item) => Array.isArray(item))
         : null;
 
-      const returnData: INodeExecutionData[] = [];
+
 
       if (recordsArray) {
         // Format the results

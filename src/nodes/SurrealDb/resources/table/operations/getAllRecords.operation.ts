@@ -1,7 +1,8 @@
 import type {
   IDataObject,
   IExecuteFunctions,
-  INodeExecutionData,
+  INodeExecutionData
+
 } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
 import {
@@ -15,6 +16,7 @@ import {
   cleanTableName,
   buildSelectQuery,
   buildCredentialsObject,
+
 } from "../../../GenericFunctions";
 import type { IOperationHandler } from "../../../types/operation.types";
 

@@ -3,12 +3,13 @@ import type {
   INodeExecutionData,
   IHttpRequestOptions,
   IDataObject,
+
 } from "n8n-workflow";
 import type { IOperationHandler } from "../../../types/operation.types";
 import type { Surreal } from "surrealdb";
 import {
   prepareSurrealQuery,
-  buildCredentialsObject,
+  buildCredentialsObject, checkQueryResult,
 } from "../../../GenericFunctions";
 import { debugLog, addSuccessResult } from "../../../utilities";
 
@@ -47,6 +48,14 @@ export const versionOperation: IOperationHandler = {
         resolvedCredentials,
       );
       const result = await client.query(infoQuery);
+
+      // Check for query errors
+      const queryCheck = checkQueryResult(result, "Query failed");
+      if (!queryCheck.success) {
+        // For version operation, we'll continue to the fallback method
+        // instead of throwing an error immediately
+        throw new Error(queryCheck.errorMessage);
+      }
 
       // Parse the version from the result
       if (Array.isArray(result) && result.length > 0 && result[0]) {

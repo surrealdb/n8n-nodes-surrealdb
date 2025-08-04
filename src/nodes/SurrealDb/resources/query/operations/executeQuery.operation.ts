@@ -3,6 +3,7 @@ import type {
   INodeExecutionData,
   IDataObject,
 } from "n8n-workflow";
+import { NodeOperationError } from "n8n-workflow";
 import type { IOperationHandler } from "../../../types/operation.types";
 import type { Surreal } from "surrealdb";
 import {
@@ -10,6 +11,7 @@ import {
   validateAndParseData,
   prepareSurrealQuery,
   buildCredentialsObject,
+  checkQueryResult,
 } from "../../../GenericFunctions";
 import {
   formatSingleResult,
@@ -106,6 +108,18 @@ export const executeQueryOperation: IOperationHandler = {
 
       // Execute the query
       const result = await client.query<[unknown[]]>(finalQuery);
+
+      // Check for query errors
+      const queryCheck = checkQueryResult(result, "Query failed");
+      if (!queryCheck.success) {
+        if (executeFunctions.continueOnFail()) {
+          returnData.push(createErrorResult(new Error(queryCheck.errorMessage), itemIndex));
+        } else {
+          throw new NodeOperationError(executeFunctions.getNode(), queryCheck.errorMessage || "Unknown error", {
+            itemIndex,
+          });
+        }
+      }
 
       if (DEBUG) {
         debugLog(

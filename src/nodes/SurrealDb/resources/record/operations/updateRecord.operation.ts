@@ -1,7 +1,8 @@
 import type {
   IExecuteFunctions,
   INodeExecutionData,
-  IDataObject,
+  IDataObject
+
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 import type { IOperationHandler } from "../../../types/operation.types";
@@ -10,6 +11,7 @@ import {
   validateRequiredField,
   validateAndParseData,
   cleanTableName,
+
 } from "../../../GenericFunctions";
 import {
   createRecordId,

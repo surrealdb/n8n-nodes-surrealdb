@@ -9,6 +9,7 @@ import {
   prepareSurrealQuery,
   validateRequiredField,
   buildCredentialsObject,
+  checkQueryResult,
 } from "../../../GenericFunctions";
 import { debugLog } from "../../../utilities";
 import type { IOperationHandler } from "../../../types/operation.types";
@@ -63,6 +64,23 @@ export const listFieldsOperation: IOperationHandler = {
 
       // Execute the query
       const result = await client.query(preparedQuery);
+
+      // Check for query errors
+      const queryCheck = checkQueryResult(result, "Query failed");
+      if (!queryCheck.success) {
+        if (executeFunctions.continueOnFail()) {
+          returnData.push({
+            json: {
+              error: queryCheck.errorMessage,
+            },
+            pairedItem: { item: itemIndex },
+          });
+        } else {
+          throw new NodeOperationError(executeFunctions.getNode(), queryCheck.errorMessage || "Unknown error", {
+            itemIndex,
+          });
+        }
+      }
 
       if (DEBUG) {
         // DEBUG: Log raw result
