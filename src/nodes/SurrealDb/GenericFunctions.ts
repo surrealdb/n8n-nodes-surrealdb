@@ -277,48 +277,43 @@ export function prepareFields(fields: string) {
 }
 
 /**
- * Prepares a SurrealDB query based on the authentication type.
+ * Prepares a SurrealDB query for execution.
+ * 
+ * Note: Namespace and database context are now set at the connection level
+ * after authentication, so no USE statements are needed in queries.
  *
- * - For Root authentication: Adds both namespace and database to queries
- * - For Namespace authentication: Adds database to queries
- * - For Database authentication: No modification needed
- *
- * @param query The original query to modify
- * @param credentials The resolved SurrealDB credentials
- * @returns The modified query with appropriate namespace/database context
+ * @param query The original query to prepare
+ * @param credentials The resolved SurrealDB credentials (for validation purposes)
+ * @returns The query as-is, since context is handled at connection level
  */
 export function prepareSurrealQuery(
   query: string,
   credentials: ISurrealCredentials,
 ): string {
+  // Validate that required namespace/database are provided for the authentication type
   const { authentication, namespace, database } = credentials;
 
-  // Early return if query is empty or authentication is Database (no modification needed)
-  if (!query || authentication === "Database") {
-    return query;
-  }
-
-  // For Root authentication, we need to add both namespace and database
   if (authentication === "Root") {
     if (!namespace || !database) {
       throw new Error(
-        "Namespace and Database are required for queries with Root authentication",
+        "Namespace and Database are required for Root authentication",
       );
     }
-    return `USE NS ${namespace} DB ${database}; ${query}`;
-  }
-
-  // For Namespace authentication, we need to add database
-  if (authentication === "Namespace") {
-    if (!database) {
+  } else if (authentication === "Namespace") {
+    if (!namespace || !database) {
       throw new Error(
-        "Database is required for queries with Namespace authentication",
+        "Namespace and Database are required for Namespace authentication",
       );
     }
-    return `USE DB ${database}; ${query}`;
+  } else if (authentication === "Database") {
+    if (!namespace || !database) {
+      throw new Error(
+        "Namespace and Database are required for Database authentication",
+      );
+    }
   }
 
-  // Default return (should not reach here based on the conditions above)
+  // Return the query as-is since context is now handled at connection level
   return query;
 }
 
@@ -571,95 +566,49 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
       );
     }
 
-    // For Database authentication, pass namespace and database directly in connect options
-    if (authType === "Database") {
-      if (!namespace || !database) {
-        throw new Error(
-          "Namespace and Database are required for Database authentication",
-        );
-      }
-
-      if (DEBUG) {
-        // eslint-disable-next-line no-console
-        console.log(
-          "DEBUG - connectSurrealClient - Connecting with options - Namespace:",
-          namespace,
-          "Database:",
-          database,
-        );
-      }
-
-      // Connect with namespace and database in options
-      await db.connect(connectionString, {
-        namespace: namespace,
-        database: database,
-      });
-    } else {
-      // For other authentication types, just connect without options
-      await db.connect(connectionString);
-    }
+    // Connect to SurrealDB (without namespace/database in connect options)
+    await db.connect(connectionString);
 
     // Sign in based on authentication type
     if (authType === "Root") {
       // For root authentication, we just need username and password
       await db.signin({ username, password });
-
-      // For Root authentication, we don't set namespace/database at connection time
-      // Instead, we'll add USE statements to each query
     } else if (authType === "Namespace") {
       if (!namespace) {
         throw new Error("Namespace is required for Namespace authentication");
       }
       // For namespace authentication, we need username, password, and namespace
       await db.signin({ username, password, namespace });
-
-      // For Namespace authentication, we set the namespace at connection time
-      // but add USE DB statements to each query
-      await db.use({ namespace });
     } else if (authType === "Database") {
       if (!namespace || !database) {
         throw new Error(
           "Namespace and Database are required for Database authentication",
         );
       }
-      // For database authentication, we need username, password, namespace, and database
+      await db.signin({ username, password, namespace, database });
+    }
+
+    // Apply namespace and database context after authentication
+    // This ensures all subsequent operations run in the expected context
+    if (namespace && database) {
       if (DEBUG) {
         // eslint-disable-next-line no-console
         console.log(
-          "DEBUG - connectSurrealClient - Before signin - Authentication:",
-          authType,
-        );
-        // eslint-disable-next-line no-console
-        console.log(
-          "DEBUG - connectSurrealClient - Before signin - Username:",
-          username,
-        );
-        // eslint-disable-next-line no-console
-        console.log(
-          "DEBUG - connectSurrealClient - Before signin - Namespace:",
+          "DEBUG - connectSurrealClient - Setting namespace and database context:",
           namespace,
-        );
-        // eslint-disable-next-line no-console
-        console.log(
-          "DEBUG - connectSurrealClient - Before signin - Database:",
           database,
         );
       }
-      await db.signin({ username, password, namespace, database });
+      await db.use({ namespace, database });
+    } else if (namespace) {
       if (DEBUG) {
         // eslint-disable-next-line no-console
         console.log(
-          "DEBUG - connectSurrealClient - After signin - Successfully signed in",
+          "DEBUG - connectSurrealClient - Setting namespace context:",
+          namespace,
         );
       }
-
-      // Note: We're not calling db.use() here because we've already set namespace and database in connect options
-      if (DEBUG) {
-        // eslint-disable-next-line no-console
-        console.log(
-          "DEBUG - connectSurrealClient - Using namespace and database from connect options",
-        );
-      }
+      await db.use({ namespace });
     }
 
     return db;
