@@ -55,7 +55,7 @@ export const versionOperation: IOperationHandler = {
         if (typeof serverInfo === "object" && serverInfo !== null) {
           // Extract version from the server info
           // The exact structure depends on SurrealDB's response format
-          version = (serverInfo as any).version || "unknown";
+          version = (serverInfo as IDataObject).version as string || "unknown";
         }
       }
     } catch (queryError) {
@@ -91,13 +91,12 @@ export const versionOperation: IOperationHandler = {
         if (response && typeof response === "string") {
           version = response.trim();
         } else if (response && typeof response === "object") {
-          version = (response as any).version || "unknown";
+          version = (response as IDataObject).version as string || "unknown";
         }
       } catch (httpError) {
         // If both methods fail, set details to the error message
-        details = `Failed to retrieve version: ${
-          (queryError as Error).message
-        }, ${(httpError as Error).message}`;
+        details = `Failed to retrieve version: ${(queryError as Error).message
+          }, ${(httpError as Error).message}`;
       }
     }
 

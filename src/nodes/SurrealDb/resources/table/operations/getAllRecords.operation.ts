@@ -98,8 +98,8 @@ export const getAllRecordsOperation: IOperationHandler = {
       }
 
       // Execute the query
-      // Provide generic type argument for expected result structure: [any[]] - An array containing the array of records
-      const result = await client.query<[any[]]>(query, queryParams);
+      // Provide generic type argument for expected result structure: [unknown[]] - An array containing the array of records
+      const result = await client.query<[unknown[]]>(query, queryParams);
 
       if (DEBUG) {
         // DEBUG: Log raw result

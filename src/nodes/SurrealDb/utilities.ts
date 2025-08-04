@@ -1,4 +1,4 @@
-import type { IPairedItemData, INodeExecutionData } from "n8n-workflow";
+import type { IPairedItemData, INodeExecutionData, INode } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 import { RecordId } from "surrealdb";
 
@@ -33,9 +33,9 @@ export function createRecordId(table: string, id: string): RecordId {
  * @throws {NodeOperationError} If the record ID is invalid or the table prefix does not match.
  */
 export function parseAndValidateRecordId(
-  recordIdString: string | any,
+  recordIdString: string | unknown,
   expectedTable: string,
-  node: any,
+  node: INode,
   itemIndex: number
 ): string {
   // Ensure recordIdString is a string
@@ -50,13 +50,13 @@ export function parseAndValidateRecordId(
         { itemIndex }
       );
     }
-    
+
     // Strip SurrealDB angle brackets ⟨⟩ if present, as the RecordId constructor expects the raw ID
     let cleanId = id;
     if (id.startsWith('⟨') && id.endsWith('⟩')) {
       cleanId = id.slice(1, -1);
     }
-    
+
     return cleanId;
   }
   return idStr;
@@ -66,7 +66,7 @@ export function parseAndValidateRecordId(
  * Normalize data to ensure proper JSON serialization
  * Converts undefined values to null so they don't get dropped during JSON serialization
  */
-function normalizeForJson(obj: any): any {
+function normalizeForJson(obj: unknown): unknown {
   if (obj === undefined) {
     return null;
   }
@@ -76,7 +76,7 @@ function normalizeForJson(obj: any): any {
   }
 
   if (obj !== null && typeof obj === "object") {
-    const normalized: any = {};
+    const normalized: Record<string, unknown> = {};
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         normalized[key] = normalizeForJson(obj[key]);
@@ -92,7 +92,7 @@ function normalizeForJson(obj: any): any {
  * Format single result output
  * Standardizes the output format for operations that return a single result
  */
-export function formatSingleResult(result: any): INodeExecutionData {
+export function formatSingleResult(result: unknown): INodeExecutionData {
   return { json: normalizeForJson(result) };
 }
 
@@ -101,7 +101,7 @@ export function formatSingleResult(result: any): INodeExecutionData {
  * Standardizes the output format for operations that return an array of results
  * Each item in the array becomes a separate n8n item
  */
-export function formatArrayResult(results: any[]): INodeExecutionData[] {
+export function formatArrayResult(results: unknown[]): INodeExecutionData[] {
   return results.map((item) => ({ json: normalizeForJson(item) }));
 }
 
@@ -118,17 +118,19 @@ export function debugLog(
   operation: string,
   message: string,
   itemIndex?: number,
-  data?: any
+  data?: unknown
 ): void {
   // Determine if itemIndex should be included in the log
   const indexPart = itemIndex !== undefined ? ` [item:${itemIndex}]` : "";
 
   // Basic log without additional data
   if (data === undefined) {
+    // eslint-disable-next-line no-console
     console.log(`DEBUG (${operation})${indexPart} - ${message}`);
   }
   // Log with additional data
   else {
+    // eslint-disable-next-line no-console
     console.log(`DEBUG (${operation})${indexPart} - ${message}`, data);
   }
 }
@@ -141,7 +143,7 @@ export function debugLog(
  * @returns An INodeExecutionData object with standardized structure
  */
 export function createSuccessResult(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   itemIndex: number
 ): INodeExecutionData {
   return {
@@ -159,7 +161,7 @@ export function createSuccessResult(
  */
 export function addSuccessResult(
   returnData: INodeExecutionData[],
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   itemIndex: number
 ): void {
   returnData.push(createSuccessResult(data, itemIndex));

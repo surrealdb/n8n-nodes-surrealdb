@@ -149,7 +149,7 @@ export const getManyOperation: IOperationHandler = {
       }
 
       // Execute the query (no parameters needed for IDs now)
-      const result = await client.query<[any[]]>(query);
+      const result = await client.query<[unknown[]]>(query);
 
       if (DEBUG) {
         debugLog(

@@ -29,60 +29,55 @@ export const deleteTableOperation: IOperationHandler = {
   ): Promise<INodeExecutionData[]> {
     const returnData: INodeExecutionData[] = [];
 
-    try {
-      // Get parameters
-      let table = executeFunctions.getNodeParameter(
-        "table",
-        itemIndex
-      ) as string;
-      validateRequiredField(executeFunctions, table, "Table", itemIndex);
+    // Get parameters
+    let table = executeFunctions.getNodeParameter(
+      "table",
+      itemIndex
+    ) as string;
+    validateRequiredField(executeFunctions, table, "Table", itemIndex);
 
-      // Clean and standardize the table name
-      table = cleanTableName(table);
+    // Clean and standardize the table name
+    table = cleanTableName(table);
 
-      // Get options
-      const options = executeFunctions.getNodeParameter(
-        "options",
-        itemIndex,
-        {}
-      ) as IDataObject;
+    // Get options
+    const options = executeFunctions.getNodeParameter(
+      "options",
+      itemIndex,
+      {}
+    ) as IDataObject;
 
-      // Get credentials
-      const credentials = await executeFunctions.getCredentials("surrealDbApi");
+    // Get credentials
+    const credentials = await executeFunctions.getCredentials("surrealDbApi");
 
-      // Build the resolved credentials object
-      const resolvedCredentials = buildCredentialsObject(credentials, options);
+    // Build the resolved credentials object
+    const resolvedCredentials = buildCredentialsObject(credentials, options);
 
-      // Build the query to remove the table
-      const query = `REMOVE TABLE ${table}`;
-      const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
+    // Build the query to remove the table
+    const query = `REMOVE TABLE ${table}`;
+    const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
 
-      if (DEBUG) {
-        debugLog("deleteTable", "Query", itemIndex, preparedQuery);
-      }
-
-      // Execute the query
-      const result = await client.query(preparedQuery);
-
-      if (DEBUG) {
-        debugLog(
-          "deleteTable",
-          "Raw query result",
-          itemIndex,
-          JSON.stringify(result)
-        );
-      }
-
-      // For DELETE TABLE operations, SurrealDB typically returns [null]
-      // We need to ensure we always return a valid json property for n8n
-      returnData.push({
-        json: {}, // Empty object is the minimal valid json property
-        pairedItem: { item: itemIndex },
-      });
-    } catch (error) {
-      // Let the handler deal with error handling and continueOnFail logic
-      throw error;
+    if (DEBUG) {
+      debugLog("deleteTable", "Query", itemIndex, preparedQuery);
     }
+
+    // Execute the query
+    const result = await client.query(preparedQuery);
+
+    if (DEBUG) {
+      debugLog(
+        "deleteTable",
+        "Raw query result",
+        itemIndex,
+        JSON.stringify(result)
+      );
+    }
+
+    // For DELETE TABLE operations, SurrealDB typically returns [null]
+    // We need to ensure we always return a valid json property for n8n
+    returnData.push({
+      json: {}, // Empty object is the minimal valid json property
+      pairedItem: { item: itemIndex },
+    });
 
     return returnData;
   },

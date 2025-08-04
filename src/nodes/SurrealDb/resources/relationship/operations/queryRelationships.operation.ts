@@ -172,7 +172,7 @@ export const queryRelationshipsOperation: IOperationHandler = {
       // Handle different result formats based on the query structure
       if (splitIntoItems) {
         // Split results into individual items
-        let relationships: any[] = [];
+        let relationships: unknown[] = [];
 
         // Extract relationships from the result based on the query structure
         if (!recordId) {
@@ -215,9 +215,8 @@ export const queryRelationshipsOperation: IOperationHandler = {
         if (returnData.length === 0) {
           returnData.push({
             json: {
-              message: `No relationships found${
-                recordId ? ` for ${recordId}` : ""
-              }`,
+              message: `No relationships found${recordId ? ` for ${recordId}` : ""
+                }`,
             },
             pairedItem: { item: itemIndex },
           });

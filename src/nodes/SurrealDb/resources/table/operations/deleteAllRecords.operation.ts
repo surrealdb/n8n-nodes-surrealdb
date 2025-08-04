@@ -92,7 +92,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
       }
 
       // Execute the query
-      const result = await client.query<[any[]]>(finalQuery);
+      const result = await client.query<[unknown[]]>(finalQuery);
 
       if (DEBUG) {
         // DEBUG: Log raw result

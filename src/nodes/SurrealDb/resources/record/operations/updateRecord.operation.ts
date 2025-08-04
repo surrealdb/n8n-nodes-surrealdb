@@ -1,4 +1,4 @@
-import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
+import type { IExecuteFunctions, INodeExecutionData, IDataObject } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 import type { IOperationHandler } from "../../../types/operation.types";
 import type { Surreal } from "surrealdb";
@@ -75,11 +75,11 @@ export const updateRecordOperation: IOperationHandler = {
       // Get the update mode
       const updateMode = executeFunctions.getNodeParameter("updateMode", itemIndex) as string;
 
-      let result: any;
+      let result: unknown;
 
       if (updateMode === "set") {
         // Handle SET operations mode
-        const setOperationsInput = executeFunctions.getNodeParameter("setOperations", itemIndex) as any;
+        const setOperationsInput = executeFunctions.getNodeParameter("setOperations", itemIndex) as IDataObject;
         const operations = setOperationsInput?.operations || [];
 
         if (DEBUG) {
@@ -96,9 +96,9 @@ export const updateRecordOperation: IOperationHandler = {
         }
 
         // Build the SET clause
-        const setClause = operations.map((op: any) => {
+        const setClause = operations.map((op: IDataObject) => {
           const { field, operator, value } = op;
-          
+
           // Validate the operation - be more specific about what's missing
           if (!field || field.trim() === '') {
             throw new NodeOperationError(
@@ -107,7 +107,7 @@ export const updateRecordOperation: IOperationHandler = {
               { itemIndex }
             );
           }
-          
+
           if (value === undefined || value === null) {
             throw new NodeOperationError(
               executeFunctions.getNode(),
@@ -117,10 +117,10 @@ export const updateRecordOperation: IOperationHandler = {
           }
 
           // Parse the value as JSON to handle different data types
-          let parsedValue: any;
+          let parsedValue: unknown;
           try {
             parsedValue = JSON.parse(value);
-          } catch (error) {
+          } catch {
             // If JSON parse fails, treat as string (but don't wrap in quotes yet)
             parsedValue = value;
           }
@@ -140,13 +140,13 @@ export const updateRecordOperation: IOperationHandler = {
 
           // Default to "=" if operator is empty (temporary fix for UI issue)
           let finalOperator = (!operator || operator.trim() === '') ? '=' : operator;
-          
+
           // Handle string concatenation special case
           if (finalOperator === "+ =") {
             // For string concatenation, we need to generate: field = field + value
             return `${field} = ${field} + ${formattedValue}`;
           }
-          
+
           return `${field} ${finalOperator} ${formattedValue}`;
         }).join(", ");
 
@@ -155,12 +155,12 @@ export const updateRecordOperation: IOperationHandler = {
         if (DEBUG) {
           debugLog("updateRecord", `Executing SET query: ${query}`, itemIndex);
         }
-        
+
         const queryResult = await client.query(query);
         if (DEBUG) {
           debugLog("updateRecord", "Raw query result:", itemIndex, queryResult);
         }
-        
+
         // SurrealDB query returns an array of results, we need to extract the actual updated record
         // The structure is typically: [{ result: [updatedRecord] }] or [[updatedRecord]]
         if (queryResult && queryResult.length > 0) {
@@ -169,8 +169,8 @@ export const updateRecordOperation: IOperationHandler = {
           if (Array.isArray(firstResult)) {
             result = firstResult.length > 0 ? firstResult[0] : null;
           } else if (firstResult && typeof firstResult === 'object' && 'result' in firstResult) {
-            result = Array.isArray(firstResult.result) && firstResult.result.length > 0 
-              ? firstResult.result[0] 
+            result = Array.isArray(firstResult.result) && firstResult.result.length > 0
+              ? firstResult.result[0]
               : firstResult.result;
           } else {
             result = firstResult;

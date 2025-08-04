@@ -118,7 +118,7 @@ export const mergeAllRecordsOperation: IOperationHandler = {
       }
 
       // Execute the query
-      const result = await client.query<[any[]]>(finalQuery, { data });
+      const result = await client.query<[unknown[]]>(finalQuery, { data });
 
       if (DEBUG) {
         debugLog(

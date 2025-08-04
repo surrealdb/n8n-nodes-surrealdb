@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
 

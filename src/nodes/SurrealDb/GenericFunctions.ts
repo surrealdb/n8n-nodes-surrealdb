@@ -29,10 +29,10 @@ export function validateJSON(
   self: IExecuteFunctions,
   input: string,
   itemIndex: number
-): any {
+): unknown {
   try {
     return JSON.parse(input);
-  } catch (error) {
+  } catch {
     throw new NodeOperationError(self.getNode(), "Invalid JSON provided", {
       itemIndex,
     });
@@ -49,7 +49,7 @@ export function validateJSON(
  */
 export function validateRequiredField(
   self: IExecuteFunctions,
-  field: any,
+  field: unknown,
   fieldName: string,
   itemIndex: number
 ): void {
@@ -71,7 +71,7 @@ export function validateRequiredField(
  */
 export function validateNumericField(
   self: IExecuteFunctions,
-  field: any,
+  field: unknown,
   fieldName: string,
   itemIndex: number
 ): number {
@@ -94,7 +94,7 @@ export function validateNumericField(
  * @param tableInput The raw table name input from node parameters
  * @returns The cleaned table name, with everything after a colon (if present) removed
  */
-export function cleanTableName(tableInput: any): string {
+export function cleanTableName(tableInput: unknown): string {
   // Ensure table is a string
   const table = String(tableInput || "");
 
@@ -116,7 +116,7 @@ export function cleanTableName(tableInput: any): string {
  */
 export function validateArrayField(
   self: IExecuteFunctions,
-  field: any,
+  field: unknown,
   fieldName: string,
   itemIndex: number
 ): void {
@@ -141,12 +141,12 @@ export function validateArrayField(
  */
 export function validateAndParseData(
   self: IExecuteFunctions,
-  dataInput: any,
+  dataInput: unknown,
   fieldName: string,
   itemIndex: number
-): any {
+): unknown {
   // Check if data is provided
-  if (dataInput === undefined || dataInput === null || dataInput === "") {
+  if (dataInput === undefined || dataInput === "") {
     throw new NodeOperationError(self.getNode(), `${fieldName} is required`, {
       itemIndex,
     });
@@ -155,7 +155,15 @@ export function validateAndParseData(
   // Process data based on type
   if (typeof dataInput === "string") {
     // If it's a string, parse and validate as JSON
-    return validateJSON(self, dataInput, itemIndex);
+    try {
+      return JSON.parse(dataInput);
+    } catch {
+      throw new NodeOperationError(
+        self.getNode(),
+        `${fieldName} must be valid JSON`,
+        { itemIndex }
+      );
+    }
   } else if (typeof dataInput === "object" && dataInput !== null) {
     // If it's already an object, use it directly
     return dataInput;
@@ -316,13 +324,6 @@ export function prepareSurrealQuery(
 }
 
 /**
- * Connects to SurrealDB and authenticates using the provided credentials.
- *
- * @param credentials Resolved SurrealDB credentials
- * @returns A connected and authenticated SurrealDB client instance
- * @throws Error if connection or authentication fails
- */
-/**
  * Build a SELECT query with pagination options.
  *
  * @param table The table name to select from
@@ -337,11 +338,11 @@ export function buildSelectQuery(
   options: { limit?: number; start?: number } = {},
   where?: string,
   orderBy?: string,
-  fields: string = "*"
-): { query: string; params: Record<string, any> } {
+  fields = "*"
+): { query: string; params: Record<string, unknown> } {
   // Initialize the query and parameters
   let query = `SELECT ${fields} FROM ${table}`;
-  const params: Record<string, any> = {};
+  const params: Record<string, unknown> = {};
 
   // Add WHERE clause if provided
   if (where) {
@@ -355,13 +356,13 @@ export function buildSelectQuery(
 
   // Add LIMIT if provided
   if (options.limit !== undefined) {
-    query += ` LIMIT $limit`;
+    query += ` LIMIT ${options.limit}`;
     params.limit = options.limit;
   }
 
   // Add START if provided and greater than 0
   if (options.start !== undefined && options.start > 0) {
-    query += ` START $start`;
+    query += ` START ${options.start}`;
     params.start = options.start;
   }
 
@@ -419,7 +420,7 @@ export function buildDeleteQuery(table: string, where?: string): string {
 export function buildUpdateQuery(
   table: string,
   where?: string,
-  paramName: string = "data"
+  paramName = "data"
 ): string {
   let query = `UPDATE ${table} CONTENT $${paramName}`;
 
@@ -442,7 +443,7 @@ export function buildUpdateQuery(
 export function buildMergeQuery(
   table: string,
   where?: string,
-  paramName: string = "data"
+  paramName = "data"
 ): string {
   let query = `UPDATE ${table} MERGE $${paramName}`;
 
@@ -463,7 +464,7 @@ export function buildMergeQuery(
  */
 export function buildCreateQuery(
   table: string,
-  paramName: string = "data"
+  paramName = "data"
 ): string {
   return `CREATE ${table} CONTENT $${paramName}`;
 }
@@ -476,7 +477,7 @@ export function buildCreateQuery(
  * @returns The resolved SurrealDB credentials object
  */
 export function buildCredentialsObject(
-  credentials: any,
+  credentials: ICredentialDataDecryptedObject,
   options: IDataObject
 ): ISurrealCredentials {
   const nodeNamespace = (options.namespace as string)?.trim() || "";
@@ -500,11 +501,9 @@ export function buildCredentialsObject(
  * SurrealDB typically returns errors in the results array with an 'error' property.
  *
  * @param result The query result from SurrealDB
- * @param executeFunctions n8n execution functions
  * @param errorPrefix A prefix for the error message
  * @param itemIndex The index of the current item
- * @returns True if no error was found, false if processing should stop due to error
- * @throws NodeOperationError if an error is found and continueOnFail is false
+ * @returns An object with success status and optional error message
  */
 /**
  * Result of checking a SurrealDB query result for errors
@@ -524,9 +523,8 @@ export interface IQueryResultCheck {
  * @returns An object with success status and optional error message
  */
 export function checkQueryResult(
-  result: any,
-  errorPrefix: string,
-  itemIndex: number
+  result: unknown,
+  errorPrefix: string
 ): IQueryResultCheck {
   // Check if the result is an array and if the first element has an error property
   const hasError =
@@ -557,32 +555,23 @@ export function checkQueryResult(
 export async function connectSurrealClient(credentials: ISurrealCredentials) {
   const {
     connectionString,
-    authentication: authType,
     username,
     password,
     namespace,
     database,
+    authentication: authType,
   } = credentials;
 
   const db = new Surreal();
 
   try {
-    // Format the connection string to ensure it's compatible with SurrealDB SDK
-    // Remove trailing slashes and ensure it has the correct format
-    let formattedConnectionString = connectionString.trim();
+    let formattedConnectionString = connectionString;
 
-    // Remove trailing slash if present
-    if (formattedConnectionString.endsWith("/")) {
-      formattedConnectionString = formattedConnectionString.slice(0, -1);
-    }
-
-    // Ensure it ends with /rpc for HTTP/HTTPS connections
-    if (
-      (formattedConnectionString.startsWith("http://") ||
-        formattedConnectionString.startsWith("https://")) &&
-      !formattedConnectionString.endsWith("/rpc")
-    ) {
-      formattedConnectionString += "/rpc";
+    // Ensure the connection string ends with /rpc for WebSocket connections
+    if (formattedConnectionString.startsWith("ws://") || formattedConnectionString.startsWith("wss://")) {
+      if (!formattedConnectionString.endsWith("/rpc")) {
+        formattedConnectionString += "/rpc";
+      }
     }
 
     // For Database authentication, pass namespace and database directly in connect options
@@ -594,6 +583,7 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
       }
 
       if (DEBUG) {
+        // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Connecting with options - Namespace:",
           namespace,
@@ -615,7 +605,6 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
     // Sign in based on authentication type
     if (authType === "Root") {
       // For root authentication, we just need username and password
-      // @ts-ignore - The SurrealDB SDK types may not match our usage
       await db.signin({ username, password });
 
       // For Root authentication, we don't set namespace/database at connection time
@@ -625,13 +614,11 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
         throw new Error("Namespace is required for Namespace authentication");
       }
       // For namespace authentication, we need username, password, and namespace
-      // @ts-ignore - The SurrealDB SDK types may not match our usage
       await db.signin({ username, password, namespace });
 
       // For Namespace authentication, we set the namespace at connection time
       // but add USE DB statements to each query
-      // @ts-ignore
-      await db.use(namespace);
+      await db.use({ namespace });
     } else if (authType === "Database") {
       if (!namespace || !database) {
         throw new Error(
@@ -640,26 +627,30 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
       }
       // For database authentication, we need username, password, namespace, and database
       if (DEBUG) {
+        // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Before signin - Authentication:",
           authType
         );
+        // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Before signin - Username:",
           username
         );
+        // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Before signin - Namespace:",
           namespace
         );
+        // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Before signin - Database:",
           database
         );
       }
-      // @ts-ignore - The SurrealDB SDK types may not match our usage
       await db.signin({ username, password, namespace, database });
       if (DEBUG) {
+        // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - After signin - Successfully signed in"
         );
@@ -667,6 +658,7 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
 
       // Note: We're not calling db.use() here because we've already set namespace and database in connect options
       if (DEBUG) {
+        // eslint-disable-next-line no-console
         console.log(
           "DEBUG - connectSurrealClient - Using namespace and database from connect options"
         );
@@ -676,6 +668,7 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
     return db;
   } catch (error) {
     if (DEBUG) {
+      // eslint-disable-next-line no-console
       console.error("DEBUG - Error connecting to SurrealDB:", error);
     }
     throw error;

@@ -59,7 +59,7 @@ export const createManyOperation: IOperationHandler = {
       }
 
       // Process data based on type
-      let data: any;
+      let data: unknown;
       if (typeof dataInput === "string") {
         // If it's a string, parse and validate as JSON
         if (DEBUG)

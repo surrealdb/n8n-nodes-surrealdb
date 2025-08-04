@@ -128,7 +128,7 @@ export const createRelationshipOperation: IOperationHandler = {
           try {
             const jsonValue = JSON.parse(value);
             parsedValue = JSON.stringify(jsonValue);
-          } catch (e) {
+          } catch {
             // If parsing fails, use the original value
             parsedValue = `"${value}"`;
           }
