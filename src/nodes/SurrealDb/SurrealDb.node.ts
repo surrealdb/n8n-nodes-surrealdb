@@ -72,6 +72,7 @@ const operationDisplayNames = {
   deleteRelationship: "Delete Relationship",
   queryRelationships: "Query Relationships",
   executeQuery: "Execute Query",
+  buildSelectQuery: "Build Select Query",
   healthCheck: "Health Check",
   version: "Get Version",
   poolStats: "Get Pool Statistics",

@@ -4,12 +4,21 @@
 
 ### **Recently Implemented**
 
-1. **Relationship resources** ✅
+1. **Enhanced Query Builder** ✅
+   - Visual interface for building SELECT queries without writing raw SurrealQL
+   - Support for WHERE, ORDER BY, GROUP BY, LIMIT, START, and SPLIT ON clauses
+   - Multiple WHERE conditions with logical operators (AND/OR)
+   - Parameterized queries with dynamic value support
+   - Option to return generated SurrealQL query for debugging and learning
+   - Comprehensive error handling and validation
+   - Support for 14 different operators including CONTAINS, IS NULL, etc.
+
+2. **Relationship resources** ✅
    - createRelationship (using RELATE statement)
    - deleteRelationship (with flexible parameter options)
    - queryRelationships (with option to split results)
 
-2. **Connection pooling** ✅
+3. **Connection pooling** ✅
    - Connection pool with health monitoring and automatic reconnection
    - Connection reuse across operations within the same execution context
    - Graceful connection cleanup and resource management
@@ -21,7 +30,7 @@
    - Configuration validation and error handling
    - Enhanced debugging and logging capabilities
 
-3. **Enhanced error handling** ✅
+4. **Enhanced error handling** ✅
    - Comprehensive error classification
    - Retry logic with exponential backoff
    - Enhanced error reporting with context
@@ -108,30 +117,9 @@ interface ISchemaDiscovery {
 }
 ```
 
-#### **4. Enhanced Query Builder** 🛠️
-**Priority: Medium**
 
-**Current State**: Raw SurrealQL queries only
-**Proposed Enhancements**:
-- Visual query construction interface
-- Drag-and-drop query building
-- Visual relationship mapping
-- Query optimization suggestions
-- Syntax highlighting and validation
 
-**Implementation**:
-```typescript
-interface IQueryBuilder {
-  visualMode: boolean;
-  tableSelector: boolean;
-  fieldSelector: boolean;
-  conditionBuilder: boolean;
-  relationshipVisualizer: boolean;
-  queryPreview: boolean;
-}
-```
-
-#### **5. Live Query Support** ⚡
+#### **4. Live Query Support** ⚡
 **Priority: Medium**
 
 **Current State**: No real-time capabilities
@@ -153,7 +141,7 @@ interface ILiveQuery {
 
 ### **Phase 3: Performance & Monitoring (Medium-term - 3-6 months)**
 
-#### **6. Performance Optimizations** ⚡
+#### **5. Performance Optimizations** ⚡
 **Priority: Medium**
 
 **Current State**: Basic connection pooling
@@ -175,7 +163,7 @@ interface IPerformanceConfig {
 }
 ```
 
-#### **7. Advanced Error Recovery** 🔄
+#### **6. Advanced Error Recovery** 🔄
 **Priority: Low-Medium**
 
 **Current State**: Basic retry logic
@@ -197,7 +185,7 @@ interface IErrorRecovery {
 }
 ```
 
-#### **8. Monitoring & Analytics** 📊
+#### **7. Monitoring & Analytics** 📊
 **Priority: Low**
 
 **Current State**: Basic pool statistics
@@ -221,7 +209,7 @@ interface IMonitoring {
 
 ### **Phase 4: Developer Experience (Long-term - 6+ months)**
 
-#### **9. Developer Experience** 👨‍💻
+#### **8. Developer Experience** 👨‍💻
 **Priority: Low-Medium**
 
 **Current State**: Basic node functionality

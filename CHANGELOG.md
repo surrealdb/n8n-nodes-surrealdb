@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Enhanced Query Builder**: Added a visual interface for building SELECT queries with support for WHERE, ORDER BY, GROUP BY, LIMIT, START, and SPLIT ON clauses. Features include:
+  - Visual query builder for SELECT operations without writing raw SurrealQL
+  - Support for multiple WHERE conditions with logical operators (AND/OR)
+  - ORDER BY with multiple fields and sort directions
+  - GROUP BY clauses for aggregate queries
+  - Parameterized queries with dynamic value support
+  - Option to return the generated SurrealQL query for debugging and learning
+  - Comprehensive error handling and validation
 - **Batch Query Operations**: Implemented batch processing capabilities for large-scale data operations:
   - Added `batchCreate`, `batchUpsert`, `batchUpdate`, and `batchDelete` operations for efficient handling of multiple records in a single request.
   - Supports parallel processing of batches to maximize throughput.

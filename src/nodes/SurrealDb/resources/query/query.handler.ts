@@ -1,6 +1,7 @@
 import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
 import { executeQueryOperation } from "./operations/executeQuery.operation";
+import { buildSelectQueryOperation } from "./operations/buildSelectQuery.operation";
 import { createErrorResult } from "../../utilities";
 
 /**
@@ -23,6 +24,17 @@ export async function handleQueryOperations(
           returnData = [
             ...returnData,
             ...(await executeQueryOperation.execute(
+              client,
+              items,
+              executeFunctions,
+              i,
+            )),
+          ];
+          break;
+        case "buildSelectQuery":
+          returnData = [
+            ...returnData,
+            ...(await buildSelectQueryOperation.execute(
               client,
               items,
               executeFunctions,

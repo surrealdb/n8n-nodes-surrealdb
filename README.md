@@ -44,6 +44,7 @@ This is an n8n community node for SurrealDB. It provides both action and tool no
 - **Dual Node Types**: Functions as both an action node and a tool node for AI workflows
 - **Complete CRUD Operations**: Create, read, update, and delete SurrealDB records
 - **Custom Queries**: Execute any SurrealQL query with full parameter support
+- **Enhanced Query Builder**: Visual interface for building SELECT queries with WHERE, ORDER BY, GROUP BY, and other clauses
 - **Table Operations**: List fields and explore table structure
 - **Relationship Support**: Query and manage record relationships
 - **Native Data Format**: Works with SurrealDB's native data formats
@@ -158,6 +159,7 @@ The SurrealDB node provides a fairly comprehensive set of operations organized b
 ### Query Operations
 
 * **Execute Query** - Execute a raw SurrealQL query with parameters
+* **Build Select Query** - Build SELECT queries using a visual interface with WHERE, ORDER BY, GROUP BY, and other clauses
 
 ### System Operations
 
