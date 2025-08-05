@@ -1,23 +1,56 @@
+<br>
+
 <p align="center">
-    <img src="docs/images/n8n-surrealdb-icon.png" alt="SurrealDB Icon" width="200">
+    <img width=120 src="https://raw.githubusercontent.com/surrealdb/icons/main/surreal.svg" />
+    &nbsp;
+    <img width=120 src="https://raw.githubusercontent.com/surrealdb/icons/main/n8n.svg" />
+</p>
+
+<h3 align="center">The official n8n node for SurrealDB.</h3>
+
+<br>
+
+<p align="center">
+    <a href="https://github.com/surrealdb/surrealdb.js"><img src="https://img.shields.io/badge/status-beta-ff00bb.svg?style=flat-square"></a>
+    &nbsp;
+    <a href="https://surrealdb.com/docs/integrations/data-management/n8n"><img src="https://img.shields.io/badge/docs-view-44cc11.svg?style=flat-square"></a>
+    &nbsp;
+    <a href="https://www.npmjs.com/package/n8n-nodes-surrealdb"><img src="https://img.shields.io/npm/v/n8n-nodes-surrealdb?style=flat-square"></a>
+    &nbsp;
+    <a href="https://www.npmjs.com/package/n8n-nodes-surrealdb"><img src="https://img.shields.io/npm/dm/n8n-nodes-surrealdb?style=flat-square"></a>
+    &nbsp;
+    <a href="https://github.com/surrealdb/n8n-nodes-surrealdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-1d9bf0.svg?style=flat-square"></a>
 </p>
 
 <p align="center">
-    <a href="LICENSE"><img src="https://img.shields.io/github/license/nsxdavid/n8n-nodes-surrealdb" alt="License"></a>
-    <a href="https://www.npmjs.com/package/n8n-nodes-surrealdb"><img src="https://img.shields.io/npm/v/n8n-nodes-surrealdb.svg" alt="npm"></a>
-    <a href="https://github.com/nsxdavid/n8n-nodes-surrealdb/releases"><img src="https://img.shields.io/github/release/nsxdavid/n8n-nodes-surrealdb.svg" alt="GitHub release"></a>
+    <a href="https://surrealdb.com/discord"><img src="https://img.shields.io/discord/902568124350599239?label=discord&style=flat-square&color=5a66f6"></a>
+    &nbsp;
+    <a href="https://twitter.com/surrealdb"><img src="https://img.shields.io/badge/twitter-follow_us-1d9bf0.svg?style=flat-square"></a>
+    &nbsp;
+    <a href="https://www.linkedin.com/company/surrealdb/"><img src="https://img.shields.io/badge/linkedin-connect_with_us-0a66c2.svg?style=flat-square"></a>
+    &nbsp;
+    <a href="https://www.youtube.com/@SurrealDB"><img src="https://img.shields.io/badge/youtube-subscribe-fc1c1c.svg?style=flat-square"></a>
 </p>
-
 
 # n8n-nodes-surrealdb
 
-This is an n8n community node for SurrealDB. It provides both action and tool nodes to interact with a SurrealDB database, allowing you to create, read, update, and delete records, as well as execute custom SurrealQL queries.
-
-<p align="center">
-  <img src="docs/images/node-screenshot.png" alt="SurrealDB Node in n8n" width="800">
-</p>
+The official n8n node for SurrealDB. It provides both action and tool nodes to interact with a SurrealDB database, allowing you to create, read, update, and delete records, as well as execute custom SurrealQL queries.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
+
+<p align="center">
+  <img src="docs/images/node-screenshot.png" alt="SurrealDB node in n8n">
+</p>
+
+## Documentation
+
+View the node documentation [here](https://surrealdb.com/docs/integrations/data-management/n8n).
+
+## Learn SurrealDB
+
+- SurrealDB University: https://surrealdb.com/learn/fundamentals
+- Aeon's Surreal Renaissance (Interative book): https://surrealdb.com/learn/book
+- Documentation: https://surrealdb.com/docs
 
 ## Table of Contents
 
