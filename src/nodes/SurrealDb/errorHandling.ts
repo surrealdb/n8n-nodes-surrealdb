@@ -4,7 +4,6 @@ import type { Surreal } from "surrealdb";
 import { DEBUG } from "./debug";
 
 // Add global setTimeout for Node.js environment
-// eslint-disable-next-line no-unused-vars
 declare const setTimeout: (_callback: () => void, _ms: number) => void;
 
 /**
@@ -12,35 +11,24 @@ declare const setTimeout: (_callback: () => void, _ms: number) => void;
  */
 export enum ErrorCategory {
     // Connection and authentication errors
-    // eslint-disable-next-line no-unused-vars
     CONNECTION_ERROR = "CONNECTION_ERROR",
-    // eslint-disable-next-line no-unused-vars
     AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR",
-    // eslint-disable-next-line no-unused-vars
     TIMEOUT_ERROR = "TIMEOUT_ERROR",
 
     // Query and data errors
-    // eslint-disable-next-line no-unused-vars
     QUERY_SYNTAX_ERROR = "QUERY_SYNTAX_ERROR",
-    // eslint-disable-next-line no-unused-vars
     VALIDATION_ERROR = "VALIDATION_ERROR",
-    // eslint-disable-next-line no-unused-vars
     DATA_TYPE_ERROR = "DATA_TYPE_ERROR",
 
     // Permission and access errors
-    // eslint-disable-next-line no-unused-vars
     PERMISSION_ERROR = "PERMISSION_ERROR",
-    // eslint-disable-next-line no-unused-vars
     RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND",
 
     // System and infrastructure errors
-    // eslint-disable-next-line no-unused-vars
     SYSTEM_ERROR = "SYSTEM_ERROR",
-    // eslint-disable-next-line no-unused-vars
     RATE_LIMIT_ERROR = "RATE_LIMIT_ERROR",
 
     // Unknown errors
-    // eslint-disable-next-line no-unused-vars
     UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
@@ -48,13 +36,9 @@ export enum ErrorCategory {
  * Error severity levels
  */
 export enum ErrorSeverity {
-    // eslint-disable-next-line no-unused-vars
     LOW = "LOW",
-    // eslint-disable-next-line no-unused-vars
     MEDIUM = "MEDIUM",
-    // eslint-disable-next-line no-unused-vars
     HIGH = "HIGH",
-    // eslint-disable-next-line no-unused-vars
     CRITICAL = "CRITICAL",
 }
 

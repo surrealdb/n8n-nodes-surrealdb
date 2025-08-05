@@ -30,6 +30,7 @@ import { handleTableOperations } from "./resources/table";
 import { handleFieldOperations } from "./resources/field";
 import { handleIndexOperations } from "./resources/index";
 import { handleRelationshipOperations } from "./resources/relationship";
+import { handleBatchOperations } from "./resources/batch";
 
 // Import the resource operations for building the operation name map
 import { systemOperations } from "./resources/system";
@@ -39,6 +40,7 @@ import { tableOperations } from "./resources/table";
 import { fieldOperations } from "./resources/field";
 import { indexOperations } from "./resources/index";
 import { relationshipOperations } from "./resources/relationship";
+import { batchOperations } from "./resources/batch";
 
 // Define a simple flat map from operation values to display names
 const operationDisplayNames = {
@@ -73,6 +75,10 @@ const operationDisplayNames = {
   healthCheck: "Health Check",
   version: "Get Version",
   poolStats: "Get Pool Statistics",
+  batchCreate: "Batch Create",
+  batchUpdate: "Batch Update",
+  batchDelete: "Batch Delete",
+  batchUpsert: "Batch Upsert",
 };
 
 export class SurrealDb implements INodeType {
@@ -172,6 +178,14 @@ export class SurrealDb implements INodeType {
       }
     });
 
+    // Add batch operations
+    operationMap.batch = {};
+    batchOperations[0].options?.forEach((option) => {
+      if ("value" in option && "name" in option) {
+        operationMap.batch[option.value as string] = option.name as string;
+      }
+    });
+
     return operationMap;
   }
 
@@ -179,7 +193,6 @@ export class SurrealDb implements INodeType {
   methods = {
     loadOptions: {
       // Method to get the operation name for the subtitle
-      // eslint-disable-next-line no-unused-vars
       async getOperationName(this: ILoadOptionsFunctions) {
         try {
           const operation = this.getNodeParameter("operation", "") as string;
@@ -221,7 +234,6 @@ export class SurrealDb implements INodeType {
     }
   }
 
-  // eslint-disable-next-line no-unused-vars
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const credentials = await this.getCredentials("surrealDbApi");
 
@@ -352,6 +364,15 @@ export class SurrealDb implements INodeType {
       // Resource: Relationship
       else if (resource === "relationship") {
         returnData = await handleRelationshipOperations(
+          operation,
+          client,
+          items,
+          this,
+        );
+      }
+      // Resource: Batch
+      else if (resource === "batch") {
+        returnData = await handleBatchOperations(
           operation,
           client,
           items,

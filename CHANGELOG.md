@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Batch Query Operations**: Implemented batch processing capabilities for large-scale data operations:
+  - Added `batchCreate`, `batchUpsert`, `batchUpdate`, and `batchDelete` operations for efficient handling of multiple records in a single request.
+  - Supports parallel processing of batches to maximize throughput.
+  - Includes progress tracking and detailed error reporting for each batch operation.
+  - Designed for high-performance ingestion, migration, and bulk modification scenarios.
 - **Connection Pooling Support**: Added comprehensive connection pooling for improved performance and resource management. Features include:
   - Configurable pool settings (max/min connections, timeouts, health checks)
   - Automatic connection health monitoring and cleanup

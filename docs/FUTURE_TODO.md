@@ -29,9 +29,8 @@
 ## **Next Steps**
 
 1. **Implement Enhanced Authentication** - Add JWT token and OAuth2 support
-2. **Add Batch Operations** - Implement native batch create/update/delete operations
-3. **Begin Schema Discovery** - Implement automatic field discovery and validation
-4. **Plan Live Query Implementation** - Research WebSocket integration for real-time features
+2. **Begin Schema Discovery** - Implement automatic field discovery and validation
+3. **Plan Live Query Implementation** - Research WebSocket integration for real-time features
 
 ## **Comprehensive Improvement Roadmap**
 
@@ -85,32 +84,9 @@ export const transactionOperations = {
 };
 ```
 
-#### **3. Advanced Batch Operations** 📦
-**Priority: Medium-High**
-
-**Current State**: Basic batch operations (createMany, etc.)
-**Proposed Enhancements**:
-- Configurable batch sizes
-- Parallel processing options
-- Partial success handling
-- Progress tracking
-- Error handling strategies
-
-**Implementation**:
-```typescript
-interface IBatchOperation {
-  operation: "create" | "update" | "delete" | "upsert";
-  records: IDataObject[];
-  batchSize?: number;
-  parallel?: boolean;
-  transaction?: boolean;
-  errorHandling?: "stop" | "continue" | "partial";
-}
-```
-
 ### **Phase 2: Advanced Features (Short-term - 2-3 months)**
 
-#### **4. Schema Discovery & Validation** 🔍
+#### **3. Schema Discovery & Validation** 🔍
 **Priority: Medium**
 
 **Current State**: Manual field definition
@@ -132,7 +108,7 @@ interface ISchemaDiscovery {
 }
 ```
 
-#### **5. Enhanced Query Builder** 🛠️
+#### **4. Enhanced Query Builder** 🛠️
 **Priority: Medium**
 
 **Current State**: Raw SurrealQL queries only
@@ -155,7 +131,7 @@ interface IQueryBuilder {
 }
 ```
 
-#### **6. Live Query Support** ⚡
+#### **5. Live Query Support** ⚡
 **Priority: Medium**
 
 **Current State**: No real-time capabilities
@@ -177,7 +153,7 @@ interface ILiveQuery {
 
 ### **Phase 3: Performance & Monitoring (Medium-term - 3-6 months)**
 
-#### **7. Performance Optimizations** ⚡
+#### **6. Performance Optimizations** ⚡
 **Priority: Medium**
 
 **Current State**: Basic connection pooling
@@ -199,7 +175,7 @@ interface IPerformanceConfig {
 }
 ```
 
-#### **8. Advanced Error Recovery** 🔄
+#### **7. Advanced Error Recovery** 🔄
 **Priority: Low-Medium**
 
 **Current State**: Basic retry logic
@@ -221,7 +197,7 @@ interface IErrorRecovery {
 }
 ```
 
-#### **9. Monitoring & Analytics** 📊
+#### **8. Monitoring & Analytics** 📊
 **Priority: Low**
 
 **Current State**: Basic pool statistics
@@ -245,7 +221,7 @@ interface IMonitoring {
 
 ### **Phase 4: Developer Experience (Long-term - 6+ months)**
 
-#### **10. Developer Experience** 👨‍💻
+#### **9. Developer Experience** 👨‍💻
 **Priority: Low-Medium**
 
 **Current State**: Basic node functionality

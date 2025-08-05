@@ -3,7 +3,6 @@ import type { Surreal } from "surrealdb";
 import { DEBUG } from "./debug";
 
 // Add global setTimeout for Node.js environment
-// eslint-disable-next-line no-unused-vars
 declare const setTimeout: (_callback: () => void, _ms: number) => void;
 import {
     classifyError,

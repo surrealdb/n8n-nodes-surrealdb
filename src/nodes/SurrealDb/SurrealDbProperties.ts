@@ -11,6 +11,7 @@ import {
   relationshipOperations,
   relationshipFields,
 } from "./resources/relationship";
+import { batchOperations, batchFields } from "./resources/batch";
 
 /**
  * Connection pooling options for all operations
@@ -178,6 +179,11 @@ export const nodeProperties: INodeProperties[] = [
         value: "system",
         description: "Database system-level checks",
       },
+      {
+        name: "Batch",
+        value: "batch",
+        description: "High-performance batch operations with configurable processing",
+      },
     ],
     default: "record",
   },
@@ -195,6 +201,8 @@ export const nodeProperties: INodeProperties[] = [
   ...queryOperations,
   // Include system operations from modular file
   ...systemOperations,
+  // Include batch operations from modular file
+  ...batchOperations,
 
   // Include record fields from modular file
   ...recordFields,
@@ -216,6 +224,9 @@ export const nodeProperties: INodeProperties[] = [
 
   // Include system fields from modular file
   ...systemFields,
+
+  // Include batch fields from modular file
+  ...batchFields,
 
   // Include connection pooling options for all operations
   ...connectionPoolingOptions,

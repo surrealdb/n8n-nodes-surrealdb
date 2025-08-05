@@ -133,13 +133,9 @@ export function getErrorConfig(operationType: string): IErrorConfig {
  * Error recovery strategies
  */
 export enum RecoveryStrategy {
-    // eslint-disable-next-line no-unused-vars
     RETRY_ONLY = "RETRY_ONLY",
-    // eslint-disable-next-line no-unused-vars
     CONNECTION_RECOVERY = "CONNECTION_RECOVERY",
-    // eslint-disable-next-line no-unused-vars
     VALIDATION_RETRY = "VALIDATION_RETRY",
-    // eslint-disable-next-line no-unused-vars
     FULL_RECOVERY = "FULL_RECOVERY",
 }
 
@@ -148,7 +144,6 @@ export enum RecoveryStrategy {
  */
 export function getRecoveryStrategy(
     errorCategory: ErrorCategory,
-    // eslint-disable-next-line no-unused-vars
     _operationType: string,
 ): RecoveryStrategy {
     // For connection errors, always try connection recovery

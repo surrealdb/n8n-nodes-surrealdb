@@ -42,6 +42,9 @@ export default [
       '@typescript-eslint/no-empty-function': 'warn',
       '@typescript-eslint/no-empty-interface': 'error',
       
+      // Disable the regular no-unused-vars rule in favor of the TypeScript version
+      'no-unused-vars': 'off',
+      
       // Additional useful rules
       'no-console': 'warn',
       'no-undef': 'error',
