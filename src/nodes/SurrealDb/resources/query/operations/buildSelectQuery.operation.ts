@@ -81,7 +81,7 @@ function buildWhereClause(conditions: WhereCondition[]): string {
                     clause += ` ${trimmedValue}`;
                 } else {
                     // Treat as string, wrap in quotes
-                    clause += ` '${condition.value.replace(/'/g, "\\'")}'`;
+                    clause += ` '${condition.value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
                 }
             }
         }
