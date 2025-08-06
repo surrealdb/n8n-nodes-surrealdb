@@ -10,17 +10,21 @@ import { NodeOperationError } from "n8n-workflow";
  * @param defaultValue The default value to return if the path doesn't exist
  * @returns The value at the path or the default value
  */
-function get(obj: any, path: string, defaultValue: any = undefined): any {
-    const keys = path.split('.');
-    let result = obj;
-    
+function get(obj: Record<string, unknown> | null | undefined, path: string, defaultValue: unknown = undefined): unknown {
+    const keys = path.split(".");
+    let result: unknown = obj;
+
     for (const key of keys) {
-        if (result === null || result === undefined || typeof result !== 'object') {
+        if (
+            result === null ||
+            result === undefined ||
+            typeof result !== "object"
+        ) {
             return defaultValue;
         }
-        result = result[key];
+        result = (result as Record<string, unknown>)[key];
     }
-    
+
     return result !== undefined ? result : defaultValue;
 }
 
@@ -31,18 +35,22 @@ function get(obj: any, path: string, defaultValue: any = undefined): any {
  * @param value The value to set
  * @returns The modified object
  */
-function set(obj: any, path: string, value: any): any {
-    const keys = path.split('.');
+function set(obj: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
+    const keys = path.split(".");
     let current = obj;
-    
+
     for (let i = 0; i < keys.length - 1; i++) {
         const key = keys[i];
-        if (!(key in current) || current[key] === null || typeof current[key] !== 'object') {
+        if (
+            !(key in current) ||
+            current[key] === null ||
+            typeof current[key] !== "object"
+        ) {
             current[key] = {};
         }
-        current = current[key];
+        current = current[key] as Record<string, unknown>;
     }
-    
+
     current[keys[keys.length - 1]] = value;
     return obj;
 }
@@ -318,7 +326,7 @@ export function prepareItems(
             if (useDotNotation) {
                 set(updateItem, field, fieldData);
             } else {
-                updateItem[field] = fieldData;
+                updateItem[field] = fieldData as IDataObject[keyof IDataObject];
             }
         }
 
