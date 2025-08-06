@@ -10,7 +10,11 @@ import { NodeOperationError } from "n8n-workflow";
  * @param defaultValue The default value to return if the path doesn't exist
  * @returns The value at the path or the default value
  */
-function get(obj: Record<string, unknown> | null | undefined, path: string, defaultValue: unknown = undefined): unknown {
+function get(
+    obj: Record<string, unknown> | null | undefined,
+    path: string,
+    defaultValue: unknown = undefined,
+): unknown {
     const keys = path.split(".");
     let result: unknown = obj;
 
@@ -35,12 +39,16 @@ function get(obj: Record<string, unknown> | null | undefined, path: string, defa
  * @param value The value to set
  * @returns The modified object
  */
-function set(obj: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
+function set(
+    obj: Record<string, unknown>,
+    path: string,
+    value: unknown,
+): Record<string, unknown> {
     const keys = path.split(".");
     let current = obj;
 
     // Prevent prototype pollution by blocking dangerous keys
-    const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+    const dangerousKeys = ["__proto__", "constructor", "prototype"];
     for (const key of keys) {
         if (dangerousKeys.includes(key)) {
             // Optionally, throw an error or just return the object unchanged
