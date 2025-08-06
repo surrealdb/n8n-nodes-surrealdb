@@ -108,7 +108,7 @@ View the node documentation [here](https://surrealdb.com/docs/integrations/data-
 
 To use the SurrealDB node, you need to create credentials with the following properties:
 
-* **Connection String** - The connection string to your SurrealDB instance (must start with http:// or https://). WebSocket connections (ws:// or wss://) are not supported.
+* **Connection String** - The connection string to your SurrealDB instance (must start with `http://` or `https://`). WebSocket connections (`ws://` or `wss://`) are not supported.
 * **Authentication** - Choose the authentication scope:
   * **Root** - Full access to all namespaces and databases
   * **Namespace** - Access limited to a specific namespace
