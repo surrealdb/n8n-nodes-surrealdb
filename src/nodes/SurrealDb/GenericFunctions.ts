@@ -1,9 +1,76 @@
 import { DEBUG } from "./debug";
 
-import get from "lodash/get";
-import set from "lodash/set";
 import { Surreal } from "surrealdb";
 import { NodeOperationError } from "n8n-workflow";
+
+/**
+ * Native implementation of lodash's get function
+ * @param obj The object to get the value from
+ * @param path The path to the property (supports dot notation)
+ * @param defaultValue The default value to return if the path doesn't exist
+ * @returns The value at the path or the default value
+ */
+function get(
+    obj: Record<string, unknown> | null | undefined,
+    path: string,
+    defaultValue: unknown = undefined,
+): unknown {
+    const keys = path.split(".");
+    let result: unknown = obj;
+
+    for (const key of keys) {
+        if (
+            result === null ||
+            result === undefined ||
+            typeof result !== "object"
+        ) {
+            return defaultValue;
+        }
+        result = (result as Record<string, unknown>)[key];
+    }
+
+    return result !== undefined ? result : defaultValue;
+}
+
+/**
+ * Native implementation of lodash's set function
+ * @param obj The object to set the value on
+ * @param path The path to the property (supports dot notation)
+ * @param value The value to set
+ * @returns The modified object
+ */
+function set(
+    obj: Record<string, unknown>,
+    path: string,
+    value: unknown,
+): Record<string, unknown> {
+    const keys = path.split(".");
+    let current = obj;
+
+    // Prevent prototype pollution by blocking dangerous keys
+    const dangerousKeys = ["__proto__", "constructor", "prototype"];
+    for (const key of keys) {
+        if (dangerousKeys.includes(key)) {
+            // Optionally, throw an error or just return the object unchanged
+            return obj;
+        }
+    }
+
+    for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+        if (
+            !(key in current) ||
+            current[key] === null ||
+            typeof current[key] !== "object"
+        ) {
+            current[key] = {};
+        }
+        current = current[key] as Record<string, unknown>;
+    }
+
+    current[keys[keys.length - 1]] = value;
+    return obj;
+}
 import type {
     ICredentialDataDecryptedObject,
     IDataObject,
@@ -276,7 +343,7 @@ export function prepareItems(
             if (useDotNotation) {
                 set(updateItem, field, fieldData);
             } else {
-                updateItem[field] = fieldData;
+                updateItem[field] = fieldData as IDataObject[keyof IDataObject];
             }
         }
 

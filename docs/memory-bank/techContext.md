@@ -19,7 +19,7 @@
     *   `@typescript-eslint/parser` (`^5.59.2`): ESLint parser for TypeScript.
     *   `prettier` (`^2.8.8`): For code formatting.
 *   **Development Dependencies (from `devDependencies`):**
-    *   `@types/*`: Type definitions for various libraries (express, lodash, request-promise-native).
+    *   `@types/*`: Type definitions for various libraries (express, request-promise-native).
     *   `request-promise-native`: Likely used by n8n-core or for making HTTP requests if not using n8n's built-in request mechanisms.
 
 ## 2. Development Setup
