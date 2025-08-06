@@ -27,7 +27,8 @@
   "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run assets",
+    "assets": "cp src/nodes/SurrealDb/*.svg src/nodes/SurrealDb/*.png dist/nodes/SurrealDb/ 2>/dev/null || true",
     "dev": "tsc --watch",
     "lint": "eslint src",
     "format": "prettier src --write",
