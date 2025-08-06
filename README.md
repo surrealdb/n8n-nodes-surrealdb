@@ -416,6 +416,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
+## Original
+
+This code is forked originally from [n8n-nodes-surrealdb](https://github.com/nsxdavid/n8n-nodes-surrealdb), licensed under the [MIT](https://choosealicense.com/licenses/mit/) license.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
