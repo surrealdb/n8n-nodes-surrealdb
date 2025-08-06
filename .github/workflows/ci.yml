@@ -174,13 +174,13 @@ jobs:
           cat > test-load.js << 'EOF'
           try {
             // Test if the main module can be loaded
-            const mainModule = await import('./dist/index.js');
+            const mainModule = require('./dist/index.js');
             console.log('✅ Main module loaded successfully');
             // Test if credentials can be loaded
-            const credentials = await import('./dist/credentials/SurrealDbApi.credentials.js');
+            const credentials = require('./dist/credentials/SurrealDbApi.credentials.js');
             console.log('✅ Credentials module loaded successfully');
             // Test if node can be loaded
-            const node = await import('./dist/nodes/SurrealDb/SurrealDb.node.js');
+            const node = require('./dist/nodes/SurrealDb/SurrealDb.node.js');
             console.log('✅ Node module loaded successfully');
             // Everything loaded successfully
             console.log('✅ All modules loaded successfully');
