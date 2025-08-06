@@ -1,18 +1,18 @@
 {
-  "node": "n8n-nodes-base.surrealDb",
-  "nodeVersion": "1.0",
-  "codexVersion": "1.0",
-  "categories": ["Development", "Data & Storage"],
-  "resources": {
-    "credentialDocumentation": [
-      {
-        "url": "https://surrealdb.com/docs"
-      }
-    ],
-    "primaryDocumentation": [
-      {
-        "url": "https://surrealdb.com/docs"
-      }
-    ]
-  }
+    "node": "n8n-nodes-base.surrealDb",
+    "nodeVersion": "1.0",
+    "codexVersion": "1.0",
+    "categories": ["Development", "Data & Storage"],
+    "resources": {
+        "credentialDocumentation": [
+            {
+                "url": "https://surrealdb.com/docs"
+            }
+        ],
+        "primaryDocumentation": [
+            {
+                "url": "https://surrealdb.com/docs"
+            }
+        ]
+    }
 }

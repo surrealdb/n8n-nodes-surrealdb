@@ -1,4 +1,8 @@
-import type { IExecuteFunctions, INodeExecutionData, IDataObject } from "n8n-workflow";
+import type {
+    IExecuteFunctions,
+    INodeExecutionData,
+    IDataObject,
+} from "n8n-workflow";
 import type { Surreal } from "surrealdb";
 import { DEBUG } from "./debug";
 
@@ -63,7 +67,8 @@ export async function executeWithErrorHandling<T>(
     executeFunctions: IExecuteFunctions,
     client?: Surreal,
 ): Promise<INodeExecutionData> {
-    const { operationName, itemIndex, credentials, additionalContext } = context;
+    const { operationName, itemIndex, credentials, additionalContext } =
+        context;
 
     // Get error configuration for this operation type
     const errorConfig = getErrorConfig(operationName);
@@ -104,7 +109,10 @@ export async function executeWithErrorHandling<T>(
         };
     } catch (error) {
         const enhancedError = classifyError(error as Error);
-        const recoveryStrategy = getRecoveryStrategy(enhancedError.category, operationName);
+        const recoveryStrategy = getRecoveryStrategy(
+            enhancedError.category,
+            operationName,
+        );
 
         if (DEBUG) {
             // eslint-disable-next-line no-console
@@ -177,19 +185,32 @@ async function attemptRecovery<T>(
 
     if (DEBUG) {
         // eslint-disable-next-line no-console
-        console.log(`DEBUG - ${operationName} - Attempting recovery with strategy:`, recoveryStrategy);
+        console.log(
+            `DEBUG - ${operationName} - Attempting recovery with strategy:`,
+            recoveryStrategy,
+        );
     }
 
     try {
         switch (recoveryStrategy) {
             case RecoveryStrategy.CONNECTION_RECOVERY:
-                return await attemptConnectionRecovery(operation, client, credentials, context);
+                return await attemptConnectionRecovery(
+                    operation,
+                    client,
+                    credentials,
+                    context,
+                );
 
             case RecoveryStrategy.VALIDATION_RETRY:
                 return await attemptValidationRetry(operation, client, context);
 
             case RecoveryStrategy.FULL_RECOVERY:
-                return await attemptFullRecovery(operation, client, credentials, context);
+                return await attemptFullRecovery(
+                    operation,
+                    client,
+                    credentials,
+                    context,
+                );
 
             case RecoveryStrategy.RETRY_ONLY:
             default:
@@ -207,7 +228,10 @@ async function attemptRecovery<T>(
     } catch (recoveryError) {
         if (DEBUG) {
             // eslint-disable-next-line no-console
-            console.log(`DEBUG - ${operationName} - Recovery failed:`, recoveryError.message);
+            console.log(
+                `DEBUG - ${operationName} - Recovery failed:`,
+                recoveryError.message,
+            );
         }
 
         return {
@@ -243,7 +267,9 @@ async function attemptConnectionRecovery<T>(
 
     if (DEBUG) {
         // eslint-disable-next-line no-console
-        console.log(`DEBUG - ${operationName} - Attempting connection recovery`);
+        console.log(
+            `DEBUG - ${operationName} - Attempting connection recovery`,
+        );
     }
 
     // Try to recover the connection
@@ -365,13 +391,22 @@ async function attemptFullRecovery<T>(
     }
 
     // First try connection recovery
-    const connectionResult = await attemptConnectionRecovery(operation, client, credentials, context);
+    const connectionResult = await attemptConnectionRecovery(
+        operation,
+        client,
+        credentials,
+        context,
+    );
     if (connectionResult.success) {
         return connectionResult;
     }
 
     // If connection recovery failed, try validation retry
-    const validationResult = await attemptValidationRetry(operation, client, context);
+    const validationResult = await attemptValidationRetry(
+        operation,
+        client,
+        context,
+    );
     if (validationResult.success) {
         return validationResult;
     }
@@ -380,7 +415,8 @@ async function attemptFullRecovery<T>(
     return {
         success: false,
         error: {
-            message: "Full recovery failed - both connection and validation recovery attempts failed",
+            message:
+                "Full recovery failed - both connection and validation recovery attempts failed",
             category: ErrorCategory.SYSTEM_ERROR,
             severity: ErrorSeverity.CRITICAL,
             retryable: false,
@@ -392,7 +428,9 @@ async function attemptFullRecovery<T>(
 /**
  * Enhanced query execution wrapper
  */
-export async function executeQueryWithEnhancedErrorHandling<T extends unknown[]>(
+export async function executeQueryWithEnhancedErrorHandling<
+    T extends unknown[],
+>(
     client: Surreal,
     query: string,
     credentials: {
@@ -409,7 +447,12 @@ export async function executeQueryWithEnhancedErrorHandling<T extends unknown[]>
 ): Promise<INodeExecutionData> {
     return executeWithErrorHandling(
         async () => {
-            return await executeQueryWithRecovery<T>(client, query, credentials, parameters);
+            return await executeQueryWithRecovery<T>(
+                client,
+                query,
+                credentials,
+                parameters,
+            );
         },
         context,
         executeFunctions,
@@ -426,7 +469,12 @@ export async function executeRecordOperationWithErrorHandling<T>(
     executeFunctions: IExecuteFunctions,
     client?: Surreal,
 ): Promise<INodeExecutionData> {
-    return executeWithErrorHandling(operation, context, executeFunctions, client);
+    return executeWithErrorHandling(
+        operation,
+        context,
+        executeFunctions,
+        client,
+    );
 }
 
 /**
@@ -438,7 +486,12 @@ export async function executeTableOperationWithErrorHandling<T>(
     executeFunctions: IExecuteFunctions,
     client?: Surreal,
 ): Promise<INodeExecutionData> {
-    return executeWithErrorHandling(operation, context, executeFunctions, client);
+    return executeWithErrorHandling(
+        operation,
+        context,
+        executeFunctions,
+        client,
+    );
 }
 
 /**
@@ -450,5 +503,10 @@ export async function executeSystemOperationWithErrorHandling<T>(
     executeFunctions: IExecuteFunctions,
     client?: Surreal,
 ): Promise<INodeExecutionData> {
-    return executeWithErrorHandling(operation, context, executeFunctions, client);
-} 
+    return executeWithErrorHandling(
+        operation,
+        context,
+        executeFunctions,
+        client,
+    );
+}

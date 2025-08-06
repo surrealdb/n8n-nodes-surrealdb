@@ -18,25 +18,29 @@ export const batchOperations: INodeProperties[] = [
             {
                 name: "Batch Create",
                 value: "batchCreate",
-                description: "Create multiple records with configurable batch processing",
+                description:
+                    "Create multiple records with configurable batch processing",
                 action: "Create multiple records in batches",
             },
             {
                 name: "Batch Update",
                 value: "batchUpdate",
-                description: "Update multiple records with configurable batch processing",
+                description:
+                    "Update multiple records with configurable batch processing",
                 action: "Update multiple records in batches",
             },
             {
                 name: "Batch Delete",
                 value: "batchDelete",
-                description: "Delete multiple records with configurable batch processing",
+                description:
+                    "Delete multiple records with configurable batch processing",
                 action: "Delete multiple records in batches",
             },
             {
                 name: "Batch Upsert",
                 value: "batchUpsert",
-                description: "Create or update multiple records with configurable batch processing",
+                description:
+                    "Create or update multiple records with configurable batch processing",
                 action: "Upsert multiple records in batches",
             },
         ],
@@ -140,7 +144,8 @@ export const batchFields: INodeProperties[] = [
                 name: "parallel",
                 type: "boolean",
                 default: false,
-                description: "Process batches in parallel for better performance",
+                description:
+                    "Process batches in parallel for better performance",
             },
             {
                 displayName: "Max Parallel Batches",
@@ -166,17 +171,20 @@ export const batchFields: INodeProperties[] = [
                     {
                         name: "Stop on First Error",
                         value: "stop",
-                        description: "Stop processing when the first error occurs",
+                        description:
+                            "Stop processing when the first error occurs",
                     },
                     {
                         name: "Continue on Errors",
                         value: "continue",
-                        description: "Continue processing and collect all errors",
+                        description:
+                            "Continue processing and collect all errors",
                     },
                     {
                         name: "Partial Success",
                         value: "partial",
-                        description: "Return partial results and continue processing",
+                        description:
+                            "Return partial results and continue processing",
                     },
                 ],
                 default: "stop",
@@ -187,14 +195,16 @@ export const batchFields: INodeProperties[] = [
                 name: "transaction",
                 type: "boolean",
                 default: false,
-                description: "Execute all operations within a single transaction",
+                description:
+                    "Execute all operations within a single transaction",
             },
             {
                 displayName: "Progress Tracking",
                 name: "progressTracking",
                 type: "boolean",
                 default: true,
-                description: "Track and report progress during batch processing",
+                description:
+                    "Track and report progress during batch processing",
             },
         ],
     },
@@ -232,4 +242,4 @@ export const batchFields: INodeProperties[] = [
             },
         ],
     },
-]; 
+];

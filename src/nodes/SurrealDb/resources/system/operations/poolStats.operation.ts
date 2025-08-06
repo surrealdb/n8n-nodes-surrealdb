@@ -30,24 +30,44 @@ export const poolStatsOperation = {
                     totalRequests: stats.totalRequests,
                     failedRequests: stats.failedRequests,
                     averageResponseTime: Math.round(stats.averageResponseTime),
-                    successRate: stats.totalRequests > 0
-                        ? Math.round(((stats.totalRequests - stats.failedRequests) / stats.totalRequests) * 100)
-                        : 100,
+                    successRate:
+                        stats.totalRequests > 0
+                            ? Math.round(
+                                  ((stats.totalRequests -
+                                      stats.failedRequests) /
+                                      stats.totalRequests) *
+                                      100,
+                              )
+                            : 100,
                     poolUtilization: stats.poolUtilization,
                     connectionErrors: stats.connectionErrors,
                     healthCheckFailures: stats.healthCheckFailures,
                 },
                 performance: {
-                    averageResponseTimeMs: Math.round(stats.averageResponseTime),
-                    requestsPerSecond: stats.totalRequests > 0
-                        ? Math.round(stats.totalRequests / (Date.now() / 1000))
-                        : 0,
-                    errorRate: stats.totalRequests > 0
-                        ? Math.round((stats.failedRequests / stats.totalRequests) * 100)
-                        : 0,
-                    connectionErrorRate: stats.totalRequests > 0
-                        ? Math.round((stats.connectionErrors / stats.totalRequests) * 100)
-                        : 0,
+                    averageResponseTimeMs: Math.round(
+                        stats.averageResponseTime,
+                    ),
+                    requestsPerSecond:
+                        stats.totalRequests > 0
+                            ? Math.round(
+                                  stats.totalRequests / (Date.now() / 1000),
+                              )
+                            : 0,
+                    errorRate:
+                        stats.totalRequests > 0
+                            ? Math.round(
+                                  (stats.failedRequests / stats.totalRequests) *
+                                      100,
+                              )
+                            : 0,
+                    connectionErrorRate:
+                        stats.totalRequests > 0
+                            ? Math.round(
+                                  (stats.connectionErrors /
+                                      stats.totalRequests) *
+                                      100,
+                              )
+                            : 0,
                 },
                 poolHealth: {
                     utilizationRate: stats.poolUtilization,
@@ -71,4 +91,4 @@ export const poolStatsOperation = {
             return [createErrorResult(error as Error, itemIndex)];
         }
     },
-}; 
+};

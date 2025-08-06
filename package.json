@@ -29,9 +29,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "format": "prettier src --write",
     "lint": "eslint src",
-    "lintfix": "eslint src --fix",
+    "format": "prettier src --write",
     "prepublishOnly": "npm run build",
     "n8n": "node ./node_modules/n8n/bin/n8n"
   },
@@ -66,5 +65,12 @@
   },
   "overrides": {
     "pkce-challenge": "3.0.0"
+  },
+  "prettier": {
+    "semi": true,
+    "tabWidth": 4,
+    "singleQuote": false,
+    "trailingComma": "all",
+    "arrowParens": "avoid"
   }
 }

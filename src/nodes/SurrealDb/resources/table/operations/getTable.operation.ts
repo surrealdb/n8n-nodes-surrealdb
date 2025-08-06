@@ -1,130 +1,140 @@
 import type {
-  IDataObject,
-  IExecuteFunctions,
-  INodeExecutionData
-
+    IDataObject,
+    IExecuteFunctions,
+    INodeExecutionData,
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
 import {
-  prepareSurrealQuery,
-  validateRequiredField,
-  buildCredentialsObject, checkQueryResult,
+    prepareSurrealQuery,
+    validateRequiredField,
+    buildCredentialsObject,
+    checkQueryResult,
 } from "../../../GenericFunctions";
 import { debugLog } from "../../../utilities";
 import type { IOperationHandler } from "../../../types/operation.types";
 
-import { DEBUG } from '../../../debug';
+import { DEBUG } from "../../../debug";
 
 /**
  * Implementation of the "Get Table" operation
  * This operation retrieves the definition details of a table
  */
 export const getTableOperation: IOperationHandler = {
-  async execute(
-    client: Surreal,
-    items: INodeExecutionData[],
-    executeFunctions: IExecuteFunctions,
-    itemIndex: number,
-  ): Promise<INodeExecutionData[]> {
-    const returnData: INodeExecutionData[] = [];
+    async execute(
+        client: Surreal,
+        items: INodeExecutionData[],
+        executeFunctions: IExecuteFunctions,
+        itemIndex: number,
+    ): Promise<INodeExecutionData[]> {
+        const returnData: INodeExecutionData[] = [];
 
-    try {
-      // Get credentials
-      const credentials = await executeFunctions.getCredentials("surrealDbApi");
+        try {
+            // Get credentials
+            const credentials =
+                await executeFunctions.getCredentials("surrealDbApi");
 
-      // Get parameters
-      const table = executeFunctions.getNodeParameter(
-        "table",
-        itemIndex,
-      ) as string;
+            // Get parameters
+            const table = executeFunctions.getNodeParameter(
+                "table",
+                itemIndex,
+            ) as string;
 
-      // Validate required fields
-      validateRequiredField(executeFunctions, table, "Table", itemIndex);
+            // Validate required fields
+            validateRequiredField(executeFunctions, table, "Table", itemIndex);
 
-      // Get options
-      const options = executeFunctions.getNodeParameter(
-        "options",
-        itemIndex,
-        {},
-      ) as IDataObject;
+            // Get options
+            const options = executeFunctions.getNodeParameter(
+                "options",
+                itemIndex,
+                {},
+            ) as IDataObject;
 
-      // Build the resolved credentials object
-      const resolvedCredentials = buildCredentialsObject(credentials, options);
+            // Build the resolved credentials object
+            const resolvedCredentials = buildCredentialsObject(
+                credentials,
+                options,
+            );
 
-      // Build the query to get table definition
-      const query = `INFO FOR TABLE ${table};`;
+            // Build the query to get table definition
+            const query = `INFO FOR TABLE ${table};`;
 
-      const preparedQuery = prepareSurrealQuery(query, resolvedCredentials);
+            const preparedQuery = prepareSurrealQuery(
+                query,
+                resolvedCredentials,
+            );
 
-      if (DEBUG) {
-        // DEBUG: Log query
-        debugLog("getTable", "Query", itemIndex, preparedQuery);
-      }
+            if (DEBUG) {
+                // DEBUG: Log query
+                debugLog("getTable", "Query", itemIndex, preparedQuery);
+            }
 
-      // Execute the query
+            // Execute the query
 
+            const result = await client.query(preparedQuery);
 
-      const result = await client.query(preparedQuery);
+            // Check for query errors
+            const queryCheck = checkQueryResult(result, "Query failed");
+            if (!queryCheck.success) {
+                if (executeFunctions.continueOnFail()) {
+                    returnData.push({
+                        json: {
+                            error: queryCheck.errorMessage,
+                        },
+                        pairedItem: { item: itemIndex },
+                    });
+                } else {
+                    throw new NodeOperationError(
+                        executeFunctions.getNode(),
+                        queryCheck.errorMessage || "Unknown error",
+                        {
+                            itemIndex,
+                        },
+                    );
+                }
+            }
 
+            if (DEBUG) {
+                // DEBUG: Log raw result
+                debugLog(
+                    "getTable",
+                    "Raw query result",
+                    itemIndex,
+                    JSON.stringify(result),
+                );
+            }
 
+            // Process the result
+            if (Array.isArray(result) && result.length > 0) {
+                const tableInfo = result[0];
 
-      // Check for query errors
-      const queryCheck = checkQueryResult(result, "Query failed");
-      if (!queryCheck.success) {
-        if (executeFunctions.continueOnFail()) {
-          returnData.push({
-            json: {
-              error: queryCheck.errorMessage,
-            },
-            pairedItem: { item: itemIndex },
-          });
-        } else {
-          throw new NodeOperationError(executeFunctions.getNode(), queryCheck.errorMessage || "Unknown error", {
-            itemIndex,
-          });
+                // Return the table information directly
+                returnData.push({
+                    json: tableInfo as IDataObject,
+                    pairedItem: { item: itemIndex },
+                });
+            } else {
+                throw new Error(
+                    `Unable to retrieve information for table ${table}`,
+                );
+            }
+        } catch (error) {
+            if (executeFunctions.continueOnFail()) {
+                returnData.push({
+                    json: {
+                        error: error.message,
+                    },
+                    pairedItem: { item: itemIndex },
+                });
+            } else {
+                throw new NodeOperationError(
+                    executeFunctions.getNode(),
+                    `Error getting table definition: ${error.message}`,
+                    { itemIndex },
+                );
+            }
         }
-      }
 
-      if (DEBUG) {
-        // DEBUG: Log raw result
-        debugLog(
-          "getTable",
-          "Raw query result",
-          itemIndex,
-          JSON.stringify(result),
-        );
-      }
-
-      // Process the result
-      if (Array.isArray(result) && result.length > 0) {
-        const tableInfo = result[0];
-
-        // Return the table information directly
-        returnData.push({
-          json: tableInfo as IDataObject,
-          pairedItem: { item: itemIndex },
-        });
-      } else {
-        throw new Error(`Unable to retrieve information for table ${table}`);
-      }
-    } catch (error) {
-      if (executeFunctions.continueOnFail()) {
-        returnData.push({
-          json: {
-            error: error.message,
-          },
-          pairedItem: { item: itemIndex },
-        });
-      } else {
-        throw new NodeOperationError(
-          executeFunctions.getNode(),
-          `Error getting table definition: ${error.message}`,
-          { itemIndex },
-        );
-      }
-    }
-
-    return returnData;
-  },
+        return returnData;
+    },
 };

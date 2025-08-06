@@ -4,7 +4,7 @@ import { DEBUG } from "./debug";
 import {
     ErrorCategory,
     retryWithBackoff,
-    DEFAULT_RETRY_CONFIG
+    DEFAULT_RETRY_CONFIG,
 } from "./errorHandling";
 
 /**
@@ -68,7 +68,7 @@ export interface IPoolStats {
 
 /**
  * SurrealDB Connection Pool
- * 
+ *
  * Manages a pool of SurrealDB connections to improve performance
  * and reduce connection overhead.
  */
@@ -84,13 +84,13 @@ export class SurrealConnectionPool {
         connectionErrors: number;
         healthCheckFailures: number;
     } = {
-            totalRequests: 0,
-            failedRequests: 0,
-            totalResponseTime: 0,
-            waitingRequests: 0,
-            connectionErrors: 0,
-            healthCheckFailures: 0,
-        };
+        totalRequests: 0,
+        failedRequests: 0,
+        totalResponseTime: 0,
+        waitingRequests: 0,
+        connectionErrors: 0,
+        healthCheckFailures: 0,
+    };
 
     constructor(config: Partial<IConnectionPoolConfig> = {}) {
         this.config = { ...DEFAULT_POOL_CONFIG, ...config };
@@ -107,7 +107,10 @@ export class SurrealConnectionPool {
             this.stats.totalRequests++;
             this.stats.waitingRequests++;
 
-            const connection = await this.acquireConnection(poolKey, credentials);
+            const connection = await this.acquireConnection(
+                poolKey,
+                credentials,
+            );
 
             // Validate connection if enabled
             if (this.config.enableConnectionValidation) {
@@ -119,7 +122,9 @@ export class SurrealConnectionPool {
 
             if (DEBUG) {
                 // eslint-disable-next-line no-console
-                console.log(`[ConnectionPool] Acquired connection for ${poolKey} in ${Date.now() - startTime}ms`);
+                console.log(
+                    `[ConnectionPool] Acquired connection for ${poolKey} in ${Date.now() - startTime}ms`,
+                );
             }
 
             return connection;
@@ -129,7 +134,10 @@ export class SurrealConnectionPool {
 
             if (DEBUG) {
                 // eslint-disable-next-line no-console
-                console.error(`[ConnectionPool] Failed to acquire connection for ${poolKey}:`, error);
+                console.error(
+                    `[ConnectionPool] Failed to acquire connection for ${poolKey}:`,
+                    error,
+                );
             }
 
             throw error;
@@ -158,7 +166,9 @@ export class SurrealConnectionPool {
 
             if (DEBUG) {
                 // eslint-disable-next-line no-console
-                console.log(`[ConnectionPool] Released connection for ${poolKey}`);
+                console.log(
+                    `[ConnectionPool] Released connection for ${poolKey}`,
+                );
             }
         }
     }
@@ -184,7 +194,7 @@ export class SurrealConnectionPool {
         for (const [poolKey, pool] of this.pool.entries()) {
             for (const entry of pool) {
                 closePromises.push(
-                    this.closeConnectionSafely(entry.client, poolKey)
+                    this.closeConnectionSafely(entry.client, poolKey),
                 );
             }
         }
@@ -217,9 +227,10 @@ export class SurrealConnectionPool {
             }
         }
 
-        const poolUtilization = totalConnections > 0
-            ? (activeConnections / totalConnections) * 100
-            : 0;
+        const poolUtilization =
+            totalConnections > 0
+                ? (activeConnections / totalConnections) * 100
+                : 0;
 
         return {
             totalConnections,
@@ -228,9 +239,10 @@ export class SurrealConnectionPool {
             waitingRequests: this.stats.waitingRequests,
             totalRequests: this.stats.totalRequests,
             failedRequests: this.stats.failedRequests,
-            averageResponseTime: this.stats.totalRequests > 0
-                ? this.stats.totalResponseTime / this.stats.totalRequests
-                : 0,
+            averageResponseTime:
+                this.stats.totalRequests > 0
+                    ? this.stats.totalResponseTime / this.stats.totalRequests
+                    : 0,
             poolUtilization: Math.round(poolUtilization),
             connectionErrors: this.stats.connectionErrors,
             healthCheckFailures: this.stats.healthCheckFailures,
@@ -240,12 +252,17 @@ export class SurrealConnectionPool {
     /**
      * Acquire a connection from the pool or create a new one with enhanced retry logic
      */
-    private async acquireConnection(poolKey: string, credentials: ISurrealCredentials): Promise<Surreal> {
+    private async acquireConnection(
+        poolKey: string,
+        credentials: ISurrealCredentials,
+    ): Promise<Surreal> {
         const pool = this.pool.get(poolKey) || [];
         this.pool.set(poolKey, pool);
 
         // Try to find an available connection
-        const availableEntry = pool.find(entry => !entry.inUse && entry.isHealthy);
+        const availableEntry = pool.find(
+            entry => !entry.inUse && entry.isHealthy,
+        );
         if (availableEntry) {
             availableEntry.inUse = true;
             availableEntry.lastUsed = Date.now();
@@ -282,7 +299,9 @@ export class SurrealConnectionPool {
     /**
      * Create a new SurrealDB connection with enhanced error handling and retry logic
      */
-    private async createConnectionWithRetry(credentials: ISurrealCredentials): Promise<Surreal> {
+    private async createConnectionWithRetry(
+        credentials: ISurrealCredentials,
+    ): Promise<Surreal> {
         return await retryWithBackoff(
             async () => {
                 return await this.createConnection(credentials);
@@ -299,7 +318,8 @@ export class SurrealConnectionPool {
             },
             {
                 operation: "createConnection",
-                connectionString: credentials.connectionString.substring(0, 50) + "...",
+                connectionString:
+                    credentials.connectionString.substring(0, 50) + "...",
                 authentication: credentials.authentication,
             },
         );
@@ -308,7 +328,9 @@ export class SurrealConnectionPool {
     /**
      * Create a new SurrealDB connection
      */
-    private async createConnection(credentials: ISurrealCredentials): Promise<Surreal> {
+    private async createConnection(
+        credentials: ISurrealCredentials,
+    ): Promise<Surreal> {
         const client = new Surreal();
 
         try {
@@ -316,7 +338,10 @@ export class SurrealConnectionPool {
 
             // Set namespace and database if provided
             if (credentials.namespace) {
-                await client.use({ namespace: credentials.namespace, database: credentials.database || 'test' });
+                await client.use({
+                    namespace: credentials.namespace,
+                    database: credentials.database || "test",
+                });
             }
 
             // Authenticate based on authentication type
@@ -358,10 +383,16 @@ export class SurrealConnectionPool {
     /**
      * Validate a connection with a simple health check query
      */
-    private async validateConnection(client: Surreal, poolKey: string): Promise<void> {
+    private async validateConnection(
+        client: Surreal,
+        poolKey: string,
+    ): Promise<void> {
         try {
             const timeoutPromise = new Promise<never>((_, reject) => {
-                setTimeout(() => reject(new Error('Connection validation timeout')), this.config.connectionValidationTimeout);
+                setTimeout(
+                    () => reject(new Error("Connection validation timeout")),
+                    this.config.connectionValidationTimeout,
+                );
             });
 
             const validationPromise = client.query("SELECT 1");
@@ -370,9 +401,14 @@ export class SurrealConnectionPool {
         } catch (error) {
             if (DEBUG) {
                 // eslint-disable-next-line no-console
-                console.warn(`[ConnectionPool] Connection validation failed for ${poolKey}:`, error);
+                console.warn(
+                    `[ConnectionPool] Connection validation failed for ${poolKey}:`,
+                    error,
+                );
             }
-            throw new Error(`Connection validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new Error(
+                `Connection validation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+            );
         }
     }
 
@@ -382,7 +418,11 @@ export class SurrealConnectionPool {
     private async waitForConnection(poolKey: string): Promise<Surreal> {
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
-                reject(new Error(`Timeout waiting for connection in pool ${poolKey} after ${this.config.acquireTimeout}ms`));
+                reject(
+                    new Error(
+                        `Timeout waiting for connection in pool ${poolKey} after ${this.config.acquireTimeout}ms`,
+                    ),
+                );
             }, this.config.acquireTimeout);
 
             const checkInterval = setInterval(() => {
@@ -390,11 +430,15 @@ export class SurrealConnectionPool {
                 if (!pool) {
                     clearInterval(checkInterval);
                     clearTimeout(timeout);
-                    reject(new Error(`Pool ${poolKey} was removed while waiting`));
+                    reject(
+                        new Error(`Pool ${poolKey} was removed while waiting`),
+                    );
                     return;
                 }
 
-                const availableEntry = pool.find(entry => !entry.inUse && entry.isHealthy);
+                const availableEntry = pool.find(
+                    entry => !entry.inUse && entry.isHealthy,
+                );
                 if (availableEntry) {
                     clearInterval(checkInterval);
                     clearTimeout(timeout);
@@ -424,13 +468,16 @@ export class SurrealConnectionPool {
         const pool = this.pool.get(poolKey);
         if (!pool) return;
 
-        const healthCheckPromises = pool.map(async (entry) => {
+        const healthCheckPromises = pool.map(async entry => {
             if (entry.inUse) return; // Skip connections in use
 
             try {
                 // Simple health check query with timeout
                 const timeoutPromise = new Promise<never>((_, reject) => {
-                    setTimeout(() => reject(new Error('Health check timeout')), this.config.connectionValidationTimeout);
+                    setTimeout(
+                        () => reject(new Error("Health check timeout")),
+                        this.config.connectionValidationTimeout,
+                    );
                 });
 
                 const healthCheckPromise = entry.client.query("SELECT 1");
@@ -447,7 +494,10 @@ export class SurrealConnectionPool {
 
                 if (DEBUG) {
                     // eslint-disable-next-line no-console
-                    console.warn(`[ConnectionPool] Health check failed for connection in ${poolKey} (error count: ${entry.errorCount}):`, error);
+                    console.warn(
+                        `[ConnectionPool] Health check failed for connection in ${poolKey} (error count: ${entry.errorCount}):`,
+                        error,
+                    );
                 }
 
                 // Remove unhealthy connections after multiple failures
@@ -478,7 +528,10 @@ export class SurrealConnectionPool {
         const toRemove: IPoolEntry[] = [];
 
         for (const entry of pool) {
-            if (!entry.inUse && (now - entry.lastUsed) > this.config.maxIdleTime) {
+            if (
+                !entry.inUse &&
+                now - entry.lastUsed > this.config.maxIdleTime
+            ) {
                 toRemove.push(entry);
             }
         }
@@ -486,7 +539,7 @@ export class SurrealConnectionPool {
         // Remove idle connections while maintaining minimum pool size
         const canRemove = Math.min(
             toRemove.length,
-            pool.length - this.config.minConnections
+            pool.length - this.config.minConnections,
         );
 
         for (let i = 0; i < canRemove; i++) {
@@ -500,20 +553,28 @@ export class SurrealConnectionPool {
 
         if (canRemove > 0 && DEBUG) {
             // eslint-disable-next-line no-console
-            console.log(`[ConnectionPool] Cleaned up ${canRemove} idle connections from ${poolKey}`);
+            console.log(
+                `[ConnectionPool] Cleaned up ${canRemove} idle connections from ${poolKey}`,
+            );
         }
     }
 
     /**
      * Safely close a connection with error handling
      */
-    private async closeConnectionSafely(client: Surreal, poolKey: string): Promise<void> {
+    private async closeConnectionSafely(
+        client: Surreal,
+        poolKey: string,
+    ): Promise<void> {
         try {
             await client.close();
         } catch (error) {
             if (DEBUG) {
                 // eslint-disable-next-line no-console
-                console.error(`[ConnectionPool] Error closing connection in ${poolKey}:`, error);
+                console.error(
+                    `[ConnectionPool] Error closing connection in ${poolKey}:`,
+                    error,
+                );
             }
         }
     }
@@ -522,7 +583,7 @@ export class SurrealConnectionPool {
      * Generate a unique key for the connection pool
      */
     private generatePoolKey(credentials: ISurrealCredentials): string {
-        return `${credentials.connectionString}:${credentials.namespace || 'default'}:${credentials.database || 'test'}:${credentials.username}`;
+        return `${credentials.connectionString}:${credentials.namespace || "default"}:${credentials.database || "test"}:${credentials.username}`;
     }
 }
 
@@ -534,7 +595,9 @@ let globalConnectionPool: SurrealConnectionPool | null = null;
 /**
  * Get or create the global connection pool
  */
-export function getGlobalConnectionPool(config?: Partial<IConnectionPoolConfig>): SurrealConnectionPool {
+export function getGlobalConnectionPool(
+    config?: Partial<IConnectionPoolConfig>,
+): SurrealConnectionPool {
     if (!globalConnectionPool) {
         globalConnectionPool = new SurrealConnectionPool(config);
     }
@@ -549,4 +612,4 @@ export async function closeGlobalConnectionPool(): Promise<void> {
         await globalConnectionPool.close();
         globalConnectionPool = null;
     }
-} 
+}

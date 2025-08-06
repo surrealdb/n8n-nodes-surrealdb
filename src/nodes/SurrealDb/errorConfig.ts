@@ -96,33 +96,41 @@ export const BULK_OPERATION_CONFIG: IErrorConfig = {
 export function getErrorConfig(operationType: string): IErrorConfig {
     const operationTypeLower = operationType.toLowerCase();
 
-    if (operationTypeLower.includes("read") ||
+    if (
+        operationTypeLower.includes("read") ||
         operationTypeLower.includes("select") ||
         operationTypeLower.includes("get") ||
-        operationTypeLower.includes("query")) {
+        operationTypeLower.includes("query")
+    ) {
         return READ_OPERATION_CONFIG;
     }
 
-    if (operationTypeLower.includes("write") ||
+    if (
+        operationTypeLower.includes("write") ||
         operationTypeLower.includes("create") ||
         operationTypeLower.includes("update") ||
         operationTypeLower.includes("delete") ||
         operationTypeLower.includes("insert") ||
         operationTypeLower.includes("upsert") ||
-        operationTypeLower.includes("merge")) {
+        operationTypeLower.includes("merge")
+    ) {
         return WRITE_OPERATION_CONFIG;
     }
 
-    if (operationTypeLower.includes("schema") ||
+    if (
+        operationTypeLower.includes("schema") ||
         operationTypeLower.includes("auth") ||
         operationTypeLower.includes("connect") ||
-        operationTypeLower.includes("critical")) {
+        operationTypeLower.includes("critical")
+    ) {
         return CRITICAL_OPERATION_CONFIG;
     }
 
-    if (operationTypeLower.includes("bulk") ||
+    if (
+        operationTypeLower.includes("bulk") ||
         operationTypeLower.includes("batch") ||
-        operationTypeLower.includes("many")) {
+        operationTypeLower.includes("many")
+    ) {
         return BULK_OPERATION_CONFIG;
     }
 
@@ -175,9 +183,9 @@ export function getRecoveryStrategy(
  */
 export const ERROR_SEVERITY_THRESHOLDS = {
     READ_OPERATIONS: {
-        LOW: true,    // Continue on low severity errors
+        LOW: true, // Continue on low severity errors
         MEDIUM: true, // Continue on medium severity errors
-        HIGH: false,  // Stop on high severity errors
+        HIGH: false, // Stop on high severity errors
         CRITICAL: false, // Always stop on critical errors
     },
     WRITE_OPERATIONS: {
@@ -200,29 +208,35 @@ export const ERROR_SEVERITY_THRESHOLDS = {
 export function getErrorSeverityThreshold(operationType: string) {
     const operationTypeLower = operationType.toLowerCase();
 
-    if (operationTypeLower.includes("read") ||
+    if (
+        operationTypeLower.includes("read") ||
         operationTypeLower.includes("select") ||
         operationTypeLower.includes("get") ||
-        operationTypeLower.includes("query")) {
+        operationTypeLower.includes("query")
+    ) {
         return ERROR_SEVERITY_THRESHOLDS.READ_OPERATIONS;
     }
 
-    if (operationTypeLower.includes("write") ||
+    if (
+        operationTypeLower.includes("write") ||
         operationTypeLower.includes("create") ||
         operationTypeLower.includes("update") ||
         operationTypeLower.includes("delete") ||
         operationTypeLower.includes("insert") ||
         operationTypeLower.includes("upsert") ||
-        operationTypeLower.includes("merge")) {
+        operationTypeLower.includes("merge")
+    ) {
         return ERROR_SEVERITY_THRESHOLDS.WRITE_OPERATIONS;
     }
 
-    if (operationTypeLower.includes("schema") ||
+    if (
+        operationTypeLower.includes("schema") ||
         operationTypeLower.includes("auth") ||
         operationTypeLower.includes("connect") ||
-        operationTypeLower.includes("critical")) {
+        operationTypeLower.includes("critical")
+    ) {
         return ERROR_SEVERITY_THRESHOLDS.CRITICAL_OPERATIONS;
     }
 
     return ERROR_SEVERITY_THRESHOLDS.READ_OPERATIONS;
-} 
+}

@@ -15,7 +15,7 @@ import {
     createBatchResult,
 } from "../batch.utilities";
 
-import { DEBUG } from '../../../debug';
+import { DEBUG } from "../../../debug";
 
 /**
  * Implementation of the "Batch Upsert" operation
@@ -36,13 +36,21 @@ export const batchUpsertOperation: IOperationHandler = {
                 itemIndex,
             ) as string;
             if (DEBUG)
-                debugLog("batchUpsert", "Retrieved table parameter", itemIndex, table);
+                debugLog(
+                    "batchUpsert",
+                    "Retrieved table parameter",
+                    itemIndex,
+                    table,
+                );
 
             // Clean and standardize the table name
             table = cleanTableName(table);
             validateRequiredField(executeFunctions, table, "Table", itemIndex);
 
-            const dataInput = executeFunctions.getNodeParameter("data", itemIndex);
+            const dataInput = executeFunctions.getNodeParameter(
+                "data",
+                itemIndex,
+            );
             if (DEBUG) {
                 debugLog(
                     "batchUpsert",
@@ -53,7 +61,11 @@ export const batchUpsertOperation: IOperationHandler = {
             }
 
             // Validate required field
-            if (dataInput === undefined || dataInput === null || dataInput === "") {
+            if (
+                dataInput === undefined ||
+                dataInput === null ||
+                dataInput === ""
+            ) {
                 throw new Error("Records Data is required");
             }
 
@@ -78,15 +90,23 @@ export const batchUpsertOperation: IOperationHandler = {
             for (let i = 0; i < data.length; i++) {
                 const record = data[i];
                 if (!record || typeof record !== "object") {
-                    throw new Error(`Record at index ${i} is not a valid object`);
+                    throw new Error(
+                        `Record at index ${i} is not a valid object`,
+                    );
                 }
                 if (!record.id) {
-                    throw new Error(`Record at index ${i} is missing required 'id' field for upsert operation`);
+                    throw new Error(
+                        `Record at index ${i} is missing required 'id' field for upsert operation`,
+                    );
                 }
             }
 
             // Get batch configuration
-            const batchConfigInput = executeFunctions.getNodeParameter("batchConfig", itemIndex, {}) as {
+            const batchConfigInput = executeFunctions.getNodeParameter(
+                "batchConfig",
+                itemIndex,
+                {},
+            ) as {
                 batchSize?: number;
                 parallel?: boolean;
                 maxParallelBatches?: number;
@@ -124,11 +144,13 @@ export const batchUpsertOperation: IOperationHandler = {
             }
 
             // Process batches using shared utility
-            const { results, totalProcessed, totalErrors } = await processBatches(
-                batches,
-                (batch, batchIndex) => processBatch(client, table, batch, batchIndex),
-                batchConfig,
-            );
+            const { results, totalProcessed, totalErrors } =
+                await processBatches(
+                    batches,
+                    (batch, batchIndex) =>
+                        processBatch(client, table, batch, batchIndex),
+                    batchConfig,
+                );
 
             // Prepare final result
             const finalResult = {
@@ -137,14 +159,14 @@ export const batchUpsertOperation: IOperationHandler = {
                 totalProcessed,
                 totalErrors,
                 batches: results,
-                success: totalErrors === 0 || batchConfig.errorHandling !== "stop",
+                success:
+                    totalErrors === 0 || batchConfig.errorHandling !== "stop",
             };
 
             returnData.push({
                 json: finalResult,
                 pairedItem: { item: itemIndex },
             });
-
         } catch (error) {
             if (executeFunctions.continueOnFail()) {
                 returnData.push({
@@ -185,6 +207,12 @@ async function processBatch(
 
         return createBatchResult(true, results, batchIndex, results.length);
     } catch (error) {
-        return createBatchResult(false, undefined, batchIndex, 0, error.message || String(error));
+        return createBatchResult(
+            false,
+            undefined,
+            batchIndex,
+            0,
+            error.message || String(error),
+        );
     }
-} 
+}

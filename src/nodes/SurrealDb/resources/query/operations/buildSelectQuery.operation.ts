@@ -27,7 +27,7 @@ import {
     ErrorCategory,
 } from "../../../errorHandling";
 
-import { DEBUG } from '../../../debug';
+import { DEBUG } from "../../../debug";
 
 interface WhereCondition {
     field: string;
@@ -40,8 +40,6 @@ interface OrderByCondition {
     field: string;
     direction: string;
 }
-
-
 
 /**
  * Build a WHERE clause from conditions
@@ -63,8 +61,11 @@ function buildWhereClause(conditions: WhereCondition[]): string {
         let clause = `${condition.field} ${condition.operator}`;
 
         // Add value for operators that need it
-        if (condition.value !== undefined && condition.value !== "" &&
-            !["IS NULL", "IS NOT NULL"].includes(condition.operator)) {
+        if (
+            condition.value !== undefined &&
+            condition.value !== "" &&
+            !["IS NULL", "IS NOT NULL"].includes(condition.operator)
+        ) {
             // Check if the value looks like a parameter
             if (condition.value.startsWith("$")) {
                 clause += ` ${condition.value}`;
@@ -73,7 +74,10 @@ function buildWhereClause(conditions: WhereCondition[]): string {
                 const trimmedValue = condition.value.trim();
                 if (trimmedValue === "true" || trimmedValue === "false") {
                     clause += ` ${trimmedValue}`;
-                } else if (!isNaN(Number(trimmedValue)) && trimmedValue !== "") {
+                } else if (
+                    !isNaN(Number(trimmedValue)) &&
+                    trimmedValue !== ""
+                ) {
                     clause += ` ${trimmedValue}`;
                 } else {
                     // Treat as string, wrap in quotes
@@ -107,8 +111,6 @@ function buildOrderByClause(conditions: OrderByCondition[]): string {
     return clauses.length > 0 ? ` ORDER BY ${clauses.join(", ")}` : "";
 }
 
-
-
 /**
  * Build Select Query operation handler for Query resource
  */
@@ -122,7 +124,8 @@ export const buildSelectQueryOperation: IOperationHandler = {
         const returnData: INodeExecutionData[] = [];
 
         try {
-            if (DEBUG) debugLog("buildSelectQuery", "Starting operation", itemIndex);
+            if (DEBUG)
+                debugLog("buildSelectQuery", "Starting operation", itemIndex);
 
             // Get parameters for the specific item
             const table = executeFunctions.getNodeParameter(
@@ -154,8 +157,6 @@ export const buildSelectQueryOperation: IOperationHandler = {
                 itemIndex,
                 "",
             ) as string;
-
-
 
             const limit = executeFunctions.getNodeParameter(
                 "limit",
@@ -194,20 +195,30 @@ export const buildSelectQueryOperation: IOperationHandler = {
                 itemIndex,
                 {},
             ) as IDataObject;
-            const returnGeneratedQuery = options.returnGeneratedQuery as boolean;
+            const returnGeneratedQuery =
+                options.returnGeneratedQuery as boolean;
 
             // Get credentials
-            const credentials = await executeFunctions.getCredentials("surrealDbApi");
+            const credentials =
+                await executeFunctions.getCredentials("surrealDbApi");
 
             // Build credentials object
-            const resolvedCredentials = buildCredentialsObject(credentials, options);
+            const resolvedCredentials = buildCredentialsObject(
+                credentials,
+                options,
+            );
 
             // Build the SELECT query
             let query = `SELECT ${fields} FROM ${table}`;
 
             // Add WHERE clause
-            if (whereConditions.condition && Array.isArray(whereConditions.condition)) {
-                const whereClause = buildWhereClause(whereConditions.condition as WhereCondition[]);
+            if (
+                whereConditions.condition &&
+                Array.isArray(whereConditions.condition)
+            ) {
+                const whereClause = buildWhereClause(
+                    whereConditions.condition as WhereCondition[],
+                );
                 query += whereClause;
             }
 
@@ -216,11 +227,11 @@ export const buildSelectQueryOperation: IOperationHandler = {
                 query += ` GROUP BY ${groupBy.trim()}`;
             }
 
-
-
             // Add ORDER BY clause
             if (orderBy.order && Array.isArray(orderBy.order)) {
-                const orderByClause = buildOrderByClause(orderBy.order as OrderByCondition[]);
+                const orderByClause = buildOrderByClause(
+                    orderBy.order as OrderByCondition[],
+                );
                 query += orderByClause;
             }
 
@@ -241,8 +252,18 @@ export const buildSelectQueryOperation: IOperationHandler = {
             const finalQuery = prepareSurrealQuery(query, resolvedCredentials);
 
             if (DEBUG) {
-                debugLog("buildSelectQuery", "Generated query", itemIndex, finalQuery);
-                debugLog("buildSelectQuery", "Query parameters", itemIndex, parameters);
+                debugLog(
+                    "buildSelectQuery",
+                    "Generated query",
+                    itemIndex,
+                    finalQuery,
+                );
+                debugLog(
+                    "buildSelectQuery",
+                    "Query parameters",
+                    itemIndex,
+                    parameters,
+                );
             }
 
             // Execute the query with enhanced error handling and recovery
@@ -267,22 +288,33 @@ export const buildSelectQueryOperation: IOperationHandler = {
                 {
                     operation: "buildSelectQuery",
                     query: finalQuery.substring(0, 100) + "...", // Log partial query for security
-                    parameters: Object.keys(parameters as Record<string, unknown> || {}),
+                    parameters: Object.keys(
+                        (parameters as Record<string, unknown>) || {},
+                    ),
                 },
             );
 
             // Check for query errors with enhanced error information
             const queryCheck = checkQueryResult(result, "Select query failed");
             if (!queryCheck.success) {
-                const error = new Error(queryCheck.errorMessage || "Unknown query error");
+                const error = new Error(
+                    queryCheck.errorMessage || "Unknown query error",
+                );
 
                 if (executeFunctions.continueOnFail()) {
-                    returnData.push(createErrorResult(error, itemIndex, "buildSelectQuery", {
-                        query: finalQuery.substring(0, 100) + "...",
-                        errorCategory: queryCheck.errorCategory,
-                        errorSeverity: queryCheck.errorSeverity,
-                        errorDetails: queryCheck.errorDetails,
-                    }));
+                    returnData.push(
+                        createErrorResult(
+                            error,
+                            itemIndex,
+                            "buildSelectQuery",
+                            {
+                                query: finalQuery.substring(0, 100) + "...",
+                                errorCategory: queryCheck.errorCategory,
+                                errorSeverity: queryCheck.errorSeverity,
+                                errorDetails: queryCheck.errorDetails,
+                            },
+                        ),
+                    );
                 } else {
                     throw new NodeOperationError(
                         executeFunctions.getNode(),
@@ -307,7 +339,7 @@ export const buildSelectQueryOperation: IOperationHandler = {
             // Process the results
             if (Array.isArray(result)) {
                 // Process each result set, filtering out null values
-                for (const resultSet of result.filter((item) => item !== null)) {
+                for (const resultSet of result.filter(item => item !== null)) {
                     if (Array.isArray(resultSet)) {
                         // For array results, return each item as a separate n8n item
                         const formattedResults = formatArrayResult(resultSet);
@@ -389,4 +421,4 @@ export const buildSelectQueryOperation: IOperationHandler = {
             );
         return returnData;
     },
-}; 
+};

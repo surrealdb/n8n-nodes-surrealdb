@@ -15,7 +15,7 @@ import {
     createBatchResult,
 } from "../batch.utilities";
 
-import { DEBUG } from '../../../debug';
+import { DEBUG } from "../../../debug";
 
 /**
  * Implementation of the "Batch Create" operation
@@ -36,13 +36,21 @@ export const batchCreateOperation: IOperationHandler = {
                 itemIndex,
             ) as string;
             if (DEBUG)
-                debugLog("batchCreate", "Retrieved table parameter", itemIndex, table);
+                debugLog(
+                    "batchCreate",
+                    "Retrieved table parameter",
+                    itemIndex,
+                    table,
+                );
 
             // Clean and standardize the table name
             table = cleanTableName(table);
             validateRequiredField(executeFunctions, table, "Table", itemIndex);
 
-            const dataInput = executeFunctions.getNodeParameter("data", itemIndex);
+            const dataInput = executeFunctions.getNodeParameter(
+                "data",
+                itemIndex,
+            );
             if (DEBUG) {
                 debugLog(
                     "batchCreate",
@@ -53,7 +61,11 @@ export const batchCreateOperation: IOperationHandler = {
             }
 
             // Validate required field
-            if (dataInput === undefined || dataInput === null || dataInput === "") {
+            if (
+                dataInput === undefined ||
+                dataInput === null ||
+                dataInput === ""
+            ) {
                 throw new Error("Records Data is required");
             }
 
@@ -75,7 +87,11 @@ export const batchCreateOperation: IOperationHandler = {
             }
 
             // Get batch configuration
-            const batchConfigInput = executeFunctions.getNodeParameter("batchConfig", itemIndex, {}) as {
+            const batchConfigInput = executeFunctions.getNodeParameter(
+                "batchConfig",
+                itemIndex,
+                {},
+            ) as {
                 batchSize?: number;
                 parallel?: boolean;
                 maxParallelBatches?: number;
@@ -113,11 +129,13 @@ export const batchCreateOperation: IOperationHandler = {
             }
 
             // Process batches using shared utility
-            const { results, totalProcessed, totalErrors } = await processBatches(
-                batches,
-                (batch, batchIndex) => processBatch(client, table, batch, batchIndex),
-                batchConfig,
-            );
+            const { results, totalProcessed, totalErrors } =
+                await processBatches(
+                    batches,
+                    (batch, batchIndex) =>
+                        processBatch(client, table, batch, batchIndex),
+                    batchConfig,
+                );
 
             // Prepare final result
             const finalResult = {
@@ -126,14 +144,14 @@ export const batchCreateOperation: IOperationHandler = {
                 totalProcessed,
                 totalErrors,
                 batches: results,
-                success: totalErrors === 0 || batchConfig.errorHandling !== "stop",
+                success:
+                    totalErrors === 0 || batchConfig.errorHandling !== "stop",
             };
 
             returnData.push({
                 json: finalResult,
                 pairedItem: { item: itemIndex },
             });
-
         } catch (error) {
             if (executeFunctions.continueOnFail()) {
                 returnData.push({
@@ -164,9 +182,21 @@ async function processBatch(
         if (Array.isArray(result)) {
             return createBatchResult(true, result, batchIndex, result.length);
         } else {
-            return createBatchResult(false, undefined, batchIndex, 0, "Unexpected result format from insert operation");
+            return createBatchResult(
+                false,
+                undefined,
+                batchIndex,
+                0,
+                "Unexpected result format from insert operation",
+            );
         }
     } catch (error) {
-        return createBatchResult(false, undefined, batchIndex, 0, error.message || String(error));
+        return createBatchResult(
+            false,
+            undefined,
+            batchIndex,
+            0,
+            error.message || String(error),
+        );
     }
-} 
+}

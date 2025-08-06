@@ -14,7 +14,7 @@ import {
     createBatchResult,
 } from "../batch.utilities";
 
-import { DEBUG } from '../../../debug';
+import { DEBUG } from "../../../debug";
 
 /**
  * Implementation of the "Batch Delete" operation
@@ -35,13 +35,21 @@ export const batchDeleteOperation: IOperationHandler = {
                 itemIndex,
             ) as string;
             if (DEBUG)
-                debugLog("batchDelete", "Retrieved table parameter", itemIndex, table);
+                debugLog(
+                    "batchDelete",
+                    "Retrieved table parameter",
+                    itemIndex,
+                    table,
+                );
 
             // Clean and standardize the table name
             table = cleanTableName(table);
             validateRequiredField(executeFunctions, table, "Table", itemIndex);
 
-            const idsInput = executeFunctions.getNodeParameter("ids", itemIndex) as string;
+            const idsInput = executeFunctions.getNodeParameter(
+                "ids",
+                itemIndex,
+            ) as string;
             if (DEBUG) {
                 debugLog(
                     "batchDelete",
@@ -59,15 +67,15 @@ export const batchDeleteOperation: IOperationHandler = {
             // Parse and validate record IDs
             const recordIds = idsInput
                 .split(",")
-                .map((id) => id.trim())
-                .filter((id) => id.length > 0);
+                .map(id => id.trim())
+                .filter(id => id.length > 0);
 
             if (recordIds.length === 0) {
                 throw new Error("At least one record ID is required");
             }
 
             // Process record IDs to ensure they have table prefix if needed
-            const processedIds = recordIds.map((id) => {
+            const processedIds = recordIds.map(id => {
                 if (id.includes(":")) {
                     return id; // Already has table prefix
                 } else {
@@ -85,7 +93,11 @@ export const batchDeleteOperation: IOperationHandler = {
             }
 
             // Get batch configuration
-            const batchConfigInput = executeFunctions.getNodeParameter("batchConfig", itemIndex, {}) as {
+            const batchConfigInput = executeFunctions.getNodeParameter(
+                "batchConfig",
+                itemIndex,
+                {},
+            ) as {
                 batchSize?: number;
                 parallel?: boolean;
                 maxParallelBatches?: number;
@@ -112,7 +124,10 @@ export const batchDeleteOperation: IOperationHandler = {
             }
 
             // Split IDs into batches
-            const batches = splitIntoBatches(processedIds, batchConfig.batchSize);
+            const batches = splitIntoBatches(
+                processedIds,
+                batchConfig.batchSize,
+            );
 
             if (DEBUG) {
                 debugLog(
@@ -123,11 +138,13 @@ export const batchDeleteOperation: IOperationHandler = {
             }
 
             // Process batches using shared utility
-            const { results, totalProcessed, totalErrors } = await processBatches(
-                batches,
-                (batch, batchIndex) => processBatch(client, batch, batchIndex),
-                batchConfig,
-            );
+            const { results, totalProcessed, totalErrors } =
+                await processBatches(
+                    batches,
+                    (batch, batchIndex) =>
+                        processBatch(client, batch, batchIndex),
+                    batchConfig,
+                );
 
             // Prepare final result
             const finalResult = {
@@ -136,14 +153,14 @@ export const batchDeleteOperation: IOperationHandler = {
                 totalProcessed,
                 totalErrors,
                 batches: results,
-                success: totalErrors === 0 || batchConfig.errorHandling !== "stop",
+                success:
+                    totalErrors === 0 || batchConfig.errorHandling !== "stop",
             };
 
             returnData.push({
                 json: finalResult,
                 pairedItem: { item: itemIndex },
             });
-
         } catch (error) {
             if (executeFunctions.continueOnFail()) {
                 returnData.push({
@@ -178,6 +195,12 @@ async function processBatch(
 
         return createBatchResult(true, results, batchIndex, results.length);
     } catch (error) {
-        return createBatchResult(false, undefined, batchIndex, 0, error.message || String(error));
+        return createBatchResult(
+            false,
+            undefined,
+            batchIndex,
+            0,
+            error.message || String(error),
+        );
     }
-} 
+}

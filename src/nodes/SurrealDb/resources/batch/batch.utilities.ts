@@ -1,5 +1,3 @@
-
-
 export interface IBatchConfig {
     batchSize: number;
     parallel: boolean;
@@ -34,7 +32,7 @@ export class Semaphore {
             return () => this.release();
         }
 
-        return new Promise<() => void>((resolve) => {
+        return new Promise<() => void>(resolve => {
             this.waitQueue.push(() => {
                 this.permits--;
                 resolve(() => this.release());
@@ -58,7 +56,11 @@ export async function processBatches<T>(
     batches: T[][],
     batchProcessor: (batch: T[], batchIndex: number) => Promise<IBatchResult>,
     batchConfig: IBatchConfig,
-): Promise<{ results: IBatchResult[]; totalProcessed: number; totalErrors: number }> {
+): Promise<{
+    results: IBatchResult[];
+    totalProcessed: number;
+    totalErrors: number;
+}> {
     const results: IBatchResult[] = [];
     let totalProcessed = 0;
     let totalErrors = 0;
@@ -92,11 +94,11 @@ export async function processBatches<T>(
             totalProcessed += result.processedCount;
             if (!result.success) totalErrors++;
 
-
-
             // Handle error based on configuration
             if (!result.success && batchConfig.errorHandling === "stop") {
-                throw new Error(`Batch ${batchIndex + 1} failed: ${result.error}`);
+                throw new Error(
+                    `Batch ${batchIndex + 1} failed: ${result.error}`,
+                );
             }
         }
     }
@@ -132,4 +134,4 @@ export function createBatchResult(
         processedCount,
         error,
     };
-} 
+}

@@ -285,7 +285,8 @@ export function calculateBackoffDelay(
     attempt: number,
     config: IRetryConfig,
 ): number {
-    const delay = config.baseDelay * Math.pow(config.backoffMultiplier, attempt - 1);
+    const delay =
+        config.baseDelay * Math.pow(config.backoffMultiplier, attempt - 1);
     return Math.min(delay, config.maxDelay);
 }
 
@@ -293,7 +294,7 @@ export function calculateBackoffDelay(
  * Sleep for a specified number of milliseconds
  */
 export function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
@@ -358,7 +359,8 @@ export async function retryWithBackoff<T>(
     retryError.stack = lastError.stack;
 
     // Add enhanced error information
-    (retryError as unknown as Record<string, unknown>).enhancedError = enhancedError;
+    (retryError as unknown as Record<string, unknown>).enhancedError =
+        enhancedError;
     (retryError as unknown as Record<string, unknown>).retryContext = {
         attempts: config.maxRetries + 1,
         config,
@@ -427,7 +429,8 @@ export function handleOperationError(
     );
 
     // Add enhanced error information to the node error
-    (nodeError as unknown as Record<string, unknown>).enhancedError = enhancedError;
+    (nodeError as unknown as Record<string, unknown>).enhancedError =
+        enhancedError;
 
     throw nodeError;
 }
@@ -451,7 +454,9 @@ export async function recoverConnection(
         try {
             if (DEBUG) {
                 // eslint-disable-next-line no-console
-                console.log(`DEBUG - Connection recovery attempt ${attempt}/${maxAttempts}`);
+                console.log(
+                    `DEBUG - Connection recovery attempt ${attempt}/${maxAttempts}`,
+                );
             }
 
             // Try to reconnect
@@ -461,20 +466,20 @@ export async function recoverConnection(
             if (credentials.authentication === "Root") {
                 await client.signin({
                     username: credentials.username,
-                    password: credentials.password
+                    password: credentials.password,
                 });
             } else if (credentials.authentication === "Namespace") {
                 await client.signin({
                     username: credentials.username,
                     password: credentials.password,
-                    namespace: credentials.namespace
+                    namespace: credentials.namespace,
                 });
             } else if (credentials.authentication === "Database") {
                 await client.signin({
                     username: credentials.username,
                     password: credentials.password,
                     namespace: credentials.namespace,
-                    database: credentials.database
+                    database: credentials.database,
                 });
             }
 
@@ -482,7 +487,7 @@ export async function recoverConnection(
             if (credentials.namespace && credentials.database) {
                 await client.use({
                     namespace: credentials.namespace,
-                    database: credentials.database
+                    database: credentials.database,
                 });
             } else if (credentials.namespace) {
                 await client.use({ namespace: credentials.namespace });
@@ -497,7 +502,10 @@ export async function recoverConnection(
         } catch (error) {
             if (DEBUG) {
                 // eslint-disable-next-line no-console
-                console.log(`DEBUG - Connection recovery attempt ${attempt} failed:`, error.message);
+                console.log(
+                    `DEBUG - Connection recovery attempt ${attempt} failed:`,
+                    error.message,
+                );
             }
 
             if (attempt === maxAttempts) {
@@ -627,6 +635,9 @@ export function logEnhancedError(
 
     if (DEBUG) {
         // eslint-disable-next-line no-console
-        console.log("DEBUG - Enhanced Error Log:", JSON.stringify(logData, null, 2));
+        console.log(
+            "DEBUG - Enhanced Error Log:",
+            JSON.stringify(logData, null, 2),
+        );
     }
-} 
+}
