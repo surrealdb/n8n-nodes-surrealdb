@@ -39,6 +39,15 @@ function set(obj: Record<string, unknown>, path: string, value: unknown): Record
     const keys = path.split(".");
     let current = obj;
 
+    // Prevent prototype pollution by blocking dangerous keys
+    const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+    for (const key of keys) {
+        if (dangerousKeys.includes(key)) {
+            // Optionally, throw an error or just return the object unchanged
+            return obj;
+        }
+    }
+
     for (let i = 0; i < keys.length - 1; i++) {
         const key = keys[i];
         if (
