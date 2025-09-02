@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enhanced Error Handling & Recovery**: Implements intelligent error classification, retry logic, and connection recovery. Adds operation-specific configurations and enhanced error reporting with contextual information.
 
 ### Fixed
+- **Connection Validation Queries**: Fixed connection validation queries to use proper SurrealQL syntax (`RETURN 1` instead of `SELECT 1`). This ensures compatibility with SurrealDB's query language standards and prevents validation failures in connection pooling and health checks.
 - **WebSocket Connection Prevention**: Prevented connecting to SurrealDB instances using WebSocket protocols (`ws://` or `wss://`). The node now enforces HTTP/HTTPS-only connections and provides clear error messages if a WebSocket URL is supplied.
 - **Centralized Debug Logging**: Added a centralized debug logging system, controlled by the `SURREAL_DEBUG` environment variable, to provide detailed logs for troubleshooting and development without polluting production output.
 

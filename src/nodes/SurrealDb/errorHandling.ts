@@ -526,7 +526,7 @@ export async function recoverConnection(
 export async function validateConnection(client: Surreal): Promise<boolean> {
     try {
         // Try a simple query to test the connection
-        await client.query("SELECT 1");
+        await client.query("RETURN 1");
         return true;
     } catch (error) {
         if (DEBUG) {
