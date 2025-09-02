@@ -58,7 +58,7 @@ export const queryFields: INodeProperties[] = [
     {
         displayName: "Parameters (JSON)",
         name: "parameters",
-        type: "json",
+        type: "string",
         displayOptions: {
             show: {
                 resource: ["query"],
@@ -353,7 +353,7 @@ export const queryFields: INodeProperties[] = [
     {
         displayName: "Parameters (JSON)",
         name: "parameters",
-        type: "json",
+        type: "string",
         displayOptions: {
             show: {
                 resource: ["query"],
