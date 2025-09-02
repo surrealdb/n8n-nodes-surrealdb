@@ -34,12 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Connection Validation Queries**: Fixed connection validation queries to use proper SurrealQL syntax (`RETURN 1` instead of `SELECT 1`). This ensures compatibility with SurrealDB's query language standards and prevents validation failures in connection pooling and health checks.
 - **WebSocket Connection Prevention**: Prevented connecting to SurrealDB instances using WebSocket protocols (`ws://` or `wss://`). The node now enforces HTTP/HTTPS-only connections and provides clear error messages if a WebSocket URL is supplied.
 - **Centralized Debug Logging**: Added a centralized debug logging system, controlled by the `SURREAL_DEBUG` environment variable, to provide detailed logs for troubleshooting and development without polluting production output.
+- **Query Operations Parameter Validation**: Fixed "Received tool input did not match expected schema" error when executing queries without parameters. The `parameters` field in Execute Query and Build Select Query operations is now correctly treated as optional and empty parameters no longer cause validation errors.
 
 ### Changed
 - **Error Handling for `executeQuery`**: Improved error handling for the `executeQuery` operation, ensuring that errors are classified and reported more accurately, and that retry logic is applied consistently.
 - **Development Workflow**: Fixed `tsc` command in development scripts and updated ESLint configuration to resolve errors and warnings.
 - **Dependencies**: Updated third-party dependencies for improved stability and compatibility.
-
 
 ## [0.4.1] - 2025-05-31
 
@@ -119,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - N/A (initial release)
 
+[0.4.1]: https://github.com/nsxdavid/n8n-nodes-surrealdb/compare/v0.4.0...v0.4.1
 [0.3.1]: https://github.com/nsxdavid/n8n-nodes-surrealdb/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/nsxdavid/n8n-nodes-surrealdb/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/nsxdavid/n8n-nodes-surrealdb/compare/v0.1.0...v0.2.0

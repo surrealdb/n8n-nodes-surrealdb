@@ -187,6 +187,7 @@ export const buildSelectQueryOperation: IOperationHandler = {
                 parametersInput,
                 "Parameters",
                 itemIndex,
+                false, // parameters are optional
             );
 
             // Get options

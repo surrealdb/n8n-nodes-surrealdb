@@ -215,6 +215,7 @@ export function validateArrayField(
  * @param dataInput The data input from node parameters (can be string or object)
  * @param fieldName The name of the field for error messages
  * @param itemIndex The index of the current item
+ * @param isRequired Whether the field is required (default: true)
  * @returns The parsed data object
  * @throws NodeOperationError if the data is invalid
  */
@@ -223,16 +224,21 @@ export function validateAndParseData(
     dataInput: unknown,
     fieldName: string,
     itemIndex: number,
+    isRequired = true,
 ): unknown {
     // Check if data is provided
     if (dataInput === undefined || dataInput === "") {
-        throw new NodeOperationError(
-            self.getNode(),
-            `${fieldName} is required`,
-            {
-                itemIndex,
-            },
-        );
+        if (isRequired) {
+            throw new NodeOperationError(
+                self.getNode(),
+                `${fieldName} is required`,
+                {
+                    itemIndex,
+                },
+            );
+        }
+        // Return empty object for optional empty parameters
+        return {};
     }
 
     // Process data based on type

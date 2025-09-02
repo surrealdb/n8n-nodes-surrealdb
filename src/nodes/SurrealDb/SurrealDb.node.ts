@@ -329,13 +329,13 @@ export class SurrealDb implements INodeType {
         );
 
         if (DEBUG) {
-            // eslint-disable-next-line no-console
             const sanitizedCredentials = {
                 ...resolvedCredentials,
                 password: resolvedCredentials.password
                     ? "[REDACTED]"
                     : undefined,
             };
+            // eslint-disable-next-line no-console
             console.log(
                 "DEBUG - Resolved Credentials:",
                 JSON.stringify(sanitizedCredentials),
