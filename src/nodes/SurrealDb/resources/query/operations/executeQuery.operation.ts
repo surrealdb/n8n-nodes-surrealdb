@@ -196,8 +196,9 @@ export const executeQueryOperation: IOperationHandler = {
 
             // The result is an array of arrays, where each array contains the results of a statement
             if (Array.isArray(result)) {
-                // Process each result set, filtering out null values
-                for (const resultSet of result.filter(item => item !== null)) {
+                // Process each result set, filtering out null and undefined values
+                const filteredResults = result.filter(item => item != null);
+                for (const resultSet of filteredResults) {
                     if (Array.isArray(resultSet)) {
                         // For array results, return each item as a separate n8n item
                         const formattedResults = formatArrayResult(resultSet);

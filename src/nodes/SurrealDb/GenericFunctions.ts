@@ -600,17 +600,46 @@ export function checkQueryResult(
     result: unknown,
     errorPrefix: string,
 ): IQueryResultCheck {
-    // Check if the result is an array and if the first element has an error property
-    const hasError =
-        Array.isArray(result) &&
-        result.length > 0 &&
-        result[0] &&
-        typeof result[0] === "object" &&
-        "error" in result[0];
+    // Check if the result is an array and look for errors in any of the result elements
+    if (Array.isArray(result) && result.length > 0) {
+        // For batch operations, we need to check each result element for errors
+        // Skip null/undefined elements and check each non-null element
+        for (const resultElement of result) {
+            if (
+                resultElement &&
+                typeof resultElement === "object" &&
+                "error" in resultElement
+            ) {
+                // Extract the error message safely
+                const errorObj = resultElement as Record<string, unknown>;
+                const errorText = String(errorObj.error || "Unknown error");
+                const errorMessage = `${errorPrefix}: ${errorText}`;
 
-    if (hasError) {
+                // Create a synthetic error for classification
+                const syntheticError = new Error(errorText);
+                const enhancedError = classifyError(syntheticError);
+
+                return {
+                    success: false,
+                    errorMessage,
+                    errorCategory: enhancedError.category,
+                    errorSeverity: enhancedError.severity,
+                    errorDetails: {
+                        originalError: errorText,
+                        resultStructure: Array.isArray(result)
+                            ? `Array with ${result.length} elements`
+                            : typeof result,
+                        timestamp: new Date().toISOString(),
+                    },
+                };
+            }
+        }
+    }
+
+    // Check if the result itself (not an array) has an error property
+    if (result && typeof result === "object" && "error" in result) {
         // Extract the error message safely
-        const errorObj = result[0] as Record<string, unknown>;
+        const errorObj = result as Record<string, unknown>;
         const errorText = String(errorObj.error || "Unknown error");
         const errorMessage = `${errorPrefix}: ${errorText}`;
 
