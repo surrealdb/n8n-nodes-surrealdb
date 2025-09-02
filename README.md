@@ -15,9 +15,9 @@
     &nbsp;
     <a href="https://surrealdb.com/docs/integrations/data-management/n8n"><img src="https://img.shields.io/badge/docs-view-44cc11.svg?style=flat-square"></a>
     &nbsp;
-    <a href="https://www.npmjs.com/package/n8n-nodes-surrealdb"><img src="https://img.shields.io/npm/v/n8n-nodes-surrealdb?style=flat-square"></a>
+    <a href="https://www.npmjs.com/package/@surrealdb/n8n-nodes-surrealdb"><img src="https://img.shields.io/npm/v/@surrealdb/n8n-nodes-surrealdb?style=flat-square"></a>
     &nbsp;
-    <a href="https://www.npmjs.com/package/n8n-nodes-surrealdb"><img src="https://img.shields.io/npm/dm/n8n-nodes-surrealdb?style=flat-square"></a>
+    <a href="https://www.npmjs.com/package/@surrealdb/n8n-nodes-surrealdb"><img src="https://img.shields.io/npm/dm/@surrealdb/n8n-nodes-surrealdb?style=flat-square"></a>
     &nbsp;
     <a href="https://github.com/surrealdb/n8n-nodes-surrealdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-1d9bf0.svg?style=flat-square"></a>
 </p>
@@ -99,7 +99,7 @@ View the node documentation [here](https://surrealdb.com/docs/integrations/data-
 1. Open your n8n instance
 2. Go to **Settings** > **Community Nodes**
 3. Click **Install**
-4. Enter `n8n-nodes-surrealdb` and click **Install**
+4. Enter `@surrealdb/n8n-nodes-surrealdb` and click **Install**
 5. Restart your n8n instance if prompted
 
 ## Configuration
@@ -375,7 +375,7 @@ If you want to contribute to this node:
 2. Install dependencies: `npm install`
 3. Build the node: `npm run build`
 4. Link to your n8n installation for testing: `npm link`
-5. In your n8n installation directory: `npm link n8n-nodes-surrealdb`
+5. In your n8n installation directory: `npm link @surrealdb/n8n-nodes-surrealdb`
 
 ### Debug Mode
 
