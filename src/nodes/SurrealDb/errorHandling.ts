@@ -111,7 +111,6 @@ export interface IEnhancedErrorResult {
  */
 export function classifyError(error: Error): IEnhancedError {
     const message = error.message.toLowerCase();
-    const stack = error.stack?.toLowerCase() || "";
 
     // SDK ↔ server protocol version mismatch. Must run before the connection
     // branch because these errors typically include the word "connection" in
@@ -136,27 +135,13 @@ export function classifyError(error: Error): IEnhancedError {
         };
     }
 
-    // Connection errors
-    if (
-        message.includes("connection") ||
-        message.includes("network") ||
-        message.includes("econnrefused") ||
-        message.includes("enotfound") ||
-        message.includes("timeout") ||
-        stack.includes("connection")
-    ) {
-        return {
-            category: ErrorCategory.CONNECTION_ERROR,
-            severity: ErrorSeverity.HIGH,
-            message: error.message,
-            originalError: error,
-            retryable: true,
-            maxRetries: 3,
-            retryDelay: 2000,
-        };
-    }
-
-    // Authentication errors
+    // Authentication errors. Must be checked BEFORE the catch-all
+    // CONNECTION_ERROR branch below: the SurrealDB SDK's internal class is
+    // ConnectionController, so any auth failure from client.signin() has
+    // "connection" somewhere in its stack trace. If CONNECTION_ERROR ran
+    // first with a stack-substring check, it would swallow auth errors and
+    // mark them retryable — the retry loop would burn 4 attempts on a
+    // permanent credentials problem.
     if (
         message.includes("authentication") ||
         message.includes("unauthorized") ||
@@ -172,6 +157,28 @@ export function classifyError(error: Error): IEnhancedError {
             retryable: false,
             maxRetries: 0,
             retryDelay: 0,
+        };
+    }
+
+    // Connection errors. Only match on message-level signals — the previous
+    // stack.includes("connection") check was overly permissive and caused
+    // false positives for errors that happened to flow through the SDK's
+    // ConnectionController class (e.g., auth failures, version guards).
+    if (
+        message.includes("connection") ||
+        message.includes("network") ||
+        message.includes("econnrefused") ||
+        message.includes("enotfound") ||
+        message.includes("timeout")
+    ) {
+        return {
+            category: ErrorCategory.CONNECTION_ERROR,
+            severity: ErrorSeverity.HIGH,
+            message: error.message,
+            originalError: error,
+            retryable: true,
+            maxRetries: 3,
+            retryDelay: 2000,
         };
     }
 
