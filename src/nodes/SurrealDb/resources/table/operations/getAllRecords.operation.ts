@@ -16,6 +16,7 @@ import {
     buildSelectQuery,
     buildCredentialsObject,
 } from "../../../GenericFunctions";
+import { classifyError, ErrorCategory } from "../../../errorHandling";
 import type { IOperationHandler } from "../../../types/operation.types";
 
 import { DEBUG } from "../../../debug";
@@ -116,9 +117,35 @@ export const getAllRecordsOperation: IOperationHandler = {
                 debugLog("getAllRecords", "Modified query", itemIndex, query);
             }
 
-            // Execute the query
+            // Execute the query. If the caller opted into treating a missing
+            // target table as an empty result (for v1.x/v2.x compat against a
+            // v3 server), we swallow TABLE_NOT_FOUND and substitute an empty
+            // result shape so the downstream code falls through to its normal
+            // "no records" path.
             // Provide generic type argument for expected result structure: [unknown[]] - An array containing the array of records
-            const result = await client.query<[unknown[]]>(query, queryParams);
+            let result: [unknown[]];
+            try {
+                result = await client
+                    .query<[unknown[]]>(query, queryParams)
+                    .json();
+            } catch (error) {
+                const enhancedError = classifyError(error as Error);
+                if (
+                    enhancedError.category === ErrorCategory.TABLE_NOT_FOUND &&
+                    options.treatMissingTableAsEmpty === true
+                ) {
+                    if (DEBUG) {
+                        debugLog(
+                            "getAllRecords",
+                            "Table not found — treating as empty result (treatMissingTableAsEmpty=true)",
+                            itemIndex,
+                        );
+                    }
+                    result = [[]];
+                } else {
+                    throw error;
+                }
+            }
 
             if (DEBUG) {
                 // DEBUG: Log raw result

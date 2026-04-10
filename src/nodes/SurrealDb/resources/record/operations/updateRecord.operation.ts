@@ -203,7 +203,7 @@ export const updateRecordOperation: IOperationHandler = {
                     );
                 }
 
-                const queryResult = await client.query(query);
+                const queryResult = await client.query(query).json();
                 if (DEBUG) {
                     debugLog(
                         "updateRecord",
@@ -256,7 +256,7 @@ export const updateRecordOperation: IOperationHandler = {
                 }
 
                 // First check if record exists
-                const existingRecord = await client.select(recordId);
+                const existingRecord = await client.select(recordId).json();
 
                 // If record doesn't exist, throw error
                 if (
@@ -272,11 +272,12 @@ export const updateRecordOperation: IOperationHandler = {
                     );
                 }
 
-                // Execute the update operation
-                result = await client.update(
-                    recordId,
-                    data as Record<string, unknown>,
-                );
+                // Execute the update operation (v2 builder chain: replace mode).
+                // .json() makes the response JSON-safe for n8n output.
+                result = await client
+                    .update(recordId)
+                    .json()
+                    .content(data as Record<string, unknown>);
             }
 
             // Check if the operation was successful

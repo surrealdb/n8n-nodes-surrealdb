@@ -17,6 +17,7 @@ import {
     cleanTableName,
     buildCredentialsObject,
 } from "../../../GenericFunctions";
+import { classifyError, ErrorCategory } from "../../../errorHandling";
 import type { IOperationHandler } from "../../../types/operation.types";
 
 import { DEBUG } from "../../../debug";
@@ -151,8 +152,30 @@ export const getManyOperation: IOperationHandler = {
                 debugLog("getMany", "Modified query", itemIndex, query);
             }
 
-            // Execute the query (no parameters needed for IDs now)
-            const result = await client.query<[unknown[]]>(query);
+            // Execute the query (no parameters needed for IDs now). Honors the
+            // `treatMissingTableAsEmpty` option for v1.x/v2.x compatibility:
+            // v3 errors on missing tables instead of returning an empty array.
+            let result: [unknown[]];
+            try {
+                result = await client.query<[unknown[]]>(query).json();
+            } catch (error) {
+                const enhancedError = classifyError(error as Error);
+                if (
+                    enhancedError.category === ErrorCategory.TABLE_NOT_FOUND &&
+                    options.treatMissingTableAsEmpty === true
+                ) {
+                    if (DEBUG) {
+                        debugLog(
+                            "getMany",
+                            "Table not found — treating as empty result (treatMissingTableAsEmpty=true)",
+                            itemIndex,
+                        );
+                    }
+                    result = [[]];
+                } else {
+                    throw error;
+                }
+            }
 
             if (DEBUG) {
                 debugLog(

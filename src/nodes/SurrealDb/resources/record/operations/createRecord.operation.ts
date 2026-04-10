@@ -5,7 +5,7 @@ import type {
 } from "n8n-workflow";
 import type { IOperationHandler } from "../../../types/operation.types";
 import type { Surreal } from "surrealdb";
-import { RecordId } from "surrealdb";
+import { RecordId, Table } from "surrealdb";
 import {
     validateRequiredField,
     validateAndParseData,
@@ -36,7 +36,9 @@ export const createRecordOperation: IOperationHandler = {
         // Declare variables outside try block for access in catch block
         let table = "";
         let data: unknown = {};
-        let recordId: string | RecordId = "";
+        // v2 SDK: `client.create()` takes either a RecordId (for a specific
+        // id) or a Table (for auto-generated id). Both are typed wrappers.
+        let target: RecordId | Table | null = null;
 
         try {
             if (DEBUG)
@@ -95,23 +97,23 @@ export const createRecordOperation: IOperationHandler = {
                         providedId,
                     );
                 // Create the record ID with the provided ID
-                recordId = createRecordId(table, providedId.trim());
+                target = createRecordId(table, providedId.trim());
             } else {
-                // No ID provided, use only the table for auto-generation of ID by SurrealDB
+                // No ID provided — target the Table so SurrealDB auto-generates the id
                 if (DEBUG)
                     debugLog(
                         "createRecord",
-                        "No ID provided, using table name only for auto-ID generation",
+                        "No ID provided, targeting table for auto-ID generation",
                         itemIndex,
                     );
-                recordId = table;
+                target = new Table(table);
             }
 
             // Get credentials to ensure they are configured
             await executeFunctions.getCredentials("surrealDbApi");
 
             if (DEBUG) {
-                debugLog("createRecord", "Record ID", itemIndex, recordId);
+                debugLog("createRecord", "Create target", itemIndex, target);
                 debugLog(
                     "createRecord",
                     "Data",
@@ -120,13 +122,29 @@ export const createRecordOperation: IOperationHandler = {
                 );
             }
 
-            // Create the record with enhanced error handling and retry logic
+            // Create the record with enhanced error handling and retry logic.
+            // v2 builder chain: client.create(target).content(data). The two
+            // create() overloads (RecordId vs Table) are mutually exclusive,
+            // so we narrow with instanceof to pick the right one — TypeScript
+            // can't dispatch a union across separate overloads.
             const result = await retryWithBackoff(
                 async () => {
-                    return await client.create(
-                        recordId as string,
-                        data as Record<string, unknown>,
-                    );
+                    const record = data as Record<string, unknown>;
+                    // .json() converts RecordId/Datetime/etc. wrappers in the
+                    // response to JSON-safe types so n8n can serialize them.
+                    if (target instanceof RecordId) {
+                        return await client
+                            .create(target)
+                            .json()
+                            .content(record);
+                    }
+                    if (target instanceof Table) {
+                        return await client
+                            .create(target)
+                            .json()
+                            .content(record);
+                    }
+                    throw new Error("createRecord: target was not initialized");
                 },
                 {
                     ...DEFAULT_RETRY_CONFIG,
@@ -140,8 +158,8 @@ export const createRecordOperation: IOperationHandler = {
                     operation: "createRecord",
                     table,
                     recordId:
-                        typeof recordId === "string"
-                            ? recordId
+                        target instanceof RecordId
+                            ? target.toString()
                             : "auto-generated",
                     dataKeys: Object.keys(
                         (data as Record<string, unknown>) || {},
@@ -189,8 +207,8 @@ export const createRecordOperation: IOperationHandler = {
                     {
                         table,
                         recordId:
-                            typeof recordId === "string"
-                                ? recordId
+                            target instanceof RecordId
+                                ? target.toString()
                                 : "auto-generated",
                         dataKeys: Object.keys(
                             (data as Record<string, unknown>) || {},

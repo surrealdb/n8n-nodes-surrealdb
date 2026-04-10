@@ -1,5 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
+import { Table } from "surrealdb";
 import { debugLog } from "../../../utilities";
 import {
     validateJSON,
@@ -177,7 +178,14 @@ async function processBatch(
     batchIndex: number,
 ): Promise<IBatchResult> {
     try {
-        const result = await client.insert(table, batch);
+        // v2 SDK: client.insert() requires a Table wrapper, not a raw string.
+        // The explicit generic pins T as the row type so that `batch` (an
+        // array of rows) matches the expected `Values<T>[]` parameter — without
+        // it, T is inferred as the array type itself, nesting the expectation.
+        // .json() converts typed wrappers in the response to JSON-safe types.
+        const result = await client
+            .insert<Record<string, unknown>>(new Table(table), batch)
+            .json();
 
         if (Array.isArray(result)) {
             return createBatchResult(true, result, batchIndex, result.length);

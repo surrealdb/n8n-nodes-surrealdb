@@ -78,8 +78,9 @@ export const deleteRecordOperation: IOperationHandler = {
             // Create the record ID
             const recordId = createRecordId(table, validatedId);
 
-            // Execute the delete operation
-            const result = await client.delete(recordId);
+            // Execute the delete operation. .json() converts RecordId and
+            // other typed wrappers in the response to JSON-safe types.
+            const result = await client.delete(recordId).json();
 
             // Check if the delete was successful
             if (result === null || result === undefined) {

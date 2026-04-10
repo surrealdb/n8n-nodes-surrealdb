@@ -214,6 +214,14 @@ export const tableFields: INodeProperties[] = [
                 description: "Number of records to skip",
             },
             {
+                displayName: "Treat Missing Table As Empty Result",
+                name: "treatMissingTableAsEmpty",
+                type: "boolean",
+                default: false,
+                description:
+                    "Whether to return an empty result when the target table does not exist. SurrealDB v3 treats queries against non-existent tables as errors; enable this to preserve the v1.x/v2.x silent-empty behavior.",
+            },
+            {
                 displayName: "Namespace",
                 name: "namespace",
                 type: "string",
@@ -249,6 +257,19 @@ export const tableFields: INodeProperties[] = [
             },
         },
         options: [
+            {
+                displayName: "Treat Missing Table As Empty Result",
+                name: "treatMissingTableAsEmpty",
+                type: "boolean",
+                default: false,
+                description:
+                    "Whether to return an empty result when the target table does not exist. SurrealDB v3 treats queries against non-existent tables as errors; enable this to preserve the v1.x/v2.x silent-empty behavior.",
+                displayOptions: {
+                    show: {
+                        "/operation": ["getMany"],
+                    },
+                },
+            },
             {
                 displayName: "Namespace",
                 name: "namespace",
