@@ -5,6 +5,33 @@ All notable changes to the n8n-nodes-surrealdb package will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-04-10
+
+### BREAKING
+
+- **Requires SurrealDB server v3.0.0 or later.** For v1.x or v2.x servers, use `@surrealdb/n8n-nodes-surrealdb@0.5.x`. An explicit server-version guard rejects older servers with a clear fail-fast message at connection time.
+- **SurrealDB queries against non-existent tables now error by default.** SurrealDB v3 changed this from the v1.x/v2.x "return empty array" behavior to a hard error. Read operations can opt into the previous silent-empty behavior via the new "Treat Missing Table As Empty Result" option.
+
+### Added
+
+- Upgraded the `surrealdb` JS SDK from v1.3.2 to v2.0.3 for server v3 compatibility.
+- New `VERSION_ERROR` and `TABLE_NOT_FOUND` error categories with precise classification so permanent protocol errors fail fast instead of being misclassified as retryable connection errors.
+- Per-operation "Treat Missing Table As Empty Result" option on `Get All Records`, `Get Many`, `Query Relationships`, and `Execute Query`. Default `false` to match v3 strictness.
+- Explicit server-version guard inside the connection lifecycle that rejects pre-3.0 servers with a classifier-recognisable message.
+
+### Changed
+
+- Migrated every SDK call to the v2 builder chain: `.content()`, `.merge()`, `.patch()`, `.replace()`. Table arguments are wrapped in `new Table(...)` and record arguments in `new RecordId(...)`.
+- `mergeRecord` now calls `client.update(recordId).merge(data)` because the top-level `client.merge()` no longer exists in SDK v2. Semantics preserved ("error if record does not exist").
+- Response objects are now JSON-safe by default via `.json()` applied to every SDK call. Previously, v2's `RecordId` and `Datetime` class wrappers serialized as empty `{}` in n8n's output because they hold their values in private class members.
+- Consolidated three duplicate `connect → signin → use` code paths (`ConnectionPool.createConnection`, `GenericFunctions.connectSurrealClient`, `errorHandling.recoverConnection`) into a single shared `initializeSurrealClient` helper. Signin order unified to `connect → signin → use` (matches SDK documentation).
+- Dropped the implicit `database="test"` fallback that only existed in the `ConnectionPool` path. Credentials with Namespace auth and an empty Database field now leave the database unset instead of silently defaulting to "test".
+
+### Fixed
+
+- Version-mismatch errors (and other permanent protocol errors) no longer trigger the retry loop — they fail fast with a single attempt instead of the previous "Operation failed after 4 attempts" wrapper.
+- Retry error messages now report the actual number of attempts made, not the configured maximum.
+
 ## [0.5.0] - 2025-09-02
 
 ### Added
