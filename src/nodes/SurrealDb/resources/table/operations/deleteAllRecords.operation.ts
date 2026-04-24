@@ -114,7 +114,7 @@ export const deleteAllRecordsOperation: IOperationHandler = {
             }
 
             // Execute the query
-            const result = await client.query<[unknown[]]>(finalQuery);
+            const result = await client.query<[unknown[]]>(finalQuery).json();
 
             // Check for query errors
             const queryCheck = checkQueryResult(result, "Query failed");

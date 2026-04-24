@@ -51,7 +51,7 @@ export const versionOperation: IOperationHandler = {
                 "INFO FOR SERVER",
                 resolvedCredentials,
             );
-            const result = await client.query(infoQuery);
+            const result = await client.query(infoQuery).json();
 
             // Check for query errors
             const queryCheck = checkQueryResult(result, "Query failed");

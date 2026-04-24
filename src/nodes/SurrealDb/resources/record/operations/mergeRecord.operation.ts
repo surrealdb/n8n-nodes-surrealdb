@@ -97,11 +97,15 @@ export const mergeRecordOperation: IOperationHandler = {
             // Create the record ID
             const recordId = createRecordId(table, validatedId);
 
-            // Execute the merge operation
-            const result = await client.merge(
-                recordId,
-                data as Record<string, unknown>,
-            );
+            // Execute the merge operation (v2 builder chain). v1's top-level
+            // client.merge() is gone; .merge() is now a chained method on
+            // update() that performs a partial update, preserving existing
+            // fields not mentioned in `data`. .json() converts RecordId and
+            // other typed wrappers in the response to JSON-safe types.
+            const result = await client
+                .update(recordId)
+                .json()
+                .merge(data as Record<string, unknown>);
 
             // Check if the operation was successful
             if (result === null || result === undefined) {

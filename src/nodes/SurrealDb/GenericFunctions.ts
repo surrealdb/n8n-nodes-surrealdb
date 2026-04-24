@@ -90,6 +90,7 @@ import {
     ErrorCategory,
     ErrorSeverity,
     DEFAULT_RETRY_CONFIG,
+    initializeSurrealClient,
 } from "./errorHandling";
 
 /**
@@ -671,11 +672,9 @@ export function checkQueryResult(
 export async function connectSurrealClient(credentials: ISurrealCredentials) {
     const {
         connectionString,
-        username,
-        password,
+        authentication: authType,
         namespace,
         database,
-        authentication: authType,
     } = credentials;
 
     const db = new Surreal();
@@ -684,66 +683,7 @@ export async function connectSurrealClient(credentials: ISurrealCredentials) {
     return await retryWithBackoff(
         async () => {
             try {
-                // Validate that the connection string is not a WebSocket connection
-                if (
-                    connectionString.startsWith("ws://") ||
-                    connectionString.startsWith("wss://")
-                ) {
-                    throw new Error(
-                        "WebSocket connections (ws:// or wss://) are not supported. Please use HTTP/HTTPS connections only.",
-                    );
-                }
-
-                // Validate required fields based on authentication type
-                if (authType === "Namespace" && !namespace) {
-                    throw new Error(
-                        "Namespace is required for Namespace authentication",
-                    );
-                }
-                if (authType === "Database" && (!namespace || !database)) {
-                    throw new Error(
-                        "Namespace and Database are required for Database authentication",
-                    );
-                }
-
-                // Connect to SurrealDB
-                await db.connect(connectionString);
-
-                // Sign in based on authentication type
-                if (authType === "Root") {
-                    await db.signin({ username, password });
-                } else if (authType === "Namespace") {
-                    await db.signin({ username, password, namespace });
-                } else if (authType === "Database") {
-                    await db.signin({
-                        username,
-                        password,
-                        namespace,
-                        database,
-                    });
-                }
-
-                // Apply namespace and database context after authentication
-                if (namespace && database) {
-                    if (DEBUG) {
-                        // eslint-disable-next-line no-console
-                        console.log(
-                            "DEBUG - connectSurrealClient - Setting namespace and database context:",
-                            namespace,
-                            database,
-                        );
-                    }
-                    await db.use({ namespace, database });
-                } else if (namespace) {
-                    if (DEBUG) {
-                        // eslint-disable-next-line no-console
-                        console.log(
-                            "DEBUG - connectSurrealClient - Setting namespace context:",
-                            namespace,
-                        );
-                    }
-                    await db.use({ namespace });
-                }
+                await initializeSurrealClient(db, credentials);
 
                 // Validate the connection with a simple query
                 const isValid = await validateConnection(db);

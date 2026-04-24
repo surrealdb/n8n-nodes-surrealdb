@@ -145,9 +145,11 @@ export const updateAllRecordsOperation: IOperationHandler = {
             }
 
             // Execute the query
-            const result = await client.query<[unknown[]]>(finalQuery, {
-                data,
-            });
+            const result = await client
+                .query<[unknown[]]>(finalQuery, {
+                    data,
+                })
+                .json();
 
             // Check for query errors
             const queryCheck = checkQueryResult(result, "Query failed");

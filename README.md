@@ -359,7 +359,9 @@ For detailed information about the error handling system, see [Error Handling Do
 
 ## Compatibility
 
-This node has been tested with SurrealDB v2.x.
+**Requires SurrealDB server v3.0.0 or later.** For SurrealDB v1.x or v2.x servers, pin `@surrealdb/n8n-nodes-surrealdb@0.5.x`.
+
+Internally uses the `surrealdb` JavaScript SDK v2.x. Connects over HTTP/HTTPS only — WebSocket (`ws://` / `wss://`) is not supported, see [Connection Protocol](#connection-protocol) below.
 
 ## Resources
 

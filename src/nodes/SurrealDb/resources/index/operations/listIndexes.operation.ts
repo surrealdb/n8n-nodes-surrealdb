@@ -68,7 +68,7 @@ export const listIndexesOperation: IOperationHandler = {
 
         // Execute the query
 
-        const result = await client.query(preparedQuery);
+        const result = await client.query(preparedQuery).json();
 
         // Check for query errors
         const queryCheck = checkQueryResult(result, "Query failed");

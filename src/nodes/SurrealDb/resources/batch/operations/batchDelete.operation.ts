@@ -1,5 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
+import { RecordId } from "surrealdb";
 import { debugLog } from "../../../utilities";
 import {
     validateRequiredField,
@@ -187,9 +188,22 @@ async function processBatch(
     try {
         const results = [];
 
-        // Process each record ID in the batch individually
-        for (const recordId of batch) {
-            const result = await client.delete(recordId);
+        // Process each record ID in the batch individually. By the time the
+        // batch reaches here, IDs are always in "table:id" form (the caller
+        // prefixes them explicitly), so we split on the first colon to build
+        // a v2 RecordId(table, id).
+        for (const recordIdStr of batch) {
+            const colonIdx = recordIdStr.indexOf(":");
+            if (colonIdx === -1) {
+                throw new Error(
+                    `Invalid record ID format: "${recordIdStr}" (expected "table:id")`,
+                );
+            }
+            const tableName = recordIdStr.slice(0, colonIdx);
+            const id = recordIdStr.slice(colonIdx + 1);
+            const result = await client
+                .delete(new RecordId(tableName, id))
+                .json();
             results.push(result);
         }
 

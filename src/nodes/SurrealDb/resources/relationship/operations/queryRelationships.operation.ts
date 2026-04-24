@@ -11,6 +11,7 @@ import {
     checkQueryResult,
 } from "../../../GenericFunctions";
 import { debugLog } from "../../../utilities";
+import { classifyError, ErrorCategory } from "../../../errorHandling";
 import type { IOperationHandler } from "../../../types/operation.types";
 
 import { DEBUG } from "../../../debug";
@@ -149,9 +150,29 @@ export const queryRelationshipsOperation: IOperationHandler = {
             );
         }
 
-        // Execute the query
-
-        const result = await client.query(preparedQuery);
+        // Execute the query. Honors the `treatMissingTableAsEmpty` option
+        // for v1.x/v2.x compatibility when the source table is missing on v3.
+        let result: unknown;
+        try {
+            result = await client.query(preparedQuery).json();
+        } catch (error) {
+            const enhancedError = classifyError(error as Error);
+            if (
+                enhancedError.category === ErrorCategory.TABLE_NOT_FOUND &&
+                options.treatMissingTableAsEmpty === true
+            ) {
+                if (DEBUG) {
+                    debugLog(
+                        "queryRelationships",
+                        "Table not found — treating as empty result (treatMissingTableAsEmpty=true)",
+                        itemIndex,
+                    );
+                }
+                result = [[]];
+            } else {
+                throw error;
+            }
+        }
 
         // Check for query errors
         const queryCheck = checkQueryResult(result, "Query failed");

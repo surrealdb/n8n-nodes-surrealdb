@@ -49,3 +49,7 @@ dist/
 
 **/.claude/settings.local.json
 .claude/settings.local.json
+
+# Local development (not for upstream)
+/CLAUDE.md
+/scripts/

@@ -5,6 +5,7 @@ import {
     ErrorCategory,
     retryWithBackoff,
     DEFAULT_RETRY_CONFIG,
+    initializeSurrealClient,
 } from "./errorHandling";
 
 /**
@@ -334,36 +335,7 @@ export class SurrealConnectionPool {
         const client = new Surreal();
 
         try {
-            await client.connect(credentials.connectionString);
-
-            // Set namespace and database if provided
-            if (credentials.namespace) {
-                await client.use({
-                    namespace: credentials.namespace,
-                    database: credentials.database || "test",
-                });
-            }
-
-            // Authenticate based on authentication type
-            if (credentials.authentication === "Root") {
-                await client.signin({
-                    username: credentials.username,
-                    password: credentials.password,
-                });
-            } else if (credentials.authentication === "Namespace") {
-                await client.signin({
-                    username: credentials.username,
-                    password: credentials.password,
-                    namespace: credentials.namespace,
-                });
-            } else if (credentials.authentication === "Database") {
-                await client.signin({
-                    username: credentials.username,
-                    password: credentials.password,
-                    namespace: credentials.namespace,
-                    database: credentials.database,
-                });
-            }
+            await initializeSurrealClient(client, credentials);
 
             if (DEBUG) {
                 // eslint-disable-next-line no-console

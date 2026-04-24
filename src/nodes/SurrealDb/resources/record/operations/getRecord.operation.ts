@@ -94,8 +94,10 @@ export const getRecordOperation: IOperationHandler = {
             // Create the record ID
             const recordId = createRecordId(table, validatedId);
 
-            // Execute the select operation
-            const result = await client.select(recordId);
+            // Execute the select operation. .json() converts RecordId and
+            // other typed wrappers in the response to JSON-safe types so
+            // n8n can serialize them for output.
+            const result = await client.select(recordId).json();
             if (DEBUG)
                 debugLog(
                     "getRecord",

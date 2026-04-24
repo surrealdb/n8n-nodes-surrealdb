@@ -1,5 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
+import { RecordId } from "surrealdb";
 import { debugLog } from "../../../utilities";
 import {
     validateJSON,
@@ -196,12 +197,21 @@ async function processBatch(
 
         // Process each record in the batch individually for upsert
         for (const record of batch) {
-            const recordId = record.id as string;
+            const rawId = String(record.id ?? "");
+            // Strip optional "table:" prefix — we already have the table name
+            // from the batch context, and v2 RecordId takes table + id split.
+            const id = rawId.includes(":")
+                ? rawId.slice(rawId.indexOf(":") + 1)
+                : rawId;
             const recordData = { ...record } as Record<string, unknown>;
             delete recordData.id; // Remove id from the data to be upserted
 
-            // Use the upsert method which will create if doesn't exist, or update if it does
-            const result = await client.upsert(recordId, recordData);
+            // Use the upsert method which will create if doesn't exist, or
+            // update if it does. v2 builder chain: upsert(recordId).content(data).
+            const result = await client
+                .upsert(new RecordId(table, id))
+                .json()
+                .content(recordData);
             results.push(result);
         }
 

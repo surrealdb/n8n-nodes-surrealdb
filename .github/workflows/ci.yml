@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  
+
 jobs:
   lint:
     name: Lint (Node.js ${{ matrix.node-version }})
@@ -18,10 +18,10 @@ jobs:
         node-version: [20, 22, 24]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -40,10 +40,10 @@ jobs:
         node-version: [20, 22, 24]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -62,10 +62,10 @@ jobs:
         node-version: [20, 22, 24]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -81,10 +81,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: 'npm'
@@ -108,7 +108,7 @@ jobs:
           echo "Build verification passed"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: build-artifacts
           path: dist/
@@ -120,10 +120,10 @@ jobs:
     needs: [build]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: 'npm'
@@ -132,7 +132,7 @@ jobs:
         run: npm ci
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: build-artifacts
           path: dist/
@@ -140,25 +140,25 @@ jobs:
       - name: Test n8n node structure
         run: |
           echo "Validating n8n node structure..."
-          
+
           # Check if main entry point exists
           if [ ! -f "dist/index.js" ]; then
             echo "❌ dist/index.js not found"
             exit 1
           fi
-          
+
           # Check if credentials exist
           if [ ! -f "dist/credentials/SurrealDbApi.credentials.js" ]; then
             echo "❌ dist/credentials/SurrealDbApi.credentials.js not found"
             exit 1
           fi
-          
+
           # Check if node exists
           if [ ! -f "dist/nodes/SurrealDb/SurrealDb.node.js" ]; then
             echo "❌ dist/nodes/SurrealDb/SurrealDb.node.js not found"
             exit 1
           fi
-          
+
           # Check if package.json is valid for n8n
           if ! node -e "
             const pkg = require('./package.json');
@@ -174,13 +174,13 @@ jobs:
           "; then
             exit 1
           fi
-          
+
           echo "✅ All n8n node structure validations passed"
 
       - name: Test n8n node loading
         run: |
           echo "Testing node loading..."
-          
+
           # Create a simple test script
           cat > test-load.js << 'EOF'
           try {
@@ -200,5 +200,5 @@ jobs:
             process.exit(1);
           }
           EOF
-          
-          node test-load.js 
+
+          node test-load.js

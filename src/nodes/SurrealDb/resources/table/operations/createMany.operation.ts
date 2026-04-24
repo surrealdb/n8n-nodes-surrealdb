@@ -1,5 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData } from "n8n-workflow";
 import type { Surreal } from "surrealdb";
+import { Table } from "surrealdb";
 import { formatArrayResult, debugLog } from "../../../utilities";
 import {
     validateJSON,
@@ -109,9 +110,10 @@ export const createManyOperation: IOperationHandler = {
                     JSON.stringify(data),
                 );
 
-            // Execute the insert operation to create multiple records
-            // The insert method accepts an array of objects directly
-            const result = await client.insert(table, data);
+            // Execute the insert operation to create multiple records.
+            // v2 SDK: client.insert() requires a Table wrapper, not a raw string.
+            // .json() makes the response JSON-safe for n8n output.
+            const result = await client.insert(new Table(table), data).json();
 
             // The result from client.insert with an array is expected to be an array of created records.
             if (Array.isArray(result)) {

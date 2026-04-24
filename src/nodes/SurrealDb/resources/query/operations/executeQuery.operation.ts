@@ -25,6 +25,7 @@ import {
     retryWithBackoff,
     DEFAULT_RETRY_CONFIG,
     ErrorCategory,
+    classifyError,
 } from "../../../errorHandling";
 
 import { DEBUG } from "../../../debug";
@@ -129,33 +130,57 @@ export const executeQueryOperation: IOperationHandler = {
                 );
             }
 
-            // Execute the query with enhanced error handling and recovery
-            const result = await retryWithBackoff(
-                async () => {
-                    return await executeQueryWithRecovery<[unknown[]]>(
-                        client,
-                        finalQuery,
-                        resolvedCredentials,
-                        parameters as Record<string, unknown>,
-                    );
-                },
-                {
-                    ...DEFAULT_RETRY_CONFIG,
-                    retryableErrors: [
-                        ErrorCategory.CONNECTION_ERROR,
-                        ErrorCategory.TIMEOUT_ERROR,
-                        ErrorCategory.RATE_LIMIT_ERROR,
-                        ErrorCategory.SYSTEM_ERROR,
-                    ],
-                },
-                {
-                    operation: "executeQuery",
-                    query: finalQuery.substring(0, 100) + "...", // Log partial query for security
-                    parameters: Object.keys(
-                        (parameters as Record<string, unknown>) || {},
-                    ),
-                },
-            );
+            // Execute the query with enhanced error handling and recovery.
+            // Honors the `treatMissingTableAsEmpty` option for v1.x/v2.x
+            // compatibility: v3 errors on missing tables instead of returning
+            // an empty array, and workflows that depended on the old silent-
+            // empty behavior can opt back into it here.
+            let result: [unknown[]];
+            try {
+                result = await retryWithBackoff(
+                    async () => {
+                        return await executeQueryWithRecovery<[unknown[]]>(
+                            client,
+                            finalQuery,
+                            resolvedCredentials,
+                            parameters as Record<string, unknown>,
+                        );
+                    },
+                    {
+                        ...DEFAULT_RETRY_CONFIG,
+                        retryableErrors: [
+                            ErrorCategory.CONNECTION_ERROR,
+                            ErrorCategory.TIMEOUT_ERROR,
+                            ErrorCategory.RATE_LIMIT_ERROR,
+                            ErrorCategory.SYSTEM_ERROR,
+                        ],
+                    },
+                    {
+                        operation: "executeQuery",
+                        query: finalQuery.substring(0, 100) + "...", // Log partial query for security
+                        parameters: Object.keys(
+                            (parameters as Record<string, unknown>) || {},
+                        ),
+                    },
+                );
+            } catch (error) {
+                const enhancedError = classifyError(error as Error);
+                if (
+                    enhancedError.category === ErrorCategory.TABLE_NOT_FOUND &&
+                    options.treatMissingTableAsEmpty === true
+                ) {
+                    if (DEBUG) {
+                        debugLog(
+                            "executeQuery",
+                            "Table not found — treating as empty result (treatMissingTableAsEmpty=true)",
+                            itemIndex,
+                        );
+                    }
+                    result = [[]];
+                } else {
+                    throw error;
+                }
+            }
 
             // Check for query errors with enhanced error information
             const queryCheck = checkQueryResult(result, "Query failed");

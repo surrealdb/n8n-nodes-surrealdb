@@ -350,6 +350,19 @@ export const relationshipFields: INodeProperties[] = [
                     },
                 },
             },
+            {
+                displayName: "Treat Missing Table As Empty Result",
+                name: "treatMissingTableAsEmpty",
+                type: "boolean",
+                default: false,
+                description:
+                    "Whether to return an empty result when the relationship source table does not exist. SurrealDB v3 treats queries against non-existent tables as errors; enable this to preserve the v1.x/v2.x silent-empty behavior.",
+                displayOptions: {
+                    show: {
+                        "/operation": ["queryRelationships"],
+                    },
+                },
+            },
         ],
     },
 ];

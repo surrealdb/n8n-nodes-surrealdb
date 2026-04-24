@@ -89,12 +89,13 @@ export const upsertRecordOperation: IOperationHandler = {
         // Create the record ID
         const recordId = createRecordId(table, validatedId);
 
-        // For upsert, we use the upsert method which will create the record if it doesn't exist
-        // According to the SurrealDB documentation, this is the correct method for upserting records
-        const result = await client.upsert(
-            recordId,
-            data as Record<string, unknown>,
-        );
+        // For upsert, we use the upsert method which will create the record if
+        // it doesn't exist. v2 builder chain: client.upsert(recordId).content(data).
+        // .json() makes the response JSON-safe for n8n output.
+        const result = await client
+            .upsert(recordId)
+            .json()
+            .content(data as Record<string, unknown>);
 
         // Add success result with standardized format
         const returnData: INodeExecutionData[] = [];
