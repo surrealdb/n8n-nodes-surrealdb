@@ -44,10 +44,12 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/SurrealDbApi.credentials.js"
+      "dist/credentials/SurrealDbApi.credentials.js",
+      "dist/credentials/SpectronApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/SurrealDb/SurrealDb.node.js"
+      "dist/nodes/SurrealDb/SurrealDb.node.js",
+      "dist/nodes/Spectron/Spectron.node.js"
     ]
   },
   "devDependencies": {

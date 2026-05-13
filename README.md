@@ -34,7 +34,12 @@
 
 # n8n-nodes-surrealdb
 
-The official n8n node for SurrealDB. It provides both action and tool nodes to interact with a SurrealDB database, allowing you to create, read, update, and delete records, as well as execute custom SurrealQL queries.
+The official n8n node package for SurrealDB. It provides two nodes:
+
+- **SurrealDB**: interact with a SurrealDB database: create, read, update, and delete records, plus execute custom SurrealQL queries.
+- **Spectron**: drive the Spectron API (knowledge, sessions, context, memory) from your n8n workflows. See [Spectron Node](#spectron-node).
+
+Both nodes can be used as action nodes and as tool nodes for AI workflows.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
@@ -59,6 +64,7 @@ View the node documentation [here](https://surrealdb.com/docs/integrations/data-
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Operations](#operations)
+- [Spectron](#spectron)
 - [Error Handling](#error-handling)
 - [Understanding SurrealDB and n8n Integration](#understanding-surrealdb-and-n8n-integration)
 - [Resources](#resources)
@@ -199,6 +205,44 @@ The SurrealDB node provides a fairly comprehensive set of operations organized b
 * **Health Check** - Check if the database instance is responsive
 * **Version** - Get the version of the SurrealDB instance
 * **Get Pool Statistics** - Monitor connection pool performance and statistics
+
+## Spectron
+
+In addition to the SurrealDB node, this package ships a **Spectron** node for driving the [Spectron API](https://github.com/surrealdb/surrealdb.js/tree/main/packages/spectron), SurrealDB's typed REST client for knowledge, sessions, context, and memory.
+
+### Spectron Credentials
+
+Create a **Spectron API** credential with:
+
+* **Endpoint** - Spectron API origin without a trailing slash (default `https://api.spectron.dev`)
+* **API Key** - Bearer API key
+* **Context** - Spectron context id (the API path segment scoping your workspace/environment)
+* **Timeout (ms)** - Optional request timeout (default `30000`)
+* **Max Retries** - Optional retry attempts for idempotent GET requests (default `3`)
+
+### Spectron Operations
+
+#### Knowledge
+
+* **Upload** - Upload a document to the knowledge store from an n8n binary property
+* **List** - List documents in the knowledge store (with optional filters)
+* **Delete** - Delete a document by ID
+
+#### Session
+
+* **Create** - Create a new session, optionally scoped via a JSON `scope` object
+* **Get** - Get an existing session by ID
+* **Turn** - Send a turn (`role` + `content`) to an existing session
+
+#### Context
+
+* **Query** - Query Spectron context for relevant material
+* **Retrieve** - Retrieve context items
+
+#### Memory
+
+* **Profile** - Read or update the memory profile
+* **Reflect** - Trigger a memory reflection
 
 ## Understanding SurrealDB and n8n Integration
 
