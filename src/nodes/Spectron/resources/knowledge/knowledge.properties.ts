@@ -83,7 +83,8 @@ export const knowledgeFields: INodeProperties[] = [
         name: "filters",
         type: "json",
         default: "{}",
-        description: "Optional filters forwarded to the list call (JSON object)",
+        description:
+            "Optional filters forwarded to the list call (JSON object)",
         displayOptions: {
             show: {
                 resource: ["knowledge"],

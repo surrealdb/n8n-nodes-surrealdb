@@ -27,7 +27,8 @@ export class SpectronApi implements ICredentialType {
             typeOptions: { password: true },
             required: true,
             default: "",
-            description: "Bearer API key used to authenticate Spectron requests",
+            description:
+                "Bearer API key used to authenticate Spectron requests",
         },
         {
             displayName: "Context",
@@ -53,8 +54,7 @@ export class SpectronApi implements ICredentialType {
             type: "number",
             required: false,
             default: 3,
-            description:
-                "Maximum retry attempts for idempotent GET requests",
+            description: "Maximum retry attempts for idempotent GET requests",
         },
     ];
 

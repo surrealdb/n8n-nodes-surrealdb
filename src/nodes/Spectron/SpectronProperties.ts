@@ -1,13 +1,7 @@
 import type { INodeProperties } from "n8n-workflow";
 
-import {
-    knowledgeOperations,
-    knowledgeFields,
-} from "./resources/knowledge";
-import {
-    sessionsOperations,
-    sessionsFields,
-} from "./resources/sessions";
+import { knowledgeOperations, knowledgeFields } from "./resources/knowledge";
+import { sessionsOperations, sessionsFields } from "./resources/sessions";
 import { contextOperations, contextFields } from "./resources/context";
 import { memoryOperations, memoryFields } from "./resources/memory";
 

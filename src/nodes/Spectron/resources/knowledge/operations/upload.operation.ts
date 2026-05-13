@@ -32,11 +32,10 @@ export const uploadOperation: ISpectronOperationHandler = {
             itemIndex,
             binaryPropertyName,
         );
-        const binaryMeta =
-            executeFunctions.helpers.assertBinaryData(
-                itemIndex,
-                binaryPropertyName,
-            );
+        const binaryMeta = executeFunctions.helpers.assertBinaryData(
+            itemIndex,
+            binaryPropertyName,
+        );
 
         let additionalFields: Record<string, unknown> = {};
         if (additionalFieldsRaw && additionalFieldsRaw.trim() !== "") {

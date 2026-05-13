@@ -37,7 +37,7 @@
 The official n8n node package for SurrealDB. It provides two nodes:
 
 - **SurrealDB**: interact with a SurrealDB database: create, read, update, and delete records, plus execute custom SurrealQL queries.
-- **Spectron**: drive the Spectron API (knowledge, sessions, context, memory) from your n8n workflows. See [Spectron Node](#spectron-node).
+- **Spectron**: drive the Spectron API (knowledge, sessions, context, memory) from your n8n workflows. See [Spectron](#spectron).
 
 Both nodes can be used as action nodes and as tool nodes for AI workflows.
 

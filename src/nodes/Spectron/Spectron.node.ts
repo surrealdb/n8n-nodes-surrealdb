@@ -41,7 +41,10 @@ export class Spectron implements INodeType {
 
     async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
         const credentials = await this.getCredentials("spectronApi");
-        const resolved = validateAndResolveSpectronCredentials(this, credentials);
+        const resolved = validateAndResolveSpectronCredentials(
+            this,
+            credentials,
+        );
         const client = createSpectronClient(resolved);
 
         const items = this.getInputData();
