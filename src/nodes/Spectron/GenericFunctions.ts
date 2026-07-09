@@ -206,7 +206,6 @@ export function pushError(
     returnData.push({
         json: {
             error: error.message,
-            stack: error.stack,
         },
         pairedItem: { item: itemIndex },
     });
@@ -272,7 +271,15 @@ export async function runOperations(
                 pushError(returnData, error as Error, i);
                 continue;
             }
-            throw error;
+            // Surface plain errors (from requireString, JSON parsing, etc.) with
+            // node context and correct item pairing, matching the rest of the node.
+            throw error instanceof NodeOperationError
+                ? error
+                : new NodeOperationError(
+                      executeFunctions.getNode(),
+                      error as Error,
+                      { itemIndex: i },
+                  );
         }
     }
 
