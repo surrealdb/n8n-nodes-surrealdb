@@ -10,7 +10,7 @@
   "license": "MIT",
   "homepage": "https://n8n.io",
   "author": {
-    "name": "David Whatley"
+    "name": "Tobie Morgan Hitchcock"
   },
   "contributors": [
     {
@@ -18,6 +18,9 @@
     },
     {
       "name": "Tobie Morgan Hitchcock"
+    },
+    {
+      "name": "Chiru Boggavarapu"
     }
   ],
   "repository": {
