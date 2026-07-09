@@ -61,7 +61,7 @@ export class SpectronApi implements ICredentialType {
     test: ICredentialTestRequest = {
         request: {
             baseURL: "={{$credentials.endpoint.trim()}}",
-            url: "/health",
+            url: "/api/v1/health",
             method: "GET",
         },
     };

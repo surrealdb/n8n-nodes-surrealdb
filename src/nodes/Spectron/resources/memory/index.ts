@@ -1,2 +1,2 @@
-export * from "./memory.handler";
-export * from "./memory.properties";
+export { memoryOperations, memoryFields } from "./memory.properties";
+export { handleMemoryOperations } from "./memory.handler";

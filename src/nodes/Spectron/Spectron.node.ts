@@ -4,6 +4,7 @@ import type {
     INodeType,
     INodeTypeDescription,
 } from "n8n-workflow";
+import { NodeOperationError } from "n8n-workflow";
 
 import { spectronNodeProperties } from "./SpectronProperties";
 import {
@@ -11,19 +12,39 @@ import {
     validateAndResolveSpectronCredentials,
 } from "./GenericFunctions";
 
-import { handleKnowledgeOperations } from "./resources/knowledge";
-import { handleSessionsOperations } from "./resources/sessions";
-import { handleContextOperations } from "./resources/context";
 import { handleMemoryOperations } from "./resources/memory";
+import { handleDocumentOperations } from "./resources/document";
+import { handleKeywordOperations } from "./resources/keyword";
+import { handleEntityOperations } from "./resources/entity";
+import { handleSessionOperations } from "./resources/session";
+import { handleTraceOperations } from "./resources/trace";
+import { handlePrincipalOperations } from "./resources/principal";
+import { handleScopeOperations } from "./resources/scope";
+import { handleKeyOperations } from "./resources/key";
+import { handleMaintenanceOperations } from "./resources/maintenance";
+
+const resourceHandlers = {
+    memory: handleMemoryOperations,
+    document: handleDocumentOperations,
+    keyword: handleKeywordOperations,
+    entity: handleEntityOperations,
+    session: handleSessionOperations,
+    trace: handleTraceOperations,
+    principal: handlePrincipalOperations,
+    scope: handleScopeOperations,
+    key: handleKeyOperations,
+    maintenance: handleMaintenanceOperations,
+};
 
 export class Spectron implements INodeType {
     description: INodeTypeDescription = {
         displayName: "Spectron",
         name: "spectron",
+        icon: "file:spectron.png",
         group: ["input"],
         version: 1,
         description:
-            "Interact with the Spectron API (knowledge, sessions, context, memory)",
+            "Interact with the Spectron API: memory, documents, entities, sessions, traces, and governance",
         defaults: {
             name: "Spectron",
         },
@@ -49,42 +70,17 @@ export class Spectron implements INodeType {
 
         const items = this.getInputData();
         const resource = this.getNodeParameter("resource", 0) as string;
-        const operation = this.getNodeParameter("operation", 0) as string;
 
-        let returnData: INodeExecutionData[] = [];
-
-        if (resource === "knowledge") {
-            returnData = await handleKnowledgeOperations(
-                operation,
-                client,
-                items,
-                this,
+        const handler =
+            resourceHandlers[resource as keyof typeof resourceHandlers];
+        if (!handler) {
+            throw new NodeOperationError(
+                this.getNode(),
+                `Unknown Spectron resource "${resource}"`,
             );
-        } else if (resource === "sessions") {
-            returnData = await handleSessionsOperations(
-                operation,
-                client,
-                items,
-                this,
-            );
-        } else if (resource === "context") {
-            returnData = await handleContextOperations(
-                operation,
-                client,
-                items,
-                this,
-            );
-        } else if (resource === "memory") {
-            returnData = await handleMemoryOperations(
-                operation,
-                client,
-                items,
-                this,
-            );
-        } else {
-            throw new Error(`Unknown Spectron resource "${resource}"`);
         }
 
+        const returnData = await handler(client, items, this, resolved);
         return [returnData];
     }
 }

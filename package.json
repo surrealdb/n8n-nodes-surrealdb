@@ -31,7 +31,7 @@
   "type": "commonjs",
   "scripts": {
     "build": "tsc && npm run assets",
-    "assets": "cp src/nodes/SurrealDb/*.svg src/nodes/SurrealDb/*.png dist/nodes/SurrealDb/ 2>/dev/null || true",
+    "assets": "cp src/nodes/SurrealDb/*.svg src/nodes/SurrealDb/*.png dist/nodes/SurrealDb/ 2>/dev/null || true; cp src/nodes/Spectron/*.svg src/nodes/Spectron/*.png dist/nodes/Spectron/ 2>/dev/null || true",
     "dev": "tsc --watch",
     "lint": "eslint src",
     "format": "prettier src --write",
@@ -66,6 +66,7 @@
     "typescript": "~5.9.2"
   },
   "dependencies": {
+    "@surrealdb/spectron": "1.0.0-alpha.5",
     "ajv": "^8.18.0",
     "surrealdb": "^2.0.3"
   },

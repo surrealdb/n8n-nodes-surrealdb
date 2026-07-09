@@ -23,6 +23,7 @@ export default [
         setInterval: 'readonly',
         clearTimeout: 'readonly',
         clearInterval: 'readonly',
+        Buffer: 'readonly',
         NodeJS: 'readonly',
       },
     },

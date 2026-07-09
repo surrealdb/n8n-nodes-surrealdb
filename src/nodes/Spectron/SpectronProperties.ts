@@ -1,9 +1,18 @@
 import type { INodeProperties } from "n8n-workflow";
 
-import { knowledgeOperations, knowledgeFields } from "./resources/knowledge";
-import { sessionsOperations, sessionsFields } from "./resources/sessions";
-import { contextOperations, contextFields } from "./resources/context";
 import { memoryOperations, memoryFields } from "./resources/memory";
+import { documentOperations, documentFields } from "./resources/document";
+import { keywordOperations, keywordFields } from "./resources/keyword";
+import { entityOperations, entityFields } from "./resources/entity";
+import { sessionOperations, sessionFields } from "./resources/session";
+import { traceOperations, traceFields } from "./resources/trace";
+import { principalOperations, principalFields } from "./resources/principal";
+import { scopeOperations, scopeFields } from "./resources/scope";
+import { keyOperations, keyFields } from "./resources/key";
+import {
+    maintenanceOperations,
+    maintenanceFields,
+} from "./resources/maintenance";
 
 export const spectronNodeProperties: INodeProperties[] = [
     {
@@ -13,35 +22,80 @@ export const spectronNodeProperties: INodeProperties[] = [
         noDataExpression: true,
         options: [
             {
-                name: "Knowledge",
-                value: "knowledge",
-                description: "Manage documents in the Spectron knowledge store",
+                name: "Memory",
+                value: "memory",
+                description:
+                    "Remember, recall, forget, reflect on, and chat over memory",
+            },
+            {
+                name: "Document",
+                value: "document",
+                description: "Ingest, retrieve, and search documents",
+            },
+            {
+                name: "Keyword",
+                value: "keyword",
+                description: "Explore the document keyword graph",
+            },
+            {
+                name: "Entity",
+                value: "entity",
+                description: "Inspect entities, attributes, and relations",
             },
             {
                 name: "Session",
-                value: "sessions",
-                description: "Create sessions and send conversational turns",
+                value: "session",
+                description: "Create and manage conversation sessions",
             },
             {
-                name: "Context",
-                value: "context",
-                description: "Query and retrieve Spectron context",
+                name: "Trace",
+                value: "trace",
+                description: "Inspect retrieval decision traces",
             },
             {
-                name: "Memory",
-                value: "memory",
-                description: "Inspect and update Spectron memory state",
+                name: "Principal",
+                value: "principal",
+                description: "Manage principals and scope grants",
+            },
+            {
+                name: "Scope",
+                value: "scope",
+                description: "Manage the scope tree",
+            },
+            {
+                name: "Key",
+                value: "key",
+                description: "Manage self-service API keys",
+            },
+            {
+                name: "Maintenance",
+                value: "maintenance",
+                description:
+                    "Health, state, profile, audit, and store maintenance sweeps",
             },
         ],
-        default: "knowledge",
+        default: "memory",
     },
-    ...knowledgeOperations,
-    ...sessionsOperations,
-    ...contextOperations,
-    ...memoryOperations,
 
-    ...knowledgeFields,
-    ...sessionsFields,
-    ...contextFields,
+    ...memoryOperations,
+    ...documentOperations,
+    ...keywordOperations,
+    ...entityOperations,
+    ...sessionOperations,
+    ...traceOperations,
+    ...principalOperations,
+    ...scopeOperations,
+    ...keyOperations,
+    ...maintenanceOperations,
+
     ...memoryFields,
+    ...documentFields,
+    ...keywordFields,
+    ...entityFields,
+    ...sessionFields,
+    ...traceFields,
+    ...principalFields,
+    ...scopeFields,
+    ...keyFields,
+    ...maintenanceFields,
 ];
