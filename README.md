@@ -34,7 +34,12 @@
 
 # n8n-nodes-surrealdb
 
-The official n8n node for SurrealDB. It provides both action and tool nodes to interact with a SurrealDB database, allowing you to create, read, update, and delete records, as well as execute custom SurrealQL queries.
+The official n8n node package for SurrealDB. It provides two nodes:
+
+- **SurrealDB**: interact with a SurrealDB database: create, read, update, and delete records, plus execute custom SurrealQL queries.
+- **Spectron**: drive the [Spectron](https://surrealdb.com/platform/spectron) API from your n8n workflows: memory (remember/recall/chat), documents, entities, sessions, traces, and governance. See [Spectron](#spectron).
+
+Both nodes can be used as action nodes and as tool nodes for AI workflows.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
@@ -59,6 +64,7 @@ View the node documentation [here](https://surrealdb.com/docs/integrations/data-
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Operations](#operations)
+- [Spectron](#spectron)
 - [Error Handling](#error-handling)
 - [Understanding SurrealDB and n8n Integration](#understanding-surrealdb-and-n8n-integration)
 - [Resources](#resources)
@@ -199,6 +205,125 @@ The SurrealDB node provides a fairly comprehensive set of operations organized b
 * **Health Check** - Check if the database instance is responsive
 * **Version** - Get the version of the SurrealDB instance
 * **Get Pool Statistics** - Monitor connection pool performance and statistics
+
+## Spectron
+
+In addition to the SurrealDB node, this package ships a **Spectron** node for driving the [Spectron API](https://surrealdb.com/platform/spectron) — SurrealDB's memory and knowledge platform for AI agents. The node is built on the official [`@surrealdb/spectron`](https://www.npmjs.com/package/@surrealdb/spectron) client (pinned to `1.0.0-alpha.5`), which is installed automatically with this package.
+
+> **Note:** Spectron and its client are currently in pre-release (`1.0.0-alpha`). The API surface may change between alpha releases; this node tracks a specific pinned version.
+
+Like the SurrealDB node, the Spectron node can be used both as an action node and as a **tool** node in AI agent workflows.
+
+### Spectron Credentials
+
+Create a **Spectron API** credential with:
+
+* **Endpoint** - Spectron API origin without a trailing slash (default `https://api.spectron.dev`)
+* **API Key** - Bearer API key (`Authorization: Bearer …`)
+* **Context** - Spectron context id (the API path segment scoping your workspace/environment; every request targets `/api/v1/{context}/…`)
+* **Timeout (ms)** - Optional request timeout (default `30000`)
+* **Max Retries** - Optional retry attempts for idempotent requests (default `3`)
+
+The credential's **Test** button issues `GET {endpoint}/api/v1/health`.
+
+### Spectron Operations
+
+The node exposes the Spectron client's surface, grouped into ten resources. Select a **Resource**, then an **Operation**.
+
+#### Memory
+
+The core memory loop. Facts persisted with **Remember** become retrievable with **Recall**, **Context**, and **Chat**.
+
+* **Remember** - Persist facts from free text and/or caller-supplied triples (via *Additional Fields*)
+* **Remember Many** - Persist facts from a batch of conversation messages (a JSON array of `{ role, content }`)
+* **Recall** - Semantic recall over memory (`k`, retrieval `mode`, read `lens`, scope view, label filters)
+* **Context** - Retrieve LLM-facing context text for a query
+* **Reflect** - Run a reflection pass, optionally persisting discovered attributes
+* **Forget** - Forget memory matching a natural-language query (optionally `purge`)
+* **Chat** - Full chat round trip; returns the reply plus the memory updates (non-streaming)
+
+#### Document
+
+* **Upload** - Upload a document from an n8n binary property (with optional title, source, scopes, labels)
+* **Reprocess** - Reprocess an existing document with replacement bytes
+* **Get** - Get metadata for one document
+* **Get Raw** - Download the raw document bytes into a binary property
+* **Get Chunks** - Get paginated text chunks for a document
+* **List** - List documents (filter by status, MIME type; paginated)
+* **Search** - Hybrid / vector / BM25 / graph search over the corpus
+* **Recompute Links** - Recompute derived document and keyword links
+* **Delete** - Delete a document
+
+#### Keyword
+
+* **List** - List keywords with optional filters and pagination
+* **Search** - Vector search over keyword embeddings
+* **Get** - Get one keyword by its normalised form
+* **For Document** - List keywords linked to a document
+
+#### Entity
+
+* **List** - List entities, optionally filtered by type
+* **Get** - Fetch one entity with its attributes and relations
+* **History** - Supersession history for one attribute key
+* **Delete** - Soft-delete an entity
+
+#### Session
+
+* **Create** - Open a new session (optionally scoped; returns the session id)
+* **List Turns** - List the turns recorded against a session
+* **Get Context** - Retrieve session-scoped context text for a query
+* **Close** - Delete a session on the server
+
+> To record a turn against a session, use **Memory → Remember** (or **Remember Many**) with a **Session ID** set.
+
+#### Trace
+
+* **List** - List recent retrieval trace records
+* **Get** - Fetch one trace by id
+* **Stats** - Aggregate trace statistics over the recent window
+
+#### Principal
+
+* **List** - List principals in the context
+* **Get** - Fetch a principal and its declared grants
+* **Effective** - Resolve the verbs a principal effectively holds at a path
+* **Grant** - Grant a principal verbs over a scope pattern
+* **Revoke** - Revoke verbs from a principal over a scope pattern
+
+#### Scope
+
+* **List** - List registered scope nodes
+* **Register** - Register a scope path with optional display metadata
+* **Delete** - Delete (tombstone) a scope node by path
+* **Forget** - Forget (erase) a scope subtree
+
+#### Key
+
+* **Create** - Mint a new self-service API key (the secret is returned once)
+* **List** - List key metadata (secrets are never returned)
+* **Rotate** - Rotate a key, returning a fresh secret
+* **Delete** - Revoke a key by name
+
+#### Maintenance
+
+* **Health** - Liveness probe for the API
+* **State** - Structured memory state snapshot
+* **Profile** - Static and dynamic profile slices
+* **Whoami** - The calling principal's identity and resolved grants
+* **Inspect** - Inspect an entity, attribute, or trace by reference
+* **Audit** - List audit rows for write/recall activity
+* **Consolidate** - Consolidate accumulated observations into durable facts
+* **Elaborate** - Infer and emit new relation edges between entities
+* **Fsck** - Run an integrity check over the memory store
+* **Lifecycle: Expire** - Run the context-category expiry sweep
+* **Lifecycle: Decay** - Run the importance decay sweep
+
+### Field conventions
+
+* **Scopes / Lens** - A DNF (disjunctive-normal-form) scope selector. Enter a bare path (`team/eng`), a comma-separated list treated as an OR of paths, or a JSON array of clauses (`[["team/eng","org/acme"]]`, an AND within each inner array). Leave empty to use the key's default region.
+* **Labels** - Comma- or newline-separated `key=value` labels.
+* **Additional Fields (JSON)** - A JSON object merged into the SDK call, for any option without a dedicated field.
 
 ## Understanding SurrealDB and n8n Integration
 

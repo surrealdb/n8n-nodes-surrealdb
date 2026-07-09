@@ -1,6 +1,6 @@
 {
   "name": "@surrealdb/n8n-nodes-surrealdb",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "n8n node to connect to SurrealDB",
   "keywords": [
     "n8n-community-node-package",
@@ -10,7 +10,7 @@
   "license": "MIT",
   "homepage": "https://n8n.io",
   "author": {
-    "name": "David Whatley"
+    "name": "Tobie Morgan Hitchcock"
   },
   "contributors": [
     {
@@ -18,6 +18,9 @@
     },
     {
       "name": "Tobie Morgan Hitchcock"
+    },
+    {
+      "name": "Chiru Boggavarapu"
     }
   ],
   "repository": {
@@ -31,7 +34,7 @@
   "type": "commonjs",
   "scripts": {
     "build": "tsc && npm run assets",
-    "assets": "cp src/nodes/SurrealDb/*.svg src/nodes/SurrealDb/*.png dist/nodes/SurrealDb/ 2>/dev/null || true",
+    "assets": "cp src/nodes/SurrealDb/*.svg src/nodes/SurrealDb/*.png dist/nodes/SurrealDb/ 2>/dev/null || true; cp src/nodes/Spectron/*.svg src/nodes/Spectron/*.png dist/nodes/Spectron/ 2>/dev/null || true",
     "dev": "tsc --watch",
     "lint": "eslint src",
     "format": "prettier src --write",
@@ -44,10 +47,12 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/SurrealDbApi.credentials.js"
+      "dist/credentials/SurrealDbApi.credentials.js",
+      "dist/credentials/SpectronApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/SurrealDb/SurrealDb.node.js"
+      "dist/nodes/SurrealDb/SurrealDb.node.js",
+      "dist/nodes/Spectron/Spectron.node.js"
     ]
   },
   "devDependencies": {
@@ -64,6 +69,7 @@
     "typescript": "~5.9.2"
   },
   "dependencies": {
+    "@surrealdb/spectron": "1.0.0-alpha.5",
     "ajv": "^8.18.0",
     "surrealdb": "^2.0.3"
   },
